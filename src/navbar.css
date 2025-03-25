@@ -1,15 +1,6 @@
 /* Corps principal */
 body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background-color: white;
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
-  background-image: url('assets/freepik__retouch__58585.png');
-  width: 100%;
-  max-width: 100vw;
-  background-attachment: fixed;
+ 
   animation: fadeIn 2s ease-out; /* Apply fade-in effect */
 }
 
@@ -34,6 +25,16 @@ body {
   background-position: center;
   padding-top: 20px;
   animation: fadeIn 2s ease-out; /* Fade-in animation */
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: white;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center;
+  background-image: url('assets/freepik__retouch__58585.png');
+  width: 100%;
+  max-width: 100vw;
+background-attachment: fixed;
 }
 
 /* Navbar */
@@ -47,6 +48,7 @@ body {
   top: 0;
   z-index: 10;
   animation: navbarFadeIn 1s ease-out; /* Navbar fade-in */
+  
 }
 
 @keyframes navbarFadeIn {
