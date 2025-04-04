@@ -1,17 +1,17 @@
 import React from 'react';
-import './App.css';
+import '../App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
 // Importation des images depuis src/assets
-import cloud1 from './assets/cloud1.png';
-import cloud2 from './assets/cloud2.png';
-import cloud3 from './assets/cloud3.png';
-import cloud4 from './assets/cloud4.png';
-import cloud5 from './assets/cloud5.png';
-import cloud6 from './assets/cloud6.png';
-import lettreImage from './assets/lettre-removebg-preview.png';
-import fRemovebgPreview from './assets/f-removebg-preview.png';
+import cloud1 from '../assets/cloud1.png';
+import cloud2 from '../assets/cloud2.png';
+import cloud3 from '../assets/cloud3.png';
+import cloud4 from '../assets/cloud4.png';
+import cloud5 from '../assets/cloud5.png';
+import cloud6 from '../assets/cloud6.png';
+import lettreImage from '../assets/lettre-removebg-preview.png';
+import fRemovebgPreview from '../assets/f-removebg-preview.png';
 
 const App = () => {
   return (

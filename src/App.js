@@ -1,29 +1,27 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import ProfessorDashboard from './components/ProfessorDashboard';
-import CourseManagement from './components/CourseManagement';
-import StudentResults from './components/StudentResults';
-import Communication from './components/Communication';
-import AssignmentsExams from './components/AssignmentsExams';
-import AttendanceTracking from './components/AttendanceTracking';
-import Sidebar from './components/Sidebar';
+
+import Navbar from './acceuil/Navbar';
+import Footer from './acceuil/Footer';
+import Fonctionnaliter from './acceuil/Fonctionnaliter';
+import Login from './Login';
 import './App.css';
 
 function App() {
   return (
     <Router>
       <div className="app-container">
-        <Sidebar />
-        <div className="main-content">
-          <Routes>
-            <Route path="/" element={<ProfessorDashboard />} />
-            <Route path="/courses" element={<CourseManagement />} />
-            <Route path="/results" element={<StudentResults />} />
-            <Route path="/communication" element={<Communication />} />
-            <Route path="/assignments" element={<AssignmentsExams />} />
-            <Route path="/attendance" element={<AttendanceTracking />} />
-          </Routes>
-        </div>
+        <Navbar />
+        <Routes>
+          {/* Main page route */}
+          <Route path="/" element={<Fonctionnaliter />} />
+          
+          {/* Login route */}
+          <Route path="/login" element={<Login />} />
+          
+          {/* You can add more routes here as needed */}
+        </Routes>
+        <Footer />
       </div>
     </Router>
   );
