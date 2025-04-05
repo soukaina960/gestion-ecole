@@ -1,0 +1,66 @@
+import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+
+const EnseignantDashboard = () => {
+    const [utilisateur, setUtilisateur] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        try {
+            const userData = localStorage.getItem('utilisateur');
+            if (userData) {
+                setUtilisateur(JSON.parse(userData));
+            }
+        } catch (err) {
+            setError("Erreur de chargement des données utilisateur");
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    }, []);
+
+    const handleLogout = () => {
+        localStorage.removeItem('utilisateur');
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('role');
+        navigate('/login');
+    };
+
+    if (loading) return <div>Chargement...</div>;
+    if (error) return <div className="text-red-500">{error}</div>;
+
+    return (
+        <div className="p-4 max-w-4xl mx-auto">
+            <div className="flex justify-between items-center mb-6">
+                {utilisateur && (
+                    <h2 className="text-2xl font-bold">Bonjour, {utilisateur.nom} 👋</h2>
+                )}
+                <button 
+                    onClick={handleLogout}
+                    className="bg-red-500 text-white px-3 py-1 rounded text-sm"
+                >
+                    Déconnexion
+                </button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <button 
+                    onClick={() => navigate('/enregistrer/absence')}
+                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg shadow-md transition-colors"
+                >
+                    ➕ Enregistrer une absence
+                </button>
+                <button 
+                    onClick={() => navigate('/consulter-absences')}
+                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-md transition-colors"
+                >
+                    📄 Consulter les absences
+                </button>
+            </div>
+        </div>
+    );
+};
+
+export default EnseignantDashboard;
