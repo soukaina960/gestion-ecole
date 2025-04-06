@@ -19,7 +19,7 @@ function App() {
           <Route path="/absences" element={<AbsenceList />} />
           <Route path="/emplois" element={<EmploiList />} />
           <Route path="/incidents" element={<IncidentList />} />     
-          <Route path="/notifications" element={<NotificationList />} />   
+             
           {/* Login route */}
           <Route path="/login" element={<Login />} />
           
