@@ -1,27 +1,30 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-
-import Navbar from './acceuil/Navbar';
-import Footer from './acceuil/Footer';
-import Fonctionnaliter from './acceuil/Fonctionnaliter';
+import Layout from './acceuil/Layout';
 import Login from './Login';
-import './App.css';
+import SurveillantDashboard from './Surveillant/SurveillantDashboard';
+import AbsenceList from './Surveillant/AbsenceList';
+import EmploiList from './Surveillant/EmploiSur';
+import IncidentList from './Surveillant/Incident';
+import NotificationList from './Surveillant/Notification';
 
 function App() {
   return (
     <Router>
       <div className="app-container">
-        <Navbar />
         <Routes>
           {/* Main page route */}
-          <Route path="/" element={<Fonctionnaliter />} />
-          
+          <Route path="/" element={<Layout />} />  
+          <Route path="/surveillant" element={<SurveillantDashboard />} /> 
+          <Route path="/absences" element={<AbsenceList />} />
+          <Route path="/emplois" element={<EmploiList />} />
+          <Route path="/incidents" element={<IncidentList />} />     
+          <Route path="/notifications" element={<NotificationList />} />   
           {/* Login route */}
           <Route path="/login" element={<Login />} />
           
           {/* You can add more routes here as needed */}
         </Routes>
-        <Footer />
       </div>
     </Router>
   );
