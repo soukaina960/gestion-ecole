@@ -20,7 +20,6 @@ function App() {
           <Route path="/emplois" element={<EmploiList />} />
           <Route path="/incidents" element={<IncidentList />} />     
              
-          {/* Login route */}
           <Route path="/login" element={<Login />} />
           
           {/* You can add more routes here as needed */}
