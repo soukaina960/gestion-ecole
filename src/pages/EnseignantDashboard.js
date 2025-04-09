@@ -5,6 +5,7 @@ const EnseignantDashboard = () => {
     const [utilisateur, setUtilisateur] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [selectedFile, setSelectedFile] = useState(null);
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -28,19 +29,7 @@ const EnseignantDashboard = () => {
         navigate('/login');
     };
 
-    const handleFileUpload = (e) => {
-        const file = e.target.files[0];
-        if (!file) return;
-        
-        // Example: Handle file upload logic here
-        console.log("Selected file:", file.name);
-        
-        // You would typically:
-        // 1. Validate file type/size
-        // 2. Upload to server
-        // 3. Show success/error message
-        alert(`Fichier ${file.name} sélectionné pour téléchargement`);
-    };
+   
 
     if (loading) return <div>Chargement...</div>;
     if (error) return <div className="text-red-500">{error}</div>;
@@ -83,19 +72,12 @@ const EnseignantDashboard = () => {
                 
                 {/* File Upload Button */}
                 <div className="relative">
-                    <input
-                        type="file"
-                        id="file-upload"
-                        className="hidden"
-                        onChange={handleFileUpload}
-                        accept=".pdf,.doc,.docx,.xls,.xlsx,.csv"
-                    />
-                    <label 
-                        htmlFor="file-upload"
-                        className="bg-purple-600 hover:bg-purple-700 text-white px-6 py-3 rounded-lg shadow-md transition-colors flex items-center justify-center cursor-pointer"
-                    >
-                        📁 Ajouter un fichier
-                    </label>
+                <button 
+                    onClick={() => navigate('/ajouter-fichier', { state: { professeurId } })}
+                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-lg shadow-md transition-colors"
+                >
+                    📝 ajouter Fichier
+                </button>
                 </div>
             </div>
         </div>

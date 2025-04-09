@@ -70,10 +70,11 @@ const EntreNotes = () => {
                 setClasses([]);
                 return;
             }
-            
+        
             setLoading(prev => ({ ...prev, classes: true }));
             try {
                 const res = await axios.get(`http://127.0.0.1:8000/api/filieres/${filiereId}/classes`);
+                console.log(res.data);  // Ajoutez ceci pour vérifier la réponse
                 setClasses(res.data.data || []);
             } catch (err) {
                 setError("Erreur lors du chargement des classes");
@@ -81,6 +82,7 @@ const EntreNotes = () => {
                 setLoading(prev => ({ ...prev, classes: false }));
             }
         };
+        
         fetchClasses();
     }, [filiereId]);
 
