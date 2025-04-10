@@ -15,7 +15,7 @@ function App() {
         <Routes>
           {/* Main page route */}
           <Route path="/" element={<Layout />} />  
-          <Route path="/surveillant" element={<SurveillantDashboard />} /> 
+          <Route path="/surveillant-dashboard" element={<SurveillantDashboard />} /> 
           <Route path="/absences" element={<AbsenceList />} />
           <Route path="/emplois" element={<EmploiList />} />
           <Route path="/incidents" element={<IncidentList />} />     

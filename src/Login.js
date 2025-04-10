@@ -38,6 +38,9 @@ const Login = () => {
         case 'parent':
           navigate('/parent-dashboard');
           break;
+        case 'surveillant':
+          navigate('/surveillant-dashboard');
+          break;  
         default:
           navigate('/');
       }
