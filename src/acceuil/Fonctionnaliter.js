@@ -23,9 +23,6 @@ const styles = {
     justifySelf: "center",
     marginTop: "-5px",
   },
-  imageContainer1: {
-    marginTop: "-50px",
-  },
   cloud: {
     width: "220px",
     height: "auto",
@@ -43,67 +40,59 @@ const styles = {
     width: "60px",
     height: "auto",
   },
-  imageContainer2: {
-    marginTop: "-490px",
-    marginLeft: "690px",
-  },
-  imageContainerDefault: {
+  imageContainerRight: {
     marginTop: "-450px",
     marginLeft: "690px",
   },
-  navIcon: {
-    marginLeft: "50%",
-  },
 };
 
-const App = () => {
+const Fonctionnaliter = () => {
+  const roles = ["parents", "étudiant", "professeur", "serveillant"];
+
   return (
     <div style={styles.main} className="mt-5">
       <div className="container mt-5">
         <div id="carouselExample" className="carousel slide" data-bs-ride="carousel">
           <div className="carousel-inner">
-            {/* Page 1: Admin */}
-            <div className="carousel-item active" id="active">
-              <h4 style={styles.titre} className="lettre">Fonctionnalité administrateur</h4>
-              <div className="lettre">
-                <div className="image-container" style={styles.imageContainer1}>
-                  <img src={cloud1} alt="CLOUD" className="image" style={styles.cloud} />
-                  <img src={cloud2} alt="CLOUD" className="image" style={styles.cloud} />
-                  <img src={cloud3} alt="CLOUD" className="image" style={{ ...styles.cloud, ...styles.cloudMargin }} />
-                </div>
+
+            {/* Page 1 - Admin (active) */}
+            <div className="carousel-item active">
+              <h4 style={styles.titre}>Fonctionnalité administrateur</h4>
+              <div className="image-container" style={{ marginTop: '-50px' }}>
+                <img src={cloud1} alt="cloud1" style={styles.cloud} />
+                <img src={cloud2} alt="cloud2" style={styles.cloud} />
+                <img src={cloud3} alt="cloud3" style={{ ...styles.cloud, ...styles.cloudMargin }} />
               </div>
-              <img src={lettreImage} alt="" style={styles.lettre} className="lettre" />
-              <img src={fRemovebgPreview} alt="" className="arrow" style={styles.arrow} />
-              <div className="image-container" style={styles.imageContainer2}>
-                <div className="lettre">
-                  <img src={cloud4} alt="CLOUD" className="image" style={styles.cloud} />
-                  <img src={cloud5} alt="CLOUD" className="image" style={styles.cloud} />
-                  <img src={cloud6} alt="CLOUD" className="image" style={{ ...styles.cloud, marginLeft: "-20px" }} />
-                </div>
+              <img src={lettreImage} alt="lettre" style={styles.lettre} />
+              <img src={fRemovebgPreview} alt="arrow" style={styles.arrow} />
+              <div className="image-container" style={styles.imageContainerRight}>
+                <img src={cloud4} alt="cloud4" style={styles.cloud} />
+                <img src={cloud5} alt="cloud5" style={styles.cloud} />
+                <img src={cloud6} alt="cloud6" style={{ ...styles.cloud, marginLeft: '-20px' }} />
               </div>
             </div>
 
-            {/* Pages 2 à 5 */}
-            {["parents", "étudiant", "professeur", "serveillant"].map((role, i) => (
-              <div key={role} className="carousel-item" id={`page${i + 2}`}>
+            {/* Pages 2 à 5 - Autres rôles */}
+            {roles.map((role, i) => (
+              <div key={role} className="carousel-item">
                 <h4 style={styles.titre}>Fonctionnalité {role}</h4>
                 <div className="image-container" style={{ marginTop: '-40px' }}>
-                  <img src={cloud1} alt="CLOUD" className="image" style={styles.cloud} />
-                  <img src={cloud2} alt="CLOUD" className="image" style={styles.cloud} />
-                  <img src={cloud3} alt="CLOUD" className="image" style={{ ...styles.cloud, ...styles.cloudMargin }} />
+                  <img src={cloud1} alt="cloud1" style={styles.cloud} />
+                  <img src={cloud2} alt="cloud2" style={styles.cloud} />
+                  <img src={cloud3} alt="cloud3" style={{ ...styles.cloud, ...styles.cloudMargin }} />
                 </div>
-                <div className="image-container" style={styles.imageContainerDefault}>
-                  <img src={cloud4} alt="CLOUD" className="image" style={styles.cloud} />
-                  <img src={cloud5} alt="CLOUD" className="image" style={styles.cloud} />
-                  <img src={cloud6} alt="CLOUD" className="image" style={{ ...styles.cloud, marginLeft: "-20px" }} />
+                <div className="image-container" style={styles.imageContainerRight}>
+                  <img src={cloud4} alt="cloud4" style={styles.cloud} />
+                  <img src={cloud5} alt="cloud5" style={styles.cloud} />
+                  <img src={cloud6} alt="cloud6" style={{ ...styles.cloud, marginLeft: '-20px' }} />
                 </div>
               </div>
             ))}
           </div>
 
-          {/* Navigation */}
+          {/* Contrôles de navigation */}
           <button className="carousel-control-prev" type="button" data-bs-target="#carouselExample" data-bs-slide="prev">
-            <span className="carousel-control-prev-icon" aria-hidden="true" style={styles.navIcon}></span>
+            <span className="carousel-control-prev-icon" aria-hidden="true" style={{ marginLeft: "50%" }}></span>
             <span className="visually-hidden">Précédent</span>
           </button>
           <button className="carousel-control-next" type="button" data-bs-target="#carouselExample" data-bs-slide="next">
@@ -116,4 +105,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default Fonctionnaliter;
