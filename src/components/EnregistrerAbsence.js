@@ -6,7 +6,7 @@ const EnregistrerAbsence = () => {
     const [filieres, setFilieres] = useState([]);
     const [classes, setClasses] = useState([]);
     const [etudiants, setEtudiants] = useState([]);
-    const [etudiantsProfesseurs, setEtudiantsProfesseurs] = useState([]); // Étudiants-professeurs
+    const [etudiantsProfesseurs, setEtudiantsProfesseurs] = useState([]);
     const [filiereId, setFiliereId] = useState('');
     const [classeId, setClasseId] = useState('');
     const [absences, setAbsences] = useState([]);
@@ -29,11 +29,9 @@ const EnregistrerAbsence = () => {
             setError(null);
             try {
                 const response = await axios.get('http://127.0.0.1:8000/api/filieres');
-                const data = response.data.data || response.data;
-                setFilieres(Array.isArray(data) ? data : []);
+                setFilieres(response.data.data || []);
             } catch (err) {
                 setError("Erreur lors du chargement des filières");
-                console.error(err);
             } finally {
                 setLoading(prev => ({ ...prev, filieres: false }));
             }
@@ -54,11 +52,9 @@ const EnregistrerAbsence = () => {
             setError(null);
             try {
                 const response = await axios.get(`http://127.0.0.1:8000/api/filieres/${selectedFiliere}/classes`);
-                const data = response.data.data || response.data;
-                setClasses(Array.isArray(data) ? data : []);
+                setClasses(response.data.data || []);
             } catch (err) {
                 setError("Erreur lors du chargement des classes");
-                console.error(err);
             } finally {
                 setLoading(prev => ({ ...prev, classes: false }));
             }
@@ -72,21 +68,15 @@ const EnregistrerAbsence = () => {
         if (!id) return;
 
         setClasseId(id);
-        setEtudiants([]); // Reset students
+        setEtudiants([]);
 
         try {
             setLoading(prev => ({ ...prev, etudiants: true }));
             setError(null);
             const response = await axios.get(`http://127.0.0.1:8000/api/etudiants/${id}`);
-            if (Array.isArray(response.data)) {
-                setEtudiants(response.data);
-            } else {
-                setError("Format de données inattendu pour les étudiants");
-                setEtudiants([]);
-            }
+            setEtudiants(response.data || []);
         } catch (err) {
             setError("Erreur lors du chargement des étudiants");
-            setEtudiants([]);
         } finally {
             setLoading(prev => ({ ...prev, etudiants: false }));
         }
@@ -101,28 +91,7 @@ const EnregistrerAbsence = () => {
         setEtudiants([]);
     };
 
-    // Fetch students-professors based on selected class
-    useEffect(() => {
-        const fetchEtudiantsProfesseurs = async () => {
-            if (!classeId) return;
-
-            setLoading(prev => ({ ...prev, etudiantsProfesseurs: true }));
-            setError(null);
-
-            try {
-                const response = await axios.get(`http://127.0.0.1:8000/api/etudiant_professeur/${classeId}`);
-                const data = response.data.data || response.data;
-                setEtudiantsProfesseurs(Array.isArray(data) ? data : []);
-            } catch (err) {
-                setError("Erreur lors du chargement des étudiants-professeurs");
-                console.error(err);
-            } finally {
-                setLoading(prev => ({ ...prev, etudiantsProfesseurs: false }));
-            }
-        };
-        fetchEtudiantsProfesseurs();
-    }, [classeId]);
-
+    // Toggle student absence status
     const toggleAbsence = (etudiantId) => {
         setAbsences(prev =>
             prev.includes(etudiantId)
@@ -131,6 +100,7 @@ const EnregistrerAbsence = () => {
         );
     };
 
+    // Submit absences
     const handleSubmit = async () => {
         if (!classeId || absences.length === 0) {
             setError("Veuillez sélectionner une classe et au moins un étudiant");
@@ -141,6 +111,7 @@ const EnregistrerAbsence = () => {
             setLoading(prev => ({ ...prev, submission: true }));
             setError(null);
 
+            // Sending absences to backend
             await axios.post('http://127.0.0.1:8000/api/absences', {
                 classe_id: classeId,
                 etudiants_absents: absences

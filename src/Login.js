@@ -14,17 +14,19 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     setErrorMessage('');
-    
+
     try {
       const response = await axios.post('http://127.0.0.1:8000/api/login', {
         matricule,
         mot_de_passe: motDePasse,
       });
 
+      // Stocker les données de l'utilisateur et le token dans le localStorage
       localStorage.setItem('utilisateur', JSON.stringify(response.data.utilisateur));
       localStorage.setItem('role', response.data.role);
       localStorage.setItem('access_token', response.data.access_token);
 
+      // Redirection en fonction du rôle de l'utilisateur
       switch(response.data.role) {
         case 'admin':
           navigate('/admin-dashboard');
@@ -33,7 +35,7 @@ const Login = () => {
           navigate('/enseignant/dashboard');
           break;
         case 'étudiant':
-          navigate('/etudiant-dashboard');
+          navigate('/etudiant/dashboard');
           break;
         case 'parent':
           navigate('/parent-dashboard');
