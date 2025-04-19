@@ -24,7 +24,8 @@ const styles = {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
     gap: "2rem",
-    padding: "0 2rem"
+    padding: "0 2rem",
+    
   },
   section: {
     display: "flex",

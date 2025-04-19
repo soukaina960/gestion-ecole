@@ -29,57 +29,45 @@ import EtudiantCours from './components/Etudiant/EtudiantCours';
 import EtudiantNotes from './components/Etudiant/EtudiantNotes';
 import EtudiantAbsences from './components/Etudiant/EtudiantAbsences';
 import EtudiantInfos from './components/Etudiant/EtudiantInfos';
-
+import EtudiantPayer from './components/Etudiant/EtudiantPayer';
+import ListeDemandesEtudiant from './components/Etudiant/MesDemandes';
 
 function App() {
   return (
     <Router>
-      <div className="app-container">
+      <Routes>
+        {/* Main page route */}
+        <Route path="/" element={<Layout />} />  
+        <Route path="/login" element={<Login />} />
+        <Route path="/creer-compte" element={<CreateAccount />} />
+        
+        {/* Routes protégées */}
+        <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/enseignant/dashboard" element={<ProtectedRoute allowedRoles={['professeur']}><EnseignantDashboard /></ProtectedRoute>} />
+        <Route path="/etudiant/dashboard" element={<ProtectedRoute allowedRoles={['étudiant']}><EtudiantDashboard /></ProtectedRoute>} />
+        <Route path="/parent/dashboard" element={<ProtectedRoute allowedRoles={['parent']}><ParentDashboard /></ProtectedRoute>} />
+        <Route path="/surveillant/dashboard" element={<ProtectedRoute allowedRoles={['surveillant']}><SurveillantDashboard /></ProtectedRoute>} />
+        <Route path="/mes-demandes/:etudiantId" element={<ListeDemandesEtudiant />} />
 
-        <Routes>
-          {/* Main page route */}
-          <Route path="/" element={<Layout />} />  
-          <Route path="/surveillant" element={<SurveillantDashboard />} /> 
-          <Route path="/absences" element={<AbsenceList />} />
-          <Route path="/emplois" element={<EmploiList />} />
-          <Route path="/incidents" element={<IncidentList />} />     
-             
-          <Route path="/login" element={<Login />} />
-          
-          {/* You can add more routes here as needed */}
-        </Routes>
 
-        <Navbar />
-        <main className="main-content">
-          <Routes>
-            <Route path="/" element={<Fonctionnaliter />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/enregistrer/absence" element={<EnregistrerAbsence />} />
-            <Route path="/creer-compte" element={<CreateAccount />} />
-            <Route path="entrer-notes" element={<EntrerNotes />} />
-            <Route path="/ajouter-fichier" element={<AjouterFichier />} />
-            {/* Routes protégées */}
-            <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/enseignant/dashboard" element={<ProtectedRoute allowedRoles={['professeur']}><EnseignantDashboard /></ProtectedRoute>} />
-            <Route
-          path="/etudiant/dashboard"
-          element={
-            <ProtectedRoute allowedRoles={['étudiant']}>
-              <EtudiantDashboard />
-            </ProtectedRoute>
-          }
-/>
-            <Route path="/etudiant/cours" element={<EtudiantCours />} />
-            <Route path="/etudiant/notes" element={<EtudiantNotes />} />
-            <Route path="/etudiant/absences" element={<EtudiantAbsences />} />
-            <Route path="/etudiant/infos" element={<EtudiantInfos />} />
-            <Route path="/parent/dashboard" element={<ProtectedRoute allowedRoles={['parent']}><ParentDashboard /></ProtectedRoute>} />
-            <Route path="/surveillant/dashboard" element={<ProtectedRoute allowedRoles={['surveillant']}><SurveillantDashboard /></ProtectedRoute>} />
-          </Routes>
-        </main>
-        <Footer />
+        {/* Surveillant Routes */}
+        <Route path="/surveillant/absences" element={<AbsenceList />} />
+        <Route path="/surveillant/emplois" element={<EmploiList />} />
+        <Route path="/surveillant/incidents" element={<IncidentList />} />
+        <Route path="/surveillant/notifications" element={<NotificationList />} />
 
-      </div>
+        {/* Etudiant Routes */}
+        <Route path="/etudiant/cours" element={<EtudiantCours />} />
+        <Route path="/etudiant/notes" element={<EtudiantNotes />} />
+        <Route path="/etudiant/absences" element={<EtudiantAbsences />} />
+        <Route path="/etudiant/infos" element={<EtudiantInfos />} />
+        <Route path="/etudiant/payer" element={<EtudiantPayer />} />
+        
+        {/* Admin routes */}
+        <Route path="/enregistrer/absence" element={<EnregistrerAbsence />} />
+        <Route path="/entrer-notes" element={<EntrerNotes />} />
+        <Route path="/ajouter-fichier" element={<AjouterFichier />} />
+      </Routes>
     </Router>
   );
 }
