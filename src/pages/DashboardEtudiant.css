@@ -1,0 +1,160 @@
+/* DashboardEtudiant.css */
+
+/* Global container */
+.dashboard-container {
+    display: flex;
+    min-height: 100vh;
+
+    background-size: cover;
+    background-position: center;
+    position: relative;
+    overflow: hidden;
+}
+
+/* Applying the blur effect on the background */
+.dashboard-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4); /* Fond sombre pour améliorer la lisibilité */
+    backdrop-filter: blur(10px); /* Applique l'effet de flou */
+    z-index: -1; /* Assure que le flou se trouve en arrière-plan */
+}
+
+/* Sidebar styles */
+.sidebar {
+    width: 250px;
+    background-color: rgba(255, 255, 255, 0.9); /* Fond semi-transparent pour la sidebar */
+    padding: 2rem;
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+    border-right: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.sidebar-title {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #6b21a8;
+    margin-bottom: 1rem;
+}
+
+.sidebar-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Styling for each sidebar button */
+.sidebar-button {
+    padding: 1rem;
+    background-color: #f9fafb;
+    border-radius: 8px;
+    color: #4a5568;
+    font-weight: bold;
+    text-align: left;
+    transition: background-color 0.3s ease;
+    cursor: pointer;
+    border: 1px solid #e5e7eb;
+}
+
+.sidebar-button:hover {
+    background-color: #edf2f7;
+}
+
+/* Logout button */
+.logout-button {
+    padding: 1rem;
+    background-color: #f87171;
+    color: white;
+    font-weight: bold;
+    border-radius: 8px;
+    border: 1px solid #e5e7eb;
+    transition: background-color 0.3s ease;
+    cursor: pointer;
+}
+
+.logout-button:hover {
+    background-color: #e11d48;
+}
+
+/* Content area */
+.content {
+    flex-grow: 1;
+    padding: 2rem;
+    background-color: rgba(255, 255, 255, 0.9); /* Fond semi-transparent pour la section content */
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+    border-left: 1px solid #e5e7eb;
+}
+
+.content h3 {
+    font-size: 2rem;
+    color: #6b21a8;
+    font-weight: bold;
+}
+.dashboard-container {
+    display: flex;
+    height: 100vh;
+}
+
+.sidebar {
+    width: 250px;
+    background-color: #f4f4f4;
+    padding: 20px;
+}
+
+.sidebar-title {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+}
+
+.sidebar-buttons {
+    display: flex;
+    flex-direction: column;
+}
+
+.sidebar-button {
+    padding: 10px;
+    margin-bottom: 10px;
+    background-color: #9333ea;
+   
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.sidebar-button:hover {
+    background-color: #0056b3;
+}
+
+.logout-button {
+    margin-top: 20px;
+    padding: 10px;
+    background-color: #ff4d4d;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+.logout-button:hover {
+    background-color: #ff0000;
+}
+
+.content {
+    flex-grow: 1;
+    padding: 20px;
+    background-color: #fff;
+    overflow-y: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+
+/* Ajouter plus de styles selon besoin */

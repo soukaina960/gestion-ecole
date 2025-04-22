@@ -15,12 +15,19 @@
     "antd": "^5.24.5",
     "axios": "^1.8.4",
     "bootstrap": "^5.3.5",
+<<<<<<< HEAD
+=======
     "bootstrap-icons": "^1.11.3",
+>>>>>>> 4e7b1992d3b3565de344ecc78dc9daff74bebd53
     "framer-motion": "^12.6.0",
     "immer": "^10.1.1",
+    "jspdf": "^3.0.1",
     "react": "^18.3.1",
     "react-bootstrap": "^2.10.9",
+<<<<<<< HEAD
+=======
     "react-bootstrap-icons": "^1.11.5",
+>>>>>>> 4e7b1992d3b3565de344ecc78dc9daff74bebd53
     "react-dom": "^18.3.1",
     "react-icons": "^5.5.0",
     "react-intersection-observer": "^9.16.0",

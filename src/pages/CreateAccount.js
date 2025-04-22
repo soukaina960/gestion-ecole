@@ -19,7 +19,7 @@ const CreateAccount = () => {
     e.preventDefault();
     setLoading(true);
     setErrorMessage('');
-
+  
     try {
       const response = await axios.post('http://127.0.0.1:8000/api/register', {
         matricule,
@@ -31,11 +31,10 @@ const CreateAccount = () => {
         telephone,
         adresse
       });
-
+  
       localStorage.setItem('utilisateur', JSON.stringify(response.data.utilisateur));
       localStorage.setItem('role', response.data.utilisateur.role);
-
-      // Rediriger en fonction du rôle
+  
       switch(response.data.utilisateur.role) {
         case 'admin':
           navigate('/admin-dashboard');
@@ -53,11 +52,23 @@ const CreateAccount = () => {
           navigate('/');
       }
     } catch (error) {
-      setErrorMessage(error.response?.data?.message || 'Erreur lors de la création du compte');
+      console.error(error);  // Log complet de l'erreur
+      if (error.response) {
+        if (error.response.status === 422) {
+          // Validation des erreurs
+          const errorMessages = Object.values(error.response.data.errors).flat().join(", ");
+          setErrorMessage(`Erreur de validation : ${errorMessages}`);
+        } else {
+          setErrorMessage(error.response.data.message || 'Une erreur est survenue.');
+        }
+      } else {
+        setErrorMessage('Erreur de connexion au serveur.');
+      }
     } finally {
       setLoading(false);
     }
   };
+  
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">

@@ -8,6 +8,7 @@ import {
 } from "react-icons/fa";
 import { motion, useAnimation } from "framer-motion";
 import { useInView } from "react-intersection-observer";
+<<<<<<< HEAD
 
 const styles = {
   footer: {
@@ -24,7 +25,8 @@ const styles = {
     display: "grid",
     gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
     gap: "2rem",
-    padding: "0 2rem"
+    padding: "0 2rem",
+    
   },
   section: {
     display: "flex",
@@ -95,6 +97,9 @@ const styles = {
     fontSize: "0.85rem"
   }
 };
+=======
+import "./footer.css";
+>>>>>>> 9b2f84d045c97926a1471fa954e828dc062988a3
 
 const Footer = () => {
   const controls = useAnimation();
@@ -143,29 +148,29 @@ const Footer = () => {
 
   return (
     <motion.footer
-      style={styles.footer}
+      className="gradient-footer"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration: 0.8 }}
     >
       <motion.div
         ref={ref}
-        style={styles.container}
+        className="footer-container"
         initial="hidden"
         animate={controls}
         variants={containerVariants}
       >
-        {/* Logo + Description */}
-        <motion.div style={styles.section} variants={itemVariants}>
+        {/* Section Logo et description */}
+        <motion.div className="footer-section" variants={itemVariants}>
           <motion.div
-            style={styles.logo}
+            className="logo"
             whileHover={{ scale: 1.05 }}
             transition={{ type: "spring", stiffness: 300 }}
           >
             LOGO
           </motion.div>
           <motion.p
-            style={styles.description}
+            className="footer-description"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.5, duration: 1 }}
@@ -175,26 +180,16 @@ const Footer = () => {
           </motion.p>
         </motion.div>
 
-        {/* Navigation */}
-        <motion.div style={styles.section} variants={itemVariants}>
-          <motion.h3
-            style={styles.heading}
-            variants={itemVariants}
-            whileHover={{ scale: 1.05 }}
-          >
-            Navigation
-          </motion.h3>
-          <nav style={styles.nav}>
+        {/* Section Navigation */}
+        <motion.div className="footer-section" variants={itemVariants}>
+          <motion.h3 whileHover={{ scale: 1.05 }}>Navigation</motion.h3>
+          <nav className="footer-nav">
             {["Accueil", "À propos", "Services", "Contact"].map((item) => (
               <motion.a
                 key={item}
                 href={`#${item.toLowerCase().replace(" ", "-")}`}
-                style={styles.navLink}
                 variants={itemVariants}
-                whileHover={{
-                  x: 5,
-                  color: "rgba(255, 255, 255, 0.9)"
-                }}
+                whileHover={{ x: 5, color: "rgba(255, 255, 255, 0.9)" }}
                 transition={{ type: "spring", stiffness: 300 }}
               >
                 {item}
@@ -203,16 +198,10 @@ const Footer = () => {
           </nav>
         </motion.div>
 
-        {/* Contact */}
-        <motion.div style={styles.section} variants={itemVariants}>
-          <motion.h3
-            style={styles.heading}
-            variants={itemVariants}
-            whileHover={{ scale: 1.05 }}
-          >
-            Contact
-          </motion.h3>
-          <motion.div style={styles.contactInfo} variants={containerVariants}>
+        {/* Section Contact */}
+        <motion.div className="footer-section" variants={itemVariants}>
+          <motion.h3 whileHover={{ scale: 1.05 }}>Contact</motion.h3>
+          <motion.div className="contact-info" variants={containerVariants}>
             {["email@exemple.com", "+123 456 7890", "Adresse, Ville"].map(
               (item, index) => (
                 <motion.p key={index} variants={itemVariants}>
@@ -223,16 +212,10 @@ const Footer = () => {
           </motion.div>
         </motion.div>
 
-        {/* Réseaux sociaux */}
-        <motion.div style={styles.section} variants={itemVariants}>
-          <motion.h3
-            style={styles.heading}
-            variants={itemVariants}
-            whileHover={{ scale: 1.05 }}
-          >
-            Réseaux sociaux
-          </motion.h3>
-          <motion.div style={styles.socialLinks} variants={containerVariants}>
+        {/* Section Réseaux sociaux */}
+        <motion.div className="footer-section" variants={itemVariants}>
+          <motion.h3 whileHover={{ scale: 1.05 }}>Réseaux sociaux</motion.h3>
+          <motion.div className="social-links" variants={containerVariants}>
             {[
               { icon: <FaFacebook />, label: "Facebook" },
               { icon: <FaTwitter />, label: "Twitter" },
@@ -240,24 +223,25 @@ const Footer = () => {
               { icon: <FaLinkedin />, label: "LinkedIn" },
               { icon: <FaGithub />, label: "GitHub" }
             ].map((social) => (
-                  <motion.a
-                  key={social.label}
-                  href={`https://${social.label.toLowerCase()}.com`}
-                  aria-label={social.label}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  variants={itemVariants}
-                  whileHover={socialVariants.hover}
-                >
-                  {social.icon}
-                </motion.a>
-                        ))}
-                      </motion.div>
-                    </motion.div>
+              <motion.a
+                key={social.label}
+                href={`https://${social.label.toLowerCase()}.com`}
+                aria-label={social.label}
+                target="_blank"
+                rel="noopener noreferrer"
+                variants={itemVariants}
+                whileHover="hover"
+                variants={socialVariants}
+              >
+                {social.icon}
+              </motion.a>
+            ))}
+          </motion.div>
+        </motion.div>
 
-        {/* Footer bottom */}
+        {/* Copyright */}
         <motion.div
-          style={styles.bottom}
+          className="footer-bottom"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8, duration: 0.5 }}
@@ -266,25 +250,26 @@ const Footer = () => {
             whileHover={{ scale: 1.02 }}
             transition={{ type: "spring", stiffness: 300 }}
           >
-            &copy; {new Date().getFullYear()} Mon Application. Tous droits réservés.
+            &copy; {new Date().getFullYear()} Mon Application. Tous droits
+            réservés.
           </motion.p>
-          <motion.div style={styles.legalLinks} variants={containerVariants}>
-            {["Politique de confidentialité", "Conditions d'utilisation"].map(
-              (item) => (
-                <motion.a
-                  key={item}
-                  href={`#${item.toLowerCase().replace(" ", "-")}`}
-                  style={styles.navLink}
-                  variants={itemVariants}
-                  whileHover={{
-                    scale: 1.05,
-                    color: "rgba(255, 255, 255, 0.9)"
-                  }}
-                >
-                  {item}
-                </motion.a>
-              )
-            )}
+          <motion.div className="legal-links" variants={containerVariants}>
+            {[
+              "Politique de confidentialité",
+              "Conditions d'utilisation"
+            ].map((item) => (
+              <motion.a
+                key={item}
+                href={`#${item.toLowerCase().replace(" ", "-")}`}
+                variants={itemVariants}
+                whileHover={{
+                  scale: 1.05,
+                  color: "rgba(255, 255, 255, 0.9)"
+                }}
+              >
+                {item}
+              </motion.a>
+            ))}
           </motion.div>
         </motion.div>
       </motion.div>
