@@ -30,6 +30,7 @@ const NosServices = () => {
 };
 
 const styles = {
+  
   card: {
     transition: "transform 0.3s ease",
     display: "flex",
@@ -45,6 +46,7 @@ const styles = {
     minHeight: "200px", // Assurer une hauteur minimale pour éviter que les cartes soient trop petites
     margin: "0 auto", // Centrer chaque carte
   },
+  
 };
 
 export default NosServices;

@@ -2,6 +2,18 @@ import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
+const API_CONFIG = {
+  BASE_URL: process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api',
+  ENDPOINTS: {
+    ANNEES: '/annees_scolaires',
+    SEMESTRES: '/annees/:anneeId/semestres',
+    CLASSES: '/classes',
+    FILIERES: '/classes/:classeId/filieres',
+    MATIERES: '/professeurs/:professeurId/matieres',
+    FICHIERS: '/fichiers-pedagogiques'
+  }
+};
+
 const AjouterFichier = () => {
   const navigate = useNavigate();
   const [utilisateur, setUtilisateur] = useState(null);
@@ -11,7 +23,6 @@ const AjouterFichier = () => {
   const [matieres, setMatieres] = useState([]);
   const [typesFichier] = useState(['cours', 'devoir', 'examen', 'corrigé', 'ressource']);
   const [filieres, setFilieres] = useState([]);
-
   const [selectedAnnee, setSelectedAnnee] = useState("");
   const [selectedSemestre, setSelectedSemestre] = useState("");
   const [selectedClasse, setSelectedClasse] = useState("");
@@ -21,7 +32,6 @@ const AjouterFichier = () => {
   const [fichier, setFichier] = useState(null);
   const [fichiersListe, setFichiersListe] = useState([]);
   const [isLycee, setIsLycee] = useState(false);
-
   const [loading, setLoading] = useState({
     annees: false,
     semestres: false,
@@ -34,7 +44,11 @@ const AjouterFichier = () => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  // Charger l'utilisateur connecté
+  const handleApiError = (error, context) => {
+    console.error(`Erreur ${context}:`, error);
+    setError(error.response?.data?.message || `Erreur lors de ${context}`);
+  };
+
   useEffect(() => {
     const userData = localStorage.getItem("utilisateur");
     if (userData) {
@@ -42,219 +56,203 @@ const AjouterFichier = () => {
     }
   }, []);
 
-  // Charger les années scolaires
   useEffect(() => {
-    setLoading((prev) => ({ ...prev, annees: true }));
-    axios
-      .get("http://127.0.0.1:8000/api/annees_scolaires")
-      .then((res) => setAnnees(res.data))
-      .catch((err) => console.error("Erreur chargement années:", err))
-      .finally(() => setLoading((prev) => ({ ...prev, annees: false })));
+    const fetchAnnees = async () => {
+      setLoading(prev => ({ ...prev, annees: true }));
+      try {
+        const res = await axios.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ANNEES}`);
+        setAnnees(res.data);
+      } catch (err) {
+        handleApiError(err, "chargement des années");
+      } finally {
+        setLoading(prev => ({ ...prev, annees: false }));
+      }
+    };
+    fetchAnnees();
   }, []);
 
-  // Charger les semestres quand une année est sélectionnée
   useEffect(() => {
-    if (selectedAnnee) {
-      setLoading((prev) => ({ ...prev, semestres: true }));
-      axios
-        .get(`http://127.0.0.1:8000/api/annees/${selectedAnnee}/semestres`)
-        .then((res) => setSemestres(res.data))
-        .catch((err) => console.error("Erreur chargement semestres:", err))
-        .finally(() => setLoading((prev) => ({ ...prev, semestres: false })));
-    } else {
-      setSemestres([]);
-      setSelectedSemestre("");
-    }
+    const fetchSemestres = async () => {
+      if (!selectedAnnee) return setSemestres([]);
+      setLoading(prev => ({ ...prev, semestres: true }));
+      try {
+        const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SEMESTRES.replace(':anneeId', selectedAnnee)}`;
+        const res = await axios.get(url);
+        setSemestres(res.data);
+      } catch (err) {
+        handleApiError(err, "chargement des semestres");
+      } finally {
+        setLoading(prev => ({ ...prev, semestres: false }));
+      }
+    };
+    fetchSemestres();
   }, [selectedAnnee]);
 
-  // Charger les classes quand un semestre est sélectionné
   useEffect(() => {
-    if (selectedAnnee && selectedSemestre) {
-      setLoading((prev) => ({ ...prev, classes: true }));
-      axios
-        .get(`http://127.0.0.1:8000/api/classes?annee=${selectedAnnee}`)
-        .then((res) => setClasses(res.data))
-        .catch((err) => console.error("Erreur chargement classes:", err))
-        .finally(() => setLoading((prev) => ({ ...prev, classes: false })));
-    } else {
-      setClasses([]);
-      setSelectedClasse("");
-    }
+    const fetchClasses = async () => {
+      if (!selectedAnnee || !selectedSemestre) return setClasses([]);
+      setLoading(prev => ({ ...prev, classes: true }));
+      try {
+        const res = await axios.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLASSES}?annee=${selectedAnnee}`);
+        setClasses(res.data);
+      } catch (err) {
+        handleApiError(err, "chargement des classes");
+      } finally {
+        setLoading(prev => ({ ...prev, classes: false }));
+      }
+    };
+    fetchClasses();
   }, [selectedAnnee, selectedSemestre]);
 
-  // Vérifier si c'est une classe de lycée et charger les filières
   useEffect(() => {
-    if (selectedClasse) {
-      const classe = classes.find((c) => c.id === parseInt(selectedClasse));
-      const lycee = classe && classe.niveau === "Secondaire";
-      setIsLycee(lycee);
+    const checkLyceeAndFetchFilieres = async () => {
+      if (!selectedClasse) return setIsLycee(false);
+      const classe = classes.find(c => c.id === parseInt(selectedClasse));
+      const isLycee = classe?.niveau === "Secondaire";
+      setIsLycee(isLycee);
+      if (!isLycee) return setFilieres([]);
 
-      if (lycee) {
-        setLoading((prev) => ({ ...prev, filieres: true }));
-        axios
-          .get(`http://127.0.0.1:8000/api/classes/${selectedClasse}/filieres`)
-          .then((res) => {
-            const filieresData = res.data.filiere ? [res.data.filiere] : res.data.filieres || [];
-            setFilieres(filieresData);
-            if (filieresData.length > 0) setSelectedFiliere(filieresData[0].id);
-          })
-          .catch((err) => {
-            console.error("Erreur chargement filières:", err);
-            setFilieres([]);
-          })
-          .finally(() => setLoading((prev) => ({ ...prev, filieres: false })));
-      } else {
-        setFilieres([]);
-        setSelectedFiliere("");
+      setLoading(prev => ({ ...prev, filieres: true }));
+      try {
+        const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.FILIERES.replace(':classeId', selectedClasse)}`;
+        const res = await axios.get(url);
+        const filieresData = res.data.filiere ? [res.data.filiere] : res.data.filieres || [];
+        setFilieres(filieresData);
+        if (filieresData.length) setSelectedFiliere(filieresData[0].id);
+      } catch (err) {
+        handleApiError(err, "chargement des filières");
+      } finally {
+        setLoading(prev => ({ ...prev, filieres: false }));
       }
-    }
+    };
+    checkLyceeAndFetchFilieres();
   }, [selectedClasse, classes]);
 
-  // Charger les matières
   useEffect(() => {
-    if (selectedClasse && utilisateur?.id) {
-      setLoading((prev) => ({ ...prev, matieres: true }));
-      
-      let url;
-      if (isLycee && selectedFiliere) {
-        url = `http://127.0.0.1:8000/api/professeurs/${utilisateur.id}/classes/${selectedClasse}/filieres/${selectedFiliere}/matieres`;
-      } else {
-        url = `http://127.0.0.1:8000/api/professeurs/${utilisateur.id}/classes/${selectedClasse}/matieres`;
+    const fetchMatieres = async () => {
+      if (!selectedClasse || !utilisateur?.id) return setMatieres([]);
+      setLoading(prev => ({ ...prev, matieres: true }));
+      try {
+        const url = isLycee && selectedFiliere
+          ? `${API_CONFIG.BASE_URL}/professeurs/${utilisateur.id}/classes/${selectedClasse}/filieres/${selectedFiliere}/matieres`
+          : `${API_CONFIG.BASE_URL}/professeurs/${utilisateur.id}/classes/${selectedClasse}/matieres`;
+        const res = await axios.get(url);
+        setMatieres(res.data);
+      } catch (err) {
+        handleApiError(err, "chargement des matières");
+      } finally {
+        setLoading(prev => ({ ...prev, matieres: false }));
       }
-
-      axios
-        .get(url)
-        .then((res) => setMatieres(res.data))
-        .catch((err) => console.error("Erreur chargement matières:", err))
-        .finally(() => setLoading((prev) => ({ ...prev, matieres: false })));
-    } else {
-      setMatieres([]);
-      setSelectedMatiere("");
-    }
+    };
+    fetchMatieres();
   }, [selectedClasse, selectedFiliere, isLycee, utilisateur]);
 
-  // Charger les fichiers existants
   const fetchFichiers = useCallback(async () => {
-    if (!utilisateur?.id || !selectedAnnee || !selectedSemestre || !selectedClasse || !selectedMatiere) return;
-    
+    if (!utilisateur?.id || !selectedClasse || !selectedSemestre || !selectedMatiere) return;
+    setLoading(prev => ({ ...prev, fichiers: true }));
     try {
-      setLoading(prev => ({...prev, fichiers: true}));
-      const res = await axios.get(`http://127.0.0.1:8000/api/fichiers-pedagogiques`, {
+      const res = await axios.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.FICHIERS}`, {
         params: {
-          professeur_id: utilisateur.id,
-          annee_scolaire_id: selectedAnnee,
+          classe_id: selectedClasse,
           semestre_id: selectedSemestre,
-          classroom_id: selectedClasse,
           matiere_id: selectedMatiere
+        },
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
       });
       setFichiersListe(res.data.data || res.data);
     } catch (err) {
-      setError("Erreur de chargement des fichiers");
+      handleApiError(err, "chargement des fichiers");
     } finally {
-      setLoading(prev => ({...prev, fichiers: false}));
+      setLoading(prev => ({ ...prev, fichiers: false }));
     }
-  }, [utilisateur, selectedAnnee, selectedSemestre, selectedClasse, selectedMatiere]);
+  }, [utilisateur, selectedClasse, selectedSemestre, selectedMatiere]);
 
   useEffect(() => {
     fetchFichiers();
   }, [fetchFichiers]);
 
-  // Validation du fichier
   const validateFile = (file) => {
-    const validTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 
-                       'application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation'];
-    const maxSize = 10 * 1024 * 1024; // 10MB
-
+    if (!file) return setError("Veuillez sélectionner un fichier");
+    const validTypes = [
+      'application/pdf', 'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/vnd.ms-powerpoint',
+      'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+    ];
     if (!validTypes.includes(file.type)) {
-      setError("Type de fichier non supporté. Formats acceptés: PDF, DOC, DOCX, PPT, PPTX");
-      return false;
+      return setError("Type de fichier non supporté");
     }
-
-    if (file.size > maxSize) {
-      setError("La taille du fichier ne doit pas dépasser 10MB");
-      return false;
+    if (file.size > 10 * 1024 * 1024) {
+      return setError("Fichier trop volumineux (>10MB)");
     }
-
     return true;
   };
 
-  // Soumission du fichier
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!fichier || !selectedClasse || !selectedSemestre || !selectedMatiere) {
-      setError("Veuillez sélectionner tous les champs obligatoires et un fichier");
-      return;
-    }
-
-    if (!validateFile(fichier)) {
-      return;
-    }
+    setError(null);
+    setSuccess(null);
+    if (!validateFile(fichier)) return;
 
     const formData = new FormData();
-    formData.append('fichier', fichier);
+    formData.append('fichier', fichier); // Envoie du fichier avec le nom 'fichier'
     formData.append('type_fichier', selectedType);
-    formData.append('professeur_id', utilisateur.id);
-    formData.append('classroom_id', selectedClasse);
+    formData.append('classe_id', selectedClasse);
     formData.append('semestre_id', selectedSemestre);
-    formData.append('annee_scolaire_id', selectedAnnee);
     formData.append('matiere_id', selectedMatiere);
+    formData.append('professeur_id', utilisateur?.id);
 
     try {
-      setLoading(prev => ({...prev, submission: true}));
-      await axios.post('http://127.0.0.1:8000/api/fichiers-pedagogiques', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      setSuccess('Fichier envoyé avec succès');
-      setFichier(null);
-      fetchFichiers();
+        setLoading(prev => ({ ...prev, submission: true }));
+        await axios.post(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.FICHIERS}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        });
+        setSuccess("Fichier envoyé avec succès !");
+        setFichier(null);
+        e.target.reset();
+        fetchFichiers();
     } catch (err) {
-      setError(err.response?.data?.message || "Erreur lors de l'envoi du fichier");
+        handleApiError(err, "l'envoi du fichier");
     } finally {
-      setLoading(prev => ({...prev, submission: false}));
+        setLoading(prev => ({ ...prev, submission: false }));
     }
-  };
+};
 
-  // Télécharger un fichier
   const handleDownload = (id) => {
-    window.open(`http://127.0.0.1:8000/api/fichiers-pedagogiques/${id}/download`, '_blank');
+    window.open(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.FICHIERS}/${id}/download`, '_blank');
   };
 
-  // Supprimer un fichier
   const handleDelete = async (id) => {
-    if (!window.confirm('Confirmer la suppression ?')) return;
-    
+    if (!window.confirm("Confirmer la suppression ?")) return;
     try {
-      await axios.delete(`http://127.0.0.1:8000/api/fichiers-pedagogiques/${id}`);
-      setSuccess('Fichier supprimé avec succès');
+      await axios.delete(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.FICHIERS}/${id}`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      setSuccess("Fichier supprimé !");
       fetchFichiers();
     } catch (err) {
-      setError("Erreur lors de la suppression");
+      handleApiError(err, "la suppression");
     }
   };
 
-  // Effacer les messages après 5 secondes
   useEffect(() => {
-    if (error || success) {
-      const timer = setTimeout(() => {
-        setError(null);
-        setSuccess(null);
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
+    const timer = setTimeout(() => {
+      setError(null);
+      setSuccess(null);
+    }, 5000);
+    return () => clearTimeout(timer);
   }, [error, success]);
 
   return (
     <div className="container mt-4">
       <h2 className="mb-4">Gestion des fichiers pédagogiques</h2>
-      
       {error && <div className="alert alert-danger">{error}</div>}
       {success && <div className="alert alert-success">{success}</div>}
-
       <div className="card mb-4">
         <div className="card-header bg-primary text-white">
           <h5>Ajouter un fichier</h5>
@@ -284,7 +282,6 @@ const AjouterFichier = () => {
                   </select>
                 </div>
               </div>
-              
               <div className="col-md-3">
                 <div className="form-group">
                   <label>Semestre *</label>
@@ -306,7 +303,6 @@ const AjouterFichier = () => {
                   </select>
                 </div>
               </div>
-              
               <div className="col-md-3">
                 <div className="form-group">
                   <label>Classe *</label>
@@ -327,7 +323,6 @@ const AjouterFichier = () => {
                   </select>
                 </div>
               </div>
-
               {isLycee && filieres.length > 0 && (
                 <div className="col-md-3">
                   <div className="form-group">
@@ -347,7 +342,6 @@ const AjouterFichier = () => {
                 </div>
               )}
             </div>
-
             <div className="row mb-3">
               <div className="col-md-4">
                 <div className="form-group">
@@ -366,7 +360,6 @@ const AjouterFichier = () => {
                   </select>
                 </div>
               </div>
-
               <div className="col-md-3">
                 <div className="form-group">
                   <label>Type de fichier *</label>
@@ -384,7 +377,6 @@ const AjouterFichier = () => {
                   </select>
                 </div>
               </div>
-              
               <div className="col-md-5">
                 <div className="form-group">
                   <label>Fichier *</label>
@@ -399,7 +391,6 @@ const AjouterFichier = () => {
                 </div>
               </div>
             </div>
-            
             <div className="row">
               <div className="col-md-12 d-flex justify-content-end">
                 <button
@@ -419,7 +410,6 @@ const AjouterFichier = () => {
           </form>
         </div>
       </div>
-
       <div className="card">
         <div className="card-header bg-primary text-white">
           <h5>Mes fichiers</h5>
@@ -449,13 +439,13 @@ const AjouterFichier = () => {
                     <tr key={f.id}>
                       <td>{f.nom_fichier}</td>
                       <td>
-                        <span className={`badge bg-${f.type_fichier === 'cours' ? 'primary' : f.type_fichier === 'devoir' ? 'warning' : 'danger'}`}>
-                          {f.type_fichier}
+                        <span className={`badge bg-${f.type === 'cours' ? 'primary' : f.type === 'devoir' ? 'warning' : 'danger'}`}>
+                          {f.type}
                         </span>
                       </td>
                       <td>{f.matiere?.nom || '-'}</td>
                       <td>{new Date(f.created_at).toLocaleDateString()}</td>
-                      <td>{(f.taille / 1024).toFixed(1)} KB</td>
+                      <td>{(f.taille_fichier / 1024).toFixed(1)} KB</td>
                       <td>
                         <button 
                           className="btn btn-sm btn-success me-2"
