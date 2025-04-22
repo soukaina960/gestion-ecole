@@ -1,190 +1,132 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import Navbar from './NavBar';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import { FaExclamationCircle } from 'react-icons/fa'; // Icône d'avertissement
+import { FaCheckCircle } from 'react-icons/fa'; // Icône de succès
 
-const NotificationList = () => {
-  const [notifications, setNotifications] = useState([]);
-  const [filteredNotifications, setFilteredNotifications] = useState([]);
-  const [etudiantId, setEtudiantId] = useState('');
-  const [date, setDate] = useState('');
-  const [showForm, setShowForm] = useState(false);
+const Notification = () => {
+  const [students, setStudents] = useState([]);
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [parentInfo, setParentInfo] = useState(null);
+  const [message, setMessage] = useState('');
 
-  const [formData, setFormData] = useState({
-    titre: '',
-    contenu: '',
-    etudiant_id: '',
-  });
-
+  // Charger les étudiants
   useEffect(() => {
-    fetchNotifications();
-  }, []);
-
-  const fetchNotifications = () => {
-    axios.get('http://localhost:8000/api/notifications')
+    axios.get('http://127.0.0.1:8000/api/etudiants')
       .then(response => {
-        setNotifications(response.data);
-        setFilteredNotifications(response.data);
-      })
-      .catch(error => console.error('Erreur de chargement des notifications', error));
-  };
-
-  const handleFilter = () => {
-    const filtered = notifications.filter(notif => {
-      const matchEtudiant = etudiantId ? notif.etudiant_id.toString() === etudiantId : true;
-      const matchDate = date ? notif.date === date : true;
-      return matchEtudiant && matchDate;
-    });
-    setFilteredNotifications(filtered);
-  };
-
-  const handleReset = () => {
-    setFilteredNotifications(notifications);
-    setEtudiantId('');
-    setDate('');
-  };
-
-  const handleChange = e => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
-  const handleSubmit = e => {
-    e.preventDefault();
-    axios.post('http://localhost:8000/api/notifications', formData)
-      .then(() => {
-        alert('Notification envoyée ✅');
-        setShowForm(false);
-        setFormData({ titre: '', contenu: '', etudiant_id: '' });
-        fetchNotifications();
+        setStudents(response.data);
       })
       .catch(error => {
-        alert('Erreur lors de l\'envoi ❌');
-        console.error(error);
+        console.error("Erreur lors du chargement des étudiants:", error);
+        setMessage('Erreur lors du chargement des étudiants.');
+      });
+  }, []);
+
+  // Fonction pour sélectionner un étudiant
+  const handleStudentSelection = (event) => {
+    const studentId = event.target.value;
+    const student = students.find(stud => stud.id === parseInt(studentId));
+    setSelectedStudent(student);
+
+    // Récupérer les informations du parent après la sélection de l'étudiant
+    axios.get(`http://127.0.0.1:8000/api/etudiant/${studentId}/parent`)
+      .then(response => {
+        setParentInfo(response.data); // Enregistrer les infos du parent
+      })
+      .catch(error => {
+        console.error("Erreur lors de la récupération des informations du parent:", error);
+        setParentInfo(null); // Si une erreur se produit, réinitialiser les données du parent
       });
   };
 
-  const styles = {
-    container: { padding: '20px', fontFamily: 'Arial, sans-serif' },
-    title: { fontSize: '24px', marginBottom: '20px' },
-    filters: { display: 'flex', gap: '10px', marginBottom: '20px', flexWrap: 'wrap' },
-    input: { padding: '8px', borderRadius: '4px', border: '1px solid #ccc' },
-    button: {
-      padding: '8px 16px',
-      backgroundColor: '#009688',
-      color: 'white',
-      border: 'none',
-      borderRadius: '4px',
-      cursor: 'pointer'
-    },
-    table: {
-      width: '100%',
-      borderCollapse: 'collapse',
-      backgroundColor: '#fff',
-      boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
-    },
-    th: {
-      backgroundColor: '#009688',
-      color: 'white',
-      padding: '10px',
-      textAlign: 'left',
-      borderBottom: '2px solid #00695c',
-    },
-    td: {
-      padding: '10px',
-      borderBottom: '1px solid #ccc',
-    },
-    formContainer: {
-      backgroundColor: '#f9f9f9',
-      padding: '20px',
-      border: '1px solid #ddd',
-      borderRadius: '8px',
-      marginBottom: '20px',
-      maxWidth: '400px'
-    },
-    formLabel: { marginBottom: '5px', display: 'block' },
-    formInput: { width: '100%', padding: '8px', marginBottom: '10px', borderRadius: '4px', border: '1px solid #ccc' }
+  // Fonction pour envoyer la notification au parent
+  const sendNotification = () => {
+    if (!selectedStudent) {
+      toast.error('Veuillez sélectionner un étudiant.');
+      return;
+    }
+
+    if (!parentInfo) {
+      toast.error('Informations du parent non trouvées.');
+      return;
+    }
+
+    // Envoi de l'email et SMS
+    axios.post('http://127.0.0.1:8000/api/send-email-sms-notification', {
+      parent_email: parentInfo.email,
+      parent_phone: parentInfo.phone,
+      student_name: selectedStudent.nom,
+      student_prenom: selectedStudent.prenom,
+      // Ajouter d'autres détails ici si nécessaire
+    })
+    .then(() => {
+      toast.success(
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <FaCheckCircle style={{ marginRight: '10px', color: '#4CAF50' }} />
+          Notification envoyée au parent de {selectedStudent.nom} !
+        </div>,
+        {
+          position: toast.POSITION.TOP_RIGHT,
+          autoClose: 5000,
+          hideProgressBar: true,
+          closeButton: true,
+          style: { background: '#4CAF50', color: '#fff' },
+        }
+      );
+    })
+    .catch(() => {
+      toast.error(
+        <div style={{ display: 'flex', alignItems: 'center' }}>
+          <FaExclamationCircle style={{ marginRight: '10px', color: '#F44336' }} />
+          Erreur lors de l'envoi de la notification !
+        </div>,
+        {
+          position: toast.POSITION.TOP_RIGHT,
+          autoClose: 5000,
+          hideProgressBar: true,
+          closeButton: true,
+          style: { background: '#F44336', color: '#fff' },
+        }
+      );
+    });
   };
 
   return (
-    <div style={styles.container}>
-      <Navbar />
-      <h2 style={styles.title}>Notifications envoyées</h2>
-
-      <div style={styles.filters}>
-        <input
-          style={styles.input}
-          type="text"
-          placeholder="ID Étudiant"
-          value={etudiantId}
-          onChange={(e) => setEtudiantId(e.target.value)}
-        />
-        <input
-          style={styles.input}
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-        />
-        <button style={styles.button} onClick={handleFilter}>Filtrer</button>
-        <button style={{ ...styles.button, backgroundColor: '#555' }} onClick={handleReset}>Réinitialiser</button>
-        <button style={{ ...styles.button, backgroundColor: '#4CAF50' }} onClick={() => setShowForm(!showForm)}>
-          {showForm ? '❌ Fermer le formulaire' : '➕ Envoyer une notification'}
-        </button>
+    <div style={{ fontFamily: 'Arial, sans-serif', maxWidth: '900px', margin: '0 auto', padding: '20px' }}>
+      <h2 style={{ textAlign: 'center', color: '#333' }}>Sélectionner un étudiant</h2>
+      <ToastContainer />
+      
+      <div style={{ marginBottom: '20px' }}>
+        <label htmlFor="student">Choisir un étudiant: </label>
+        <select id="student" onChange={handleStudentSelection}>
+          <option value="">Sélectionner un étudiant</option>
+          {students.map(student => (
+            <option key={student.id} value={student.id}>
+              {student.nom} {student.prenom}
+            </option>
+          ))}
+        </select>
       </div>
 
-      {showForm && (
-        <form onSubmit={handleSubmit} style={styles.formContainer}>
-          <label style={styles.formLabel}>Titre :</label>
-          <input
-            type="text"
-            name="titre"
-            value={formData.titre}
-            onChange={handleChange}
-            style={styles.formInput}
-            required
-          />
-          <label style={styles.formLabel}>Contenu :</label>
-          <input
-            type="text"
-            name="contenu"
-            value={formData.contenu}
-            onChange={handleChange}
-            style={styles.formInput}
-            required
-          />
-          <label style={styles.formLabel}>ID Étudiant :</label>
-          <input
-            type="text"
-            name="etudiant_id"
-            value={formData.etudiant_id}
-            onChange={handleChange}
-            style={styles.formInput}
-            required
-          />
-          <button type="submit" style={{ ...styles.button, width: '100%', marginTop: '10px' }}>📤 Envoyer</button>
-        </form>
-      )}
+      {selectedStudent && parentInfo && (
+        <div>
+          <h3>Informations de l'étudiant</h3>
+          <p><strong>Nom de l'étudiant:</strong> {selectedStudent.nom} {selectedStudent.prenom}</p>
+          <p><strong>Email de l'étudiant:</strong> {selectedStudent.email}</p>
+          <p><strong>Classe:</strong> {selectedStudent.classroom.name}</p>
 
-      <table style={styles.table}>
-        <thead>
-          <tr>
-            <th style={styles.th}>Titre</th>
-            <th style={styles.th}>Contenu</th>
-            <th style={styles.th}>Date</th>
-            <th style={styles.th}>Étudiant ID</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredNotifications.map((notif, index) => (
-            <tr key={index}>
-              <td style={styles.td}>{notif.titre}</td>
-              <td style={styles.td}>{notif.contenu}</td>
-              <td style={styles.td}>{notif.date}</td>
-              <td style={styles.td}>{notif.etudiant_id}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+          <h3>Informations du parent</h3>
+          <p><strong>Email du parent:</strong> {parentInfo.email}</p>
+          <p><strong>Téléphone du parent:</strong> {parentInfo.phone}</p>
+
+          <button onClick={sendNotification} style={{ backgroundColor: '#4CAF50', color: 'white', padding: '10px 20px', border: 'none', cursor: 'pointer' }}>
+            Envoyer la notification
+          </button>
+        </div>
+      )}
     </div>
   );
 };
 
-export default NotificationList;
+export default Notification;
