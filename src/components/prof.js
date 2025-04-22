@@ -8,7 +8,6 @@ export default function ProfesseurList() {
         user_id: "",
         nom: "",
         email: "",
-        specialite: "",
         niveau_enseignement: "",
         diplome: "",
         date_embauche: "",
@@ -60,8 +59,7 @@ export default function ProfesseurList() {
     };
 
     return (
-        <div className="container mt-4">
-            <h3 className="mb-4">Liste des Professeurs</h3>
+        <div className=" mt-4">
 
             <div className="row mb-3">
                 <div className="col-md-2">
@@ -91,15 +89,7 @@ export default function ProfesseurList() {
                         onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     />
                 </div>
-                <div className="col-md-2">
-                    <input
-                        type="text"
-                        className="form-control"
-                        placeholder="Spécialité"
-                        value={formData.specialite}
-                        onChange={(e) => setFormData({ ...formData, specialite: e.target.value })}
-                    />
-                </div>
+                
                 <div className="col-md-2">
                     <input
                         type="text"
@@ -118,7 +108,7 @@ export default function ProfesseurList() {
                         onChange={(e) => setFormData({ ...formData, diplome: e.target.value })}
                     />
                 </div>
-                <div className="col-md-2 mt-2">
+                <div className="col-md-2 ">
                     <input
                         type="date"
                         className="form-control"
@@ -126,20 +116,19 @@ export default function ProfesseurList() {
                         onChange={(e) => setFormData({ ...formData, date_embauche: e.target.value })}
                     />
                 </div>
-                <div className="col-md-2 mt-2">
+                </div>
+                <div className="  w-100">
                     <button className="btn btn-primary" onClick={handleSubmit}>
                         {editId ? "Modifier" : "Ajouter"}
                     </button>
                 </div>
-            </div>
-
+            <h3 className="mb-4">Liste des Professeurs</h3>
             <table className="table table-bordered">
                 <thead>
                     <tr>
                         <th>ID</th>
                         <th>Nom</th>
                         <th>Email</th>
-                        <th>Spécialité</th>
                         <th>Niveau d'Enseignement</th>
                         <th>Diplôme</th>
                         <th>Date d'Embauche</th>
@@ -154,18 +143,29 @@ export default function ProfesseurList() {
                                 <Link to={`/professeur/${professeur.id}`}>{professeur.nom}</Link>
                             </td>
                             <td>{professeur.email}</td>
-                            <td>{professeur.specialite}</td>
                             <td>{professeur.niveau_enseignement}</td>
                             <td>{professeur.diplome}</td>
                             <td>{professeur.date_embauche}</td>
                             <td>
-                                <button className="btn btn-warning me-2" onClick={() => handleEdit(professeur)}>
-                                    Modifier
+                            <div className="dropdown">
+                                <button className="btn btn-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Actions
                                 </button>
-                                <button className="btn btn-danger" onClick={() => handleDelete(professeur.id)}>
-                                    Supprimer
-                                </button>
+                                <ul className="dropdown-menu">
+                                <li>
+                                    <button className="dropdown-item" onClick={() => handleEdit(professeur)}>
+                                    <i className="bi bi-pencil-square me-2"></i> Modifier
+                                    </button>
+                                </li>
+                                <li>
+                                    <button className="dropdown-item text-danger" onClick={() => handleDelete(professeur.id)}>
+                                    <i className="bi bi-trash me-2"></i> Supprimer
+                                    </button>
+                                </li>
+                                </ul>
+                            </div>
                             </td>
+
                         </tr>
                     ))}
                 </tbody>
