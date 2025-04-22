@@ -1,10 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import EtudiantCours from '../components/Etudiant/EtudiantCours';
+import EtudiantNotes from '../components/Etudiant/EtudiantNotes';
+import EtudiantAbsences from '../components/Etudiant/EtudiantAbsences';
+import EtudiantInfos from '../components/Etudiant/EtudiantInfos';
+import DemandeAttestation from '../components/Etudiant/DemandeAttestation'; // Assuming you have a component for this
+import './DashboardEtudiant.css'; // Assuming you have a CSS file for styles
 
 const EtudiantDashboard = () => {
     const [utilisateur, setUtilisateur] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
+    const [activeSection, setActiveSection] = useState("");  // Section active par défaut
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -31,45 +38,61 @@ const EtudiantDashboard = () => {
     if (loading) return <div>Chargement...</div>;
     if (error) return <div className="text-red-500">{error}</div>;
 
+    const handleSectionChange = (section) => {
+        setActiveSection(section);
+    };
+
     return (
-        <div className="p-4 max-w-4xl mx-auto">
-            <div className="flex justify-between items-center mb-6">
-                {utilisateur && (
-                    <h2 className="text-2xl font-bold">Bonjour, {utilisateur.nom} 👋</h2>
-                )}
-                <button 
-                    onClick={handleLogout}
-                    className="bg-red-500 text-white px-3 py-1 rounded text-sm"
-                >
-                    Déconnexion
-                </button>
+        <div className="dashboard-container">
+            <div className="sidebar">
+                <h2 className="sidebar-title">Bonjour, {utilisateur?.nom} 👋</h2>
+                <div className="sidebar-buttons">
+                    <button 
+                        onClick={() => handleSectionChange("cours")}
+                        className="sidebar-button"
+                    >
+                        📚 Consulter les cours
+                    </button>
+                    <button 
+                        onClick={() => handleSectionChange("notes")}
+                        className="sidebar-button"
+                    >
+                        📊 Voir mes notes
+                    </button>
+                    <button 
+                        onClick={() => handleSectionChange("absences")}
+                        className="sidebar-button"
+                    >
+                        📅 Mes absences
+                    </button>
+                    <button 
+                        onClick={() => handleSectionChange("attestation")}
+                        className="sidebar-button"
+                    >
+                        demande attestation
+                    </button>
+                    <button 
+                        onClick={() => handleSectionChange("infos")}
+                        className="sidebar-button"
+                    >
+                        👤 Mes infos personnelles
+                    </button>
+                  
+                    <button 
+                        onClick={handleLogout}
+                        className="logout-button"
+                    >
+                        Déconnexion
+                    </button>
+                </div>
             </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <button 
-                    onClick={() => navigate('/etudiant/cours')}
-                    className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg shadow-md transition-colors"
-                >
-                    📚 Consulter les cours
-                </button>
-                <button 
-                    onClick={() => navigate('/etudiant/notes')}
-                    className="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg shadow-md transition-colors"
-                >
-                    📊 Voir mes notes
-                </button>
-                <button 
-                    onClick={() => navigate('/etudiant/absences')}
-                    className="bg-yellow-600 hover:bg-yellow-700 text-white px-6 py-3 rounded-lg shadow-md transition-colors"
-                >
-                    📅 Mes absences
-                </button>
-                <button 
-                    onClick={() => navigate('/etudiant/infos')}
-                    className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-lg shadow-md transition-colors"
-                >
-                    👤 Mes infos personnelles
-                </button>
+            <div className="content">
+                {activeSection === "cours" && <EtudiantCours />}
+                {activeSection === "notes" && <EtudiantNotes />}
+                {activeSection === "absences" && <EtudiantAbsences />}
+                {activeSection === "attestation" && <DemandeAttestation />}
+                {activeSection === "infos" && <EtudiantInfos />}
+               
             </div>
         </div>
     );

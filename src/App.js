@@ -40,15 +40,34 @@ import EtudiantCours from './components/Etudiant/EtudiantCours';
 import EtudiantNotes from './components/Etudiant/EtudiantNotes';
 import EtudiantAbsences from './components/Etudiant/EtudiantAbsences';
 import EtudiantInfos from './components/Etudiant/EtudiantInfos';
+<<<<<<< HEAD
 import GenererEmploiTemps from './components/EmploiTemps'; // Pour la génération de l'emploi du temps
 import EmploiDuTempsComplet from './components/listeemploi'; // Pour la gestion des emplois du temps
 
+=======
+import EtudiantPayer from './components/Etudiant/EtudiantPayer';
+import ListeDemandesEtudiant from './components/Etudiant/MesDemandes';
+>>>>>>> 4617749c6b028b61b0f86d7bd3dcdd8b1cf9c243
 
 function App() {
   return (
     <Router>
-      <div className="app-container">
+      <Routes>
+        {/* Main page route */}
+        <Route path="/" element={<Layout />} />  
+        <Route path="/login" element={<Login />} />
+        <Route path="/creer-compte" element={<CreateAccount />} />
+        
+        {/* Routes protégées */}
+        <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
+        <Route path="/enseignant/dashboard" element={<ProtectedRoute allowedRoles={['professeur']}><EnseignantDashboard /></ProtectedRoute>} />
+        <Route path="/etudiant/dashboard" element={<ProtectedRoute allowedRoles={['étudiant']}><EtudiantDashboard /></ProtectedRoute>} />
+        <Route path="/parent/dashboard" element={<ProtectedRoute allowedRoles={['parent']}><ParentDashboard /></ProtectedRoute>} />
+        <Route path="/surveillant/dashboard" element={<ProtectedRoute allowedRoles={['surveillant']}><SurveillantDashboard /></ProtectedRoute>} />
+        <Route path="/mes-demandes/:etudiantId" element={<ListeDemandesEtudiant />} />
 
+<<<<<<< HEAD
+=======
         <Routes>
           <Route path="/creaux" element={<CreneauList />} /> {/* Page de gestion des créneaux */}
           <Route path='/GenererEmploiTemps' element={<GenererEmploiTemps />} /> {/* Page de génération de l'emploi du temps */}
@@ -77,10 +96,30 @@ function App() {
           <Route path="/professeur/:id" element={<ProfesseurDetail />} />
 
         </Routes>
+>>>>>>> 9b2f84d045c97926a1471fa954e828dc062988a3
 
+<<<<<<< HEAD
       
+=======
+        {/* Surveillant Routes */}
+        <Route path="/surveillant/absences" element={<AbsenceList />} />
+        <Route path="/surveillant/emplois" element={<EmploiList />} />
+        <Route path="/surveillant/incidents" element={<IncidentList />} />
+        <Route path="/surveillant/notifications" element={<NotificationList />} />
+>>>>>>> 4617749c6b028b61b0f86d7bd3dcdd8b1cf9c243
 
-      </div>
+        {/* Etudiant Routes */}
+        <Route path="/etudiant/cours" element={<EtudiantCours />} />
+        <Route path="/etudiant/notes" element={<EtudiantNotes />} />
+        <Route path="/etudiant/absences" element={<EtudiantAbsences />} />
+        <Route path="/etudiant/infos" element={<EtudiantInfos />} />
+        <Route path="/etudiant/payer" element={<EtudiantPayer />} />
+        
+        {/* Admin routes */}
+        <Route path="/enregistrer/absence" element={<EnregistrerAbsence />} />
+        <Route path="/entrer-notes" element={<EntrerNotes />} />
+        <Route path="/ajouter-fichier" element={<AjouterFichier />} />
+      </Routes>
     </Router>
   );
 }

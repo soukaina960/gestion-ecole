@@ -8,7 +8,98 @@ import {
 } from "react-icons/fa";
 import { motion, useAnimation } from "framer-motion";
 import { useInView } from "react-intersection-observer";
+<<<<<<< HEAD
+
+const styles = {
+  footer: {
+    background: "linear-gradient(90deg, rgb(186, 85, 236), rgb(135, 206, 250))",
+    color: "white",
+    padding: "3rem 0 1rem",
+    marginTop: "100px",
+    width: "100%",
+    overflow: "hidden"
+  },
+  container: {
+    maxWidth: "1200px",
+    margin: "0 auto",
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))",
+    gap: "2rem",
+    padding: "0 2rem",
+    
+  },
+  section: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    textAlign: "center",
+    gap: "1rem",
+    marginBottom: "1.5rem"
+  },
+  logo: {
+    fontSize: "2rem",
+    fontWeight: "bold",
+    marginBottom: "0.5rem",
+    cursor: "pointer"
+  },
+  description: {
+    fontSize: "0.9rem",
+    opacity: 0.9,
+    lineHeight: 1.5
+  },
+  heading: {
+    fontSize: "1.2rem",
+    marginBottom: "1rem",
+    position: "relative",
+    paddingBottom: "0.5rem",
+    cursor: "pointer",
+    display: "inline-block"
+  },
+  nav: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.75rem"
+  },
+  navLink: {
+    color: "white",
+    textDecoration: "none",
+    fontSize: "0.95rem"
+  },
+  contactInfo: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.5rem",
+    fontSize: "0.95rem",
+    opacity: 0.9
+  },
+  socialLinks: {
+    display: "flex",
+    justifyContent: "center",
+    gap: "1.5rem",
+    marginTop: "0.5rem",
+    fontSize: "1.5rem",
+    color: "white"
+  },
+  bottom: {
+    gridColumn: "1 / -1",
+    textAlign: "center",
+    paddingTop: "1.5rem",
+    marginTop: "1rem",
+    borderTop: "1px solid rgba(255, 255, 255, 0.2)",
+    display: "flex",
+    flexDirection: "column",
+    gap: "1rem"
+  },
+  legalLinks: {
+    display: "flex",
+    justifyContent: "center",
+    gap: "1.5rem",
+    fontSize: "0.85rem"
+  }
+};
+=======
 import "./footer.css";
+>>>>>>> 9b2f84d045c97926a1471fa954e828dc062988a3
 
 const Footer = () => {
   const controls = useAnimation();
