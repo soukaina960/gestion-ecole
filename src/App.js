@@ -5,11 +5,11 @@ import Dashboard from './components/Dashboard'; // Importer le composant Dashboa
 import ProfesseurDetail from './components/ProfDetail'; // Importer le composant de détail du professeur
 
 // Composants
-import LayoutAccueil from './acceuil/Layout'; // Pour la page d'accueil
-import Layout from './layout/layout';    // Pour l'administration
+import AdminLayout  from './layout/layoutAdmin';    // Pour l'administration
 import  ChargeForm from './components/charge'; // Pour les charges
 import ConfigAttestationForm from './components/ConfigAttestationForm'; // Pour la configuration de l'attestation
 import FiliereManager from './components/FiliereManager'; // Pour la gestion des filières
+import CreneauList from './components/crenau'; // Pour la gestion des créneaux
 
 // Pages
 import Login from './Login';
@@ -30,7 +30,6 @@ import EnregistrerAbsence from './components/EnregistrerAbsence';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap-icons/font/bootstrap-icons.css';
-import './App.css';
 import CreateAccount from './pages/CreateAccount';
 import EntrerNotes from './components/EntrerNotes';
 import Fonctionnaliter from './acceuil/Fonctionnaliter';
@@ -41,6 +40,8 @@ import EtudiantCours from './components/Etudiant/EtudiantCours';
 import EtudiantNotes from './components/Etudiant/EtudiantNotes';
 import EtudiantAbsences from './components/Etudiant/EtudiantAbsences';
 import EtudiantInfos from './components/Etudiant/EtudiantInfos';
+import GenererEmploiTemps from './components/EmploiTemps'; // Pour la génération de l'emploi du temps
+import EmploiDuTempsComplet from './components/listeemploi'; // Pour la gestion des emplois du temps
 
 
 function App() {
@@ -49,13 +50,15 @@ function App() {
       <div className="app-container">
 
         <Routes>
+          <Route path="/creaux" element={<CreneauList />} /> {/* Page de gestion des créneaux */}
+          <Route path='/GenererEmploiTemps' element={<GenererEmploiTemps />} /> {/* Page de génération de l'emploi du temps */}
+        <Route path="/admin" element={<AdminLayout  />} />
+        <Route path='/listeemploi' element={<EmploiDuTempsComplet />} /> {/* Page de gestion des emplois du temps */}
           <Route path="/matiere" element={<MatiereManager />} /> {/* Page de gestion des matières */}
           <Route path="/filiere" element={<FiliereManager />} /> {/* Page de gestion des filières */}
-        <Route path="/admin" element={<Layout />} />
         <Route path="/config-attestation" element={<ConfigAttestationForm />} /> {/* Page de configuration des attestations */}
         <Route path="/charge" element={<ChargeForm />} /> {/* Page des charges */}
           {/* Accueil */}
-          <Route path="/" element={<LayoutAccueil />} />
           <Route path="/Dashboard" element={<Dashboard />} />
           
 
@@ -75,35 +78,7 @@ function App() {
 
         </Routes>
 
-        <Navbar />
-        <main className="main-content">
-          <Routes>
-            <Route path="/" element={<Fonctionnaliter />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/enregistrer/absence" element={<EnregistrerAbsence />} />
-            <Route path="/creer-compte" element={<CreateAccount />} />
-            <Route path="entrer-notes" element={<EntrerNotes />} />
-            <Route path="/ajouter-fichier" element={<AjouterFichier />} />
-            {/* Routes protégées */}
-            <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminDashboard /></ProtectedRoute>} />
-            <Route path="/enseignant/dashboard" element={<ProtectedRoute allowedRoles={['professeur']}><EnseignantDashboard /></ProtectedRoute>} />
-            <Route
-          path="/etudiant/dashboard"
-          element={
-            <ProtectedRoute allowedRoles={['étudiant']}>
-              <EtudiantDashboard />
-            </ProtectedRoute>
-          }
-/>
-            <Route path="/etudiant/cours" element={<EtudiantCours />} />
-            <Route path="/etudiant/notes" element={<EtudiantNotes />} />
-            <Route path="/etudiant/absences" element={<EtudiantAbsences />} />
-            <Route path="/etudiant/infos" element={<EtudiantInfos />} />
-            <Route path="/parent/dashboard" element={<ProtectedRoute allowedRoles={['parent']}><ParentDashboard /></ProtectedRoute>} />
-            <Route path="/surveillant/dashboard" element={<ProtectedRoute allowedRoles={['surveillant']}><SurveillantDashboard /></ProtectedRoute>} />
-          </Routes>
-        </main>
-        <Footer />
+      
 
       </div>
     </Router>
