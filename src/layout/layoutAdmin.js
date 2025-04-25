@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
+import axios from 'axios';
 import {
   FaUsers, FaChalkboardTeacher, FaClock, FaMoneyBill, FaChartBar,
   FaCog, FaMoon, FaSun, FaUserGraduate, FaUserTie, FaMoneyCheckAlt, FaUserSlash, FaGlobe
@@ -17,8 +18,12 @@ import EmploiTemps from "../components/EmploiTemps";
 import Dashboard from "../components/Dashboard";
 import ChargeForm from "../components/charge"; // Pour les charges
 import CalculSalaireProfesseur from "../components/CalculSalaire";
+import GenererEmploiTemps from "../components/EmploiTemps"; // Pour la génération de l'emploi du temps
+import EmploiTempsForm from "../components/EmploiTempsForm"; // Pour la gestion des emplois du temps
 import CreneauList from "../components/crenau"; // Pour la gestion des créneaux
+import { CalendarDays, PlusCircle, Settings } from 'lucide-react';
 import ConfigAttestationForm from '../components/ConfigAttestationForm'; // Pour la configuration de l'attestation
+import EmploiTempsParProf from '../components/emploiprof'; // Pour l'emploi du temps des professeurs
 
 
 const AdminLayout = () => {
@@ -26,8 +31,28 @@ const AdminLayout = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [language, setLanguage] = useState("fr");
-  const [openDropdown, setOpenDropdown] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [nbAbsentsCritiques, setNbAbsentsCritiques] = useState(0);
+  const [nbRetardsPaiement, setNbRetardsPaiement] = useState(0);
+  useEffect(() => {
+    const fetchRetardsPaiement = async () => {
+      try {
+        const response = await axios.get('http://localhost:8000/api/retards-paiement');
+        setNbRetardsPaiement(response.data.count);
+      } catch (error) {
+        console.error('Erreur lors de la récupération du nombre de retards de paiement:', error);
+      }
+    };
+    fetchRetardsPaiement();
+  }, []);
 
+  // ✅ Appel API pour les absences
+  useEffect(() => {
+    fetch("http://localhost:8000/api/absences/plus-de-15h")
+      .then((res) => res.json())
+      .then((data) => setNbAbsentsCritiques(data.count))
+      .catch((err) => console.error("Erreur chargement absences:", err));
+  }, []);
 
   useEffect(() => {
     document.documentElement.classList.toggle("dark", darkMode);
@@ -50,10 +75,13 @@ const AdminLayout = () => {
       case "settings": return <ConfigAttestationForm />;
       case "dropdown": return <ClassroomList/>;
       case "charge": return <ChargeForm />;
+      case "GenererEmploiTemps": return <GenererEmploiTemps />;
+      case "cree-creau": return <CreneauList />;
+      case "EmploiTempsForm": return <EmploiTempsForm />;
+      case "voir-emploi-prof": return <EmploiTempsParProf />;
 
     }
   };
-  const [nbAbsentsCritiques, setNbAbsentsCritiques] = useState(0);
 
 useEffect(() => {
   fetch("http://localhost:8000/api/absences/plus-de-15h")
@@ -73,12 +101,11 @@ useEffect(() => {
 
         <div className="d-flex align-items-center ms-3">
         <div className="alert alert-danger p-2 m-1 mb-0 d-flex align-items-center" style={{ fontSize: '0.9rem' }}>
-            <FaUserSlash className="me-2 text-danger" /> Absents > 15h : {nbAbsentsCritiques}
-          </div>
-
-          <div className="alert alert-warning p-2 m-1 mb-0 d-flex align-items-center" style={{ fontSize: '0.9rem' }}>
-            <FaMoneyCheckAlt className="me-2 text-warning" /> Retards : 5
-          </div>
+        <FaUserSlash className="me-2 text-danger" /> Absents &gt; 15h : {nbAbsentsCritiques}
+      </div>
+      <div className="alert alert-warning p-2 m-1 mb-0 d-flex align-items-center" style={{ fontSize: '0.9rem' }}>
+        <FaMoneyCheckAlt className="me-2 text-warning" /> Retards : {nbRetardsPaiement}
+      </div>
         </div>
 
         {/* Langue et DarkMode */}
@@ -155,9 +182,39 @@ useEffect(() => {
               </button>
             </li>
             <li className="nav-item">
-              <button className={`nav-link text-blue ${activePage === "schedule" && "active"}`} onClick={() => setActivePage("schedule")}>
-                <FaClock className="me-2" /> Emplois du temps
-              </button>
+            <div className="relative">
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center justify-between w-full px-4 py-2 text-left text-gray-800 hover:bg-gray-100 rounded-md focus:outline-none"
+      >
+        <span className="flex items-center space-x-2">
+          <CalendarDays className="w-5 h-5" />
+          <span>Emplois du temps</span>
+        </span>
+        <ChevronDown className={`w-4 h-4 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+
+              {open && (
+                <div className="ml-6 mt-2 space-y-2 text-sm">
+                 <button className={`nav-link text-blue ${activePage === "cree-creau" && "active"}`} onClick={() => setActivePage("cree-creau")}>
+                <CalendarDays className="me-2" /> creer creneau
+                  </button>
+                  <button className={`nav-link text-blue ${activePage === "EmploiTempsForm" && "active"}`} onClick={() => setActivePage("EmploiTempsForm")}>
+                <PlusCircle className="me-2" /> cree emploi du temps
+                  </button>
+                  <button className={`nav-link text-blue ${activePage === "GenererEmploiTemps" && "active"}`} onClick={() => setActivePage("GenererEmploiTemps")}>
+                <CalendarDays className="me-2" /> Voir les emplois du temps des classes
+                  </button>
+                  <button className={`nav-link text-blue ${activePage === "voir-emploi-prof" && "active"}`} onClick={() => setActivePage("voir-emploi-prof")}>
+                <CalendarDays className="me-2" /> Voir les emplois du temps des proffesseurs
+                  </button>
+                  <button className={`nav-link text-blue ${activePage === "voir-emploi-serveillant" && "active"}`} onClick={() => setActivePage("voir-emploi-serveillant")}>
+                <CalendarDays className="me-2" /> Voir les emplois du temps des serveillants
+                  </button>
+            
+                </div>
+              )}
+            </div>
             </li>
             <li className="nav-item">
               <button className={`nav-link text-blue ${activePage === "finance" && "active"}`} onClick={() => setActivePage("finance")}>
