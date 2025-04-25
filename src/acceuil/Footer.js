@@ -10,6 +10,7 @@ import {
 import { motion, useAnimation } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 
+import "./footer.css";
 const styles = {
   footer: {
     background: "linear-gradient(90deg, rgb(186, 85, 236), rgb(135, 206, 250))",
@@ -97,6 +98,12 @@ const styles = {
     fontSize: "0.85rem"
   }
 };
+<<<<<<< HEAD
+=======
+
+
+
+>>>>>>> a1bcecc8cff27b4cffea2046981c1acf45d95654
 
 const Footer = () => {
   const controls = useAnimation();
