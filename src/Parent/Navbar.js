@@ -67,8 +67,9 @@ const NavBar = () => {
       <div style={styles.header}>
         <h2 style={styles.title}>Parent Dashboard</h2>
         <ul style={styles.ul}>
-          <li><Link to="" style={styles.link}>Accueil</Link></li>
+          <li><Link to="parent" style={styles.link}>Accueil</Link></li>
           <li><Link to="notes" style={styles.link}>Notes</Link></li>
+          <li><Link to="absences" style={styles.link}>Absences</Link></li>
           <li><Link to="retards" style={styles.link}>Retards</Link></li>
           <li><Link to="incidents" style={styles.link}>Incidents</Link></li>
           <li><Link to="profil" style={styles.link}>Profil</Link></li>
