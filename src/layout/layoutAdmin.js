@@ -22,8 +22,10 @@ import GenererEmploiTemps from "../components/EmploiTemps"; // Pour la générat
 import EmploiTempsForm from "../components/EmploiTempsForm"; // Pour la gestion des emplois du temps
 import CreneauList from "../components/crenau"; // Pour la gestion des créneaux
 import { CalendarDays, PlusCircle, Settings } from 'lucide-react';
+import DemandeAttestationList from "../components/DemandeAttestationList"; // Pour la gestion des demandes d'attestation
 import ConfigAttestationForm from '../components/ConfigAttestationForm'; // Pour la configuration de l'attestation
 import EmploiTempsParProf from '../components/emploiprof'; // Pour l'emploi du temps des professeurs
+import Evenements from '../components/evenementGestion'; // Pour la gestion des événements
 
 
 const AdminLayout = () => {
@@ -34,6 +36,9 @@ const AdminLayout = () => {
   const [open, setOpen] = useState(false);
   const [nbAbsentsCritiques, setNbAbsentsCritiques] = useState(0);
   const [nbRetardsPaiement, setNbRetardsPaiement] = useState(0);
+  const [showRetardsModal, setShowRetardsModal] = useState(false);
+  const [etudiantsEnRetard, setEtudiantsEnRetard] = useState([]);
+
   useEffect(() => {
     const fetchRetardsPaiement = async () => {
       try {
@@ -45,6 +50,27 @@ const AdminLayout = () => {
     };
     fetchRetardsPaiement();
   }, []);
+  const fetchEtudiantsEnRetard = async () => {
+    try {
+      const response = await axios.get('http://localhost:8000/api/etudiants/retards');
+      setEtudiantsEnRetard(response.data); // Assure-toi que l'API renvoie un tableau d'étudiants
+      setShowRetardsModal(true);
+    } catch (error) {
+      console.error('Erreur lors du chargement des étudiants en retard:', error);
+    }
+  };
+  const envoyerNotification = async (id) => {
+    try {
+      const response = await axios.post(`http://localhost:8000/api/etudiants/${id}/envoyer-notification`);
+      alert(response.data.message || "Notification envoyée !");
+    } catch (error) {
+      console.error("Erreur lors de l'envoi !", error);
+      alert(error.response?.data?.message || "Erreur lors de l'envoi !");
+    }
+};
+
+  
+  
 
   // ✅ Appel API pour les absences
   useEffect(() => {
@@ -79,6 +105,8 @@ const AdminLayout = () => {
       case "cree-creau": return <CreneauList />;
       case "EmploiTempsForm": return <EmploiTempsForm />;
       case "voir-emploi-prof": return <EmploiTempsParProf />;
+      case "demandes": return <DemandeAttestationList />;
+      case "evenements": return <Evenements />;
 
     }
   };
@@ -92,6 +120,7 @@ useEffect(() => {
 
 
   return (
+    
     <div>
       {/* Top Navbar */}
       <nav className={`navbar navbar-expand-lg ${darkMode ? "bg-dark" : "bg-light"} text-white`} style={{ marginLeft: '240px' ,width:'84%'}}>
@@ -104,8 +133,13 @@ useEffect(() => {
         <FaUserSlash className="me-2 text-danger" /> Absents &gt; 15h : {nbAbsentsCritiques}
       </div>
       <div className="alert alert-warning p-2 m-1 mb-0 d-flex align-items-center" style={{ fontSize: '0.9rem' }}>
-        <FaMoneyCheckAlt className="me-2 text-warning" /> Retards : {nbRetardsPaiement}
+        <FaMoneyCheckAlt className="me-2 text-warning" />
+        Retards : {nbRetardsPaiement}
+        <button className="btn btn-sm btn-outline-light ms-2" onClick={fetchEtudiantsEnRetard}>
+          Voir détails
+        </button>
       </div>
+
         </div>
 
         {/* Langue et DarkMode */}
@@ -182,6 +216,11 @@ useEffect(() => {
               </button>
             </li>
             <li className="nav-item">
+              <button className={`nav-link text-blue ${activePage === "demandes" && "active"}`} onClick={() => setActivePage("demandes")}>
+                <FaUserGraduate className="me-2" /> Demandes d'attestation
+              </button>
+            </li>
+            <li className="nav-item">
             <div className="relative">
       <button
         onClick={() => setOpen(!open)}
@@ -226,6 +265,11 @@ useEffect(() => {
                 < Wallet/> charges
               </button>
             </li>
+            <li className="nav-item">
+              <button className={`nav-link text-blue ${activePage === "evenements" && "active"}`} onClick={() => setActivePage("evenements")}>
+                <FaGlobe className="me-2" /> Evenements
+              </button>
+            </li>
             
             <li className="nav-item">
               <button className={`nav-link text-blue ${activePage === "settings" && "active"}`} onClick={() => setActivePage("settings")}>
@@ -242,7 +286,40 @@ useEffect(() => {
           </div>
         </div>
       </div>
+      {showRetardsModal && (
+  <div className="modal show fade d-block" tabIndex="-1" style={{ backgroundColor: "rgba(0,0,0,0.5)" }}>
+    <div className="modal-dialog modal-lg">
+      <div className="modal-content">
+        <div className="modal-header">
+          <h5 className="modal-title">Étudiants en retard de paiement</h5>
+          <button type="button" className="btn-close" onClick={() => setShowRetardsModal(false)}></button>
+        </div>
+        <div className="modal-body">
+          {etudiantsEnRetard.length > 0 ? (
+            <ul className="list-group">
+              {etudiantsEnRetard.map((etudiant) => (
+                <li key={etudiant.id} className="list-group-item d-flex justify-content-between align-items-center">
+                  {etudiant.nom} {etudiant.prenom} - {etudiant.email}
+                  <button
+                    className="btn btn-sm btn-primary"
+                    onClick={() => envoyerNotification(etudiant.id)}
+                  >
+                    Envoyer notification
+                  </button>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p>Aucun étudiant en retard.</p>
+          )}
+        </div>
+      </div>
     </div>
+  </div>
+)}
+
+    </div>
+    
   );
 };
 export default AdminLayout;

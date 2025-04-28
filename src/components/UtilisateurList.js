@@ -272,28 +272,7 @@ const UtilisateurForm = ({ reloadUtilisateurs }) => {
               className="form-control"
             />
           </div>
-          <div className="col-md-3">
-            <input
-              type="password"
-              name="mot_de_passe"
-              placeholder="Mot de passe"
-              value={form.mot_de_passe}
-              onChange={handleChange}
-              required
-              className="form-control"
-            />
-          </div>
-          <div className="col-md-3">
-            <input
-              type="text"
-              name="matricule"
-              placeholder="Matricule"
-              value={form.matricule}
-              onChange={handleChange}
-              required
-              className="form-control"
-            />
-          </div>
+         
         </div>
 
         <div className="row mt-3">

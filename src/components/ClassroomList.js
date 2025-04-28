@@ -85,12 +85,11 @@ export default function ClassroomList() {
             const dataToSend = {
                 name,
                 capacite: parseInt(capacite),
-                niveau
+                niveau,
+                filiere_id: filiereId || null // Explicitement définir comme null si vide
             };
     
-            if (filiereId) {
-                dataToSend.filiere_id = filiereId;
-            }
+            console.log("Données envoyées:", dataToSend); // 👈 Ajoutez ce log
     
             await addClassroom(dataToSend);
             resetForm();
@@ -201,7 +200,7 @@ export default function ClassroomList() {
                                         <td>{classroom.capacite}</td>
                                         <td>{classroom.niveau}</td>
                                         <td>
-                                            {classroom.filiere ? classroom.filiere.nom : 'Aucune filière'}
+                                            {filieres.find(f => f.id === classroom.filiere_id)?.nom || 'Aucune filière'}
                                         </td>
                                         <td className="text-center">
                                             <div className="dropdown">

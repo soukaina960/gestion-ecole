@@ -98,12 +98,9 @@ const styles = {
     fontSize: "0.85rem"
   }
 };
-<<<<<<< HEAD
-=======
 
 
 
->>>>>>> a1bcecc8cff27b4cffea2046981c1acf45d95654
 
 const Footer = () => {
   const controls = useAnimation();
