@@ -98,9 +98,9 @@ const styles = {
     fontSize: "0.85rem"
   }
 };
-
-
-
+=======
+import "./footer.css";
+>>>>>>> 9b2f84d045c97926a1471fa954e828dc062988a3
 
 const Footer = () => {
   const controls = useAnimation();
@@ -232,7 +232,7 @@ const Footer = () => {
                 rel="noopener noreferrer"
                 variants={itemVariants}
                 whileHover="hover"
-                variants={socialVariants}
+                // variants={socialVariants}
               >
                 {social.icon}
               </motion.a>

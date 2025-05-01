@@ -1,72 +1,56 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';  // Assure-toi d'utiliser 'NavLink' pour les liens de navigation
-import axios from 'axios';  // Pour les appels API
-import Navbar from './NavBar';
+import axios from 'axios';
+
+const styles = {
+  dashboard: {
+    flex: 1,
+    padding: '30px',
+    color: '#4b2e83',
+    fontFamily: 'Arial, sans-serif',
+  },
+  title: {
+    fontSize: '28px',
+    marginBottom: '20px',
+  },
+  stats: {
+    backgroundColor: '#fff',
+    padding: '20px',
+    borderRadius: '12px',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+    lineHeight: '2em',
+  },
+};
 
 const SurveillantDashboard = () => {
-  const [absences, setAbsences] = useState([]);
-  const [retards, setRetards] = useState([]);
-  const [emplois, setEmplois] = useState([]);
-  const [incidents, setIncidents] = useState([]);
-  
-  // Effectuer les appels API lorsque le composant est monté
+  const [statistics, setStatistics] = useState(null);
+  const [loading, setLoading] = useState(true);
+
   useEffect(() => {
-    // Appel API pour les absences
-    axios.get('http://localhost:8000/api/absences')  // Mets l'URL de ton API ici
-      .then(response => setAbsences(response.data))
-      .catch(error => console.error('Erreur lors de la récupération des absences', error));
-
-    // Appel API pour les retards
-    axios.get('http://localhost:8000/api/retards')  // Mets l'URL de ton API ici
-      .then(response => setRetards(response.data))
-      .catch(error => console.error('Erreur lors de la récupération des retards', error));
-
-    // Appel API pour les emplois
-    axios.get('http://localhost:8000/api/emplois')  // Mets l'URL de ton API ici
-      .then(response => setEmplois(response.data))
-      .catch(error => console.error('Erreur lors de la récupération des emplois', error));
-
-    // Appel API pour les incidents
-    axios.get('http://localhost:8000/api/incidents')  // Mets l'URL de ton API ici
-      .then(response => setIncidents(response.data))
-      .catch(error => console.error('Erreur lors de la récupération des incidents', error));
+    axios.get('http://127.0.0.1:8000/api/statistics-surveillant')
+      .then((response) => {
+        setStatistics(response.data);
+        setLoading(false);
+      })
+      .catch((error) => {
+        console.error("Erreur de chargement des stats !", error);
+        setLoading(false);
+      });
   }, []);
 
   return (
-    <div className="dashboard-container">
-        <Navbar />
-
-      <div className="main-content">
-        <h1>Surveillant Dashboard</h1>
-
-        <div className="stats-section">
-          <h2>Statistiques</h2>
-          <div className="stat-card">
-            <h3>Absences</h3>
-            <p>{absences.length} Absences</p>
-          </div>
-
-          <div className="stat-card">
-            <h3>Retards</h3>
-            <p>{retards.length} Retards</p>
-          </div>
-
-          <div className="stat-card">
-            <h3>Emplois</h3>
-            <p>{emplois.length} Emplois</p>
-          </div>
-
-          <div className="stat-card">
-            <h3>Incidents</h3>
-            <p>{incidents.length} Incidents</p>
-          </div>
+    <div style={styles.dashboard}>
+      <h1 style={styles.title}>📊 Tableau de bord du Surveillant</h1>
+      {loading ? (
+        <p>Chargement des statistiques...</p>
+      ) : (
+        <div style={styles.stats}>
+          <p><strong>Total Étudiants:</strong> {statistics.studentsCount}</p>
+          <p><strong>Total Absences:</strong> {statistics.absencesCount}</p>
+          <p><strong>Absences Justifiées:</strong> {statistics.justifiedAbsencesCount}</p>
+          <p><strong>Absences Injustifiées:</strong> {statistics.unjustifiedAbsencesCount}</p>
+          <p><strong>Total Incidents:</strong> {statistics.incidentsCount}</p>
         </div>
-
-        <div className="calendar-section">
-          <h2>Calendrier</h2>
-          {/* Tu peux intégrer un calendrier ici */}
-        </div>
-      </div>
+      )}
     </div>
   );
 };
