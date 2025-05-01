@@ -8,6 +8,8 @@ const ConfigAttestationForm = () => {
     telephone: '',
     fax: '',
     logo: null,
+    signature: null, 
+  cachet: null, 
   });
 
   const [existingConfig, setExistingConfig] = useState(null);
@@ -15,6 +17,9 @@ const ConfigAttestationForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [previewSignature, setPreviewSignature] = useState(null);
+  const [previewCachet, setPreviewCachet] = useState(null);
+
 
   // Charger la config existante
   useEffect(() => {
@@ -42,6 +47,12 @@ const ConfigAttestationForm = () => {
 
     if (name === "logo" && files[0]) {
       setPreviewLogo(URL.createObjectURL(files[0]));
+    }
+    if (name === "signature" && files[0]) {
+      setPreviewSignature(URL.createObjectURL(files[0]));
+    }
+    if (name === "cachet" && files[0]) {
+      setPreviewCachet(URL.createObjectURL(files[0]));
     }
   };
 
@@ -166,8 +177,54 @@ const ConfigAttestationForm = () => {
                     style={{ maxHeight: '150px' }} 
                   />
                 </div>
+                
+              )}
+              
+            </div>
+            <div className="mb-4">
+              <label className="form-label">Signature du directeur</label>
+              <input 
+                type="file" 
+                name="signature" 
+                onChange={handleChange} 
+                className="form-control" 
+                accept="image/*"
+              />
+              {previewSignature && (
+                <div className="mt-3">
+                  <p className="text-muted small">Aperçu de la signature:</p>
+                  <img 
+                    src={previewSignature} 
+                    alt="Signature preview" 
+                    className="img-thumbnail" 
+                    style={{ maxHeight: '150px' }} 
+                  />
+                </div>
               )}
             </div>
+            <div className="mb-4">
+            <label className="form-label">Cachet de l'établissement</label>
+            <input 
+              type="file" 
+              name="cachet" 
+              onChange={handleChange} 
+              className="form-control" 
+              accept="image/*"
+            />
+            {previewCachet && (
+              <div className="mt-3">
+                <p className="text-muted small">Aperçu du cachet:</p>
+                <img 
+                  src={previewCachet} 
+                  alt="Cachet preview" 
+                  className="img-thumbnail" 
+                  style={{ maxHeight: '150px' }} 
+                />
+              </div>
+            )}
+          </div>
+
+
 
             <div className="d-flex justify-content-end">
               <button 

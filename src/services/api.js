@@ -99,17 +99,22 @@ export async function addClassroom(classroomData) {
             'Content-Type': 'application/json',
             'Accept': 'application/json'
         },
-        body: JSON.stringify(classroomData)
+        body: JSON.stringify({
+            name: classroomData.name,
+            capacite: classroomData.capacite,
+            niveau: classroomData.niveau,
+            filiere_id: classroomData.filiere_id || null // Envoyer null si non défini
+        })
     });
 
     if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText || "Erreur serveur");
+        const errorData = await response.json();
+        console.error("Détails de l'erreur:", errorData);
+        throw new Error(errorData.message || "Erreur serveur");
     }
 
     return await response.json();
 }
-
 
 export async function deleteClassroom(id) {
     const response = await fetch(`${CLASSROOMS_API_URL}/${id}`, {

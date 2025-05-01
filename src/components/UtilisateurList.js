@@ -198,7 +198,7 @@ const UtilisateurForm = ({ reloadUtilisateurs }) => {
         const messages = Object.values(error.response.data.errors).flat().join('\n');
         alert('❌ Erreur de validation :\n' + messages);
       } else {
-        alert('❌ Erreur : ' + (error.message || 'Erreur inconnue'));
+        alert('❌ Erreur : ' + ("Erreur lors de l\'ajout de l\'utilisateur verifier email"));
       }
     }
   };
@@ -272,28 +272,7 @@ const UtilisateurForm = ({ reloadUtilisateurs }) => {
               className="form-control"
             />
           </div>
-          <div className="col-md-3">
-            <input
-              type="password"
-              name="mot_de_passe"
-              placeholder="Mot de passe"
-              value={form.mot_de_passe}
-              onChange={handleChange}
-              required
-              className="form-control"
-            />
-          </div>
-          <div className="col-md-3">
-            <input
-              type="text"
-              name="matricule"
-              placeholder="Matricule"
-              value={form.matricule}
-              onChange={handleChange}
-              required
-              className="form-control"
-            />
-          </div>
+         
         </div>
 
         <div className="row mt-3">
