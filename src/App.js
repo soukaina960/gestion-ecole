@@ -52,6 +52,7 @@ import ParentDashboard from './pages/ParentDashboard';
 import DemandeAttestationList from './components/DemandeAttestationList';
 // Security
 import ProtectedRoute from './components/ProtectedRoute';
+import  ChatBot from './components/ChatBot';
 
 // Styles
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -65,6 +66,7 @@ function App() {
         {/* Public routes */}
         <Route path="/" element={<Layout />} />
         <Route path="/login" element={<Login />} />
+        <Route path='/chart' element={<ChatBot />} />
         <Route path="/creer-compte" element={<CreateAccount />} />
         <Route path="/evenements" element={<Evenements />} />
         <Route path="/emploiprof" element={<EmploiTempsParProf />} />

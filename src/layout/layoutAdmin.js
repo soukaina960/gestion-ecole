@@ -61,15 +61,39 @@ const AdminLayout = () => {
   };
   const envoyerNotification = async (id) => {
     try {
-      const response = await axios.post(`http://localhost:8000/api/etudiants/${id}/envoyer-notification`);
-      alert(response.data.message || "Notification envoyée !");
+      const response = await axios.post(
+        `http://localhost:8000/api/etudiants/${id}/envoyer-notification`,
+        {},
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          }
+        }
+      );
+      
+      if (response.data.success) {
+        alert("Notification envoyée avec succès !");
+        // Optionally refresh the list
+        fetchEtudiantsEnRetard();
+      } else {
+        alert(response.data.message || "Échec de l'envoi de la notification");
+      }
     } catch (error) {
-      console.error("Erreur lors de l'envoi !", error);
-      alert(error.response?.data?.message || "Erreur lors de l'envoi !");
+      console.error("Erreur lors de l'envoi:", error);
+      
+      let errorMessage = "Erreur lors de l'envoi de la notification";
+      if (error.response) {
+        // Server responded with a status other than 2xx
+        errorMessage = error.response.data.message || errorMessage;
+      } else if (error.request) {
+        // Request was made but no response received
+        errorMessage = "Pas de réponse du serveur";
+      }
+      
+      alert(errorMessage);
     }
-};
-
-  
+  };
   
 
   // ✅ Appel API pour les absences

@@ -198,7 +198,7 @@ const UtilisateurForm = ({ reloadUtilisateurs }) => {
         const messages = Object.values(error.response.data.errors).flat().join('\n');
         alert('❌ Erreur de validation :\n' + messages);
       } else {
-        alert('❌ Erreur : ' + (error.message || 'Erreur inconnue'));
+        alert('❌ Erreur : ' + ("Erreur lors de l\'ajout de l\'utilisateur verifier email"));
       }
     }
   };
