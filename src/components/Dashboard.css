@@ -1,0 +1,78 @@
+.dashboard-container {
+    min-height: 100vh;
+    background: linear-gradient(to bottom right, #f9fafb, #f3f4f6);
+    padding: 2rem;
+    font-family: 'Segoe UI', sans-serif;
+  }
+  
+  .dashboard-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: #1f2937;
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 2rem;
+  }
+  
+  .card {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    transform: scale(1);
+  }
+  
+  .card:hover {
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.08);
+    transform: scale(1.03);
+  }
+  
+  .card-content {
+    display: flex;
+    align-items: center;
+    padding: 1.5rem;
+  }
+  
+  .card-icon {
+    padding: 1rem;
+    border-radius: 50%;
+    box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .card-text {
+    margin-left: 1.2rem;
+  }
+  
+  .card-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #374151;
+    margin: 0;
+  }
+  
+  .card-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0.2rem 0 0 0;
+  }
+  
+  /* Couleurs personnalisées pour chaque carte */
+  .icon-blue { background-color: #e0f2fe; color: #0284c7; }
+  .icon-purple { background-color: #ede9fe; color: #7c3aed; }
+  .icon-green { background-color: #dcfce7; color: #16a34a; }
+  .icon-indigo { background-color: #e0e7ff; color: #4f46e5; }
+  .icon-rose { background-color: #ffe4e6; color: #e11d48; }
+  .icon-yellow { background-color: #fef9c3; color: #ca8a04; }
+  .icon-orange { background-color: #ffedd5; color: #f97316; }
+  .icon-teal { background-color: #ccfbf1; color: #0d9488; }
+  .icon-red { background-color: #fee2e2; color: #dc2626; }
+  

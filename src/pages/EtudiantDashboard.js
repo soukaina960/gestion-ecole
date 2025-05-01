@@ -6,6 +6,7 @@ import EtudiantAbsences from '../components/Etudiant/EtudiantAbsences';
 import EtudiantInfos from '../components/Etudiant/EtudiantInfos';
 import DemandeAttestation from '../components/Etudiant/DemandeAttestation'; // Assuming you have a component for this
 import './DashboardEtudiant.css'; // Assuming you have a CSS file for styles
+import MesExamens from '../components/Etudiant/MesExamens';
 
 const EtudiantDashboard = () => {
     const [utilisateur, setUtilisateur] = useState(null);
@@ -66,6 +67,13 @@ const EtudiantDashboard = () => {
                         📅 Mes absences
                     </button>
                     <button 
+                        onClick={() => handleSectionChange("examens")}
+                        className="sidebar-button"
+                    >
+                        📅 duree des examens
+                    </button>
+
+                    <button 
                         onClick={() => handleSectionChange("attestation")}
                         className="sidebar-button"
                     >
@@ -90,6 +98,7 @@ const EtudiantDashboard = () => {
                 {activeSection === "cours" && <EtudiantCours />}
                 {activeSection === "notes" && <EtudiantNotes />}
                 {activeSection === "absences" && <EtudiantAbsences />}
+                {activeSection === "examens" && <MesExamens />}
                 {activeSection === "attestation" && <DemandeAttestation />}
                 {activeSection === "infos" && <EtudiantInfos />}
                

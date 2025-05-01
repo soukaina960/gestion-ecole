@@ -6,8 +6,24 @@ const UtilisateurForm = ({ reloadUtilisateurs }) => {
   const [utilisateurs, setUtilisateurs] = useState([]);
   const [roleFiltre, setRoleFiltre] = useState('');
   const [parents, setParents] = useState([]);
+  const [classeId, setClasseId] = useState('');
+  const [matiereId, setMatiereId] = useState('');
+
   const [classes, setClasses] = useState([]);
-  
+  const [matieres, setMatieres] = useState([]);
+
+  const fetchMatieres = async () => {
+    try {
+      const response = await axios.get('http://127.0.0.1:8000/api/matieres');
+      console.log("API Response:", response.data); // Debug log
+      setMatieres(response.data.data);
+    } catch (error) {
+      console.error('Erreur lors du chargement des matières:', error);
+      setMatieres([]); // Fallback to empty array
+    }
+  };
+
+
   const fetchClasses = async () => {
     try {
       const response = await axios.get('http://127.0.0.1:8000/api/classrooms');
@@ -64,7 +80,8 @@ const UtilisateurForm = ({ reloadUtilisateurs }) => {
     diplome: '',
     date_embauche: '',
     professeurs: [],
-    profession: ''
+    profession: '',
+    matiere_id: '',
   });
 
   const handleChange = (e) => {
@@ -103,6 +120,9 @@ const UtilisateurForm = ({ reloadUtilisateurs }) => {
       formData.append('classe_id', form.classe_id || '');
       formData.append('origine', form.origine || '');
       formData.append('parent_id', form.parent_id || '');
+      form.professeurs.forEach((profId, index) => {
+          formData.append(`professeurs[${index}]`, profId);
+        });
       
     
     }
@@ -116,6 +136,12 @@ const UtilisateurForm = ({ reloadUtilisateurs }) => {
       formData.append('total', form.total || 0);
       formData.append('diplome', form.diplome || '');
       formData.append('date_embauche', form.date_embauche);
+      formData.append('classe_id', form.classe_id); // Required
+    formData.append('matiere_id', form.matiere_id); // Required
+    
+    // For pivot table relationship
+    formData.append('matieres_classes[0][matiere_id]', form.matiere_id);
+    formData.append('matieres_classes[0][classe_id]', form.classe_id);
     }
 
     if (form.role === 'parent') {
@@ -172,7 +198,7 @@ const UtilisateurForm = ({ reloadUtilisateurs }) => {
         const messages = Object.values(error.response.data.errors).flat().join('\n');
         alert('❌ Erreur de validation :\n' + messages);
       } else {
-        alert('❌ Erreur : ' + (error.message || 'Erreur inconnue'));
+        alert('❌ Erreur : ' + ("Erreur lors de l\'ajout de l\'utilisateur verifier email"));
       }
     }
   };
@@ -215,6 +241,7 @@ const UtilisateurForm = ({ reloadUtilisateurs }) => {
     fetchProfesseurs();
     fetchParents();
     fetchClasses();
+  fetchMatieres();
   }, [roleFiltre]);
 
   return (
@@ -245,28 +272,7 @@ const UtilisateurForm = ({ reloadUtilisateurs }) => {
               className="form-control"
             />
           </div>
-          <div className="col-md-3">
-            <input
-              type="password"
-              name="mot_de_passe"
-              placeholder="Mot de passe"
-              value={form.mot_de_passe}
-              onChange={handleChange}
-              required
-              className="form-control"
-            />
-          </div>
-          <div className="col-md-3">
-            <input
-              type="text"
-              name="matricule"
-              placeholder="Matricule"
-              value={form.matricule}
-              onChange={handleChange}
-              required
-              className="form-control"
-            />
-          </div>
+         
         </div>
 
         <div className="row mt-3">
@@ -453,6 +459,38 @@ const UtilisateurForm = ({ reloadUtilisateurs }) => {
                   className="form-control"
                 />
               </div>
+              <div className="col-md-3">
+      <select
+        name="matiere_id"
+        value={form.matiere_id}
+        onChange={handleChange}
+        className="form-control"
+        required
+      >
+        <option value="">-- Sélectionner une matière --</option>
+        {matieres.map((matiere) => (
+          <option key={matiere.id} value={matiere.id}>
+            {matiere.nom}
+          </option>
+        ))}
+      </select>
+    </div>
+    <div className="col-md-3">
+      <select
+        name="classe_id"
+        value={form.classe_id}
+        onChange={handleChange}
+        className="form-control"
+        required
+      >
+        <option value="">-- Sélectionner une classe --</option>
+        {classes.map((classe) => (
+          <option key={classe.id} value={classe.id}>
+            {classe.nom}
+          </option>
+        ))}
+      </select>
+    </div>
               <div className="col-md-3">
                 <input
                   type="text"

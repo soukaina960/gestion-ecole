@@ -9,8 +9,10 @@ import MonPanier from '../components/MonPanier';
 import AjouterAbsences from '../components/AjouterAbsences';
 
 
+
 // Importation du fichier CSS
 import './DashboardEnseignant.css';
+import AjouterExamen from '../components/AjouterExamen';
 
 const EnseignantDashboard = () => {
     const [utilisateur, setUtilisateur] = useState(null);
@@ -61,6 +63,10 @@ const EnseignantDashboard = () => {
                     <button onClick={() => handleSectionChange("notes")} className="sidebar-button">
                         📊 Entrer les notes
                     </button>
+                    <button onClick={() => handleSectionChange("exman")} className="sidebar-button">
+                        📊 Entrer les  emplois de temps exman
+                    </button>
+
                     <button onClick={() => handleSectionChange("infos")} className="sidebar-button">
                         👤 Mes informations
                     </button>
@@ -77,6 +83,7 @@ const EnseignantDashboard = () => {
                 {activeSection === "notes" && <EntrerNotes />}
                 {activeSection === "absences" && <AjouterAbsences />}
                 {activeSection === "cours" && <AjouterFichier />}
+                {activeSection === "exman" && <AjouterExamen />}
                 {activeSection === "infos" && <EtudiantInfos />}
                 {activeSection === "panier" && <MonPanier />}
 

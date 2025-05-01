@@ -39,7 +39,22 @@ const Login = () => {
       // Si l'utilisateur est un parent, on stocke aussi l'ID du parent
       if (response.data.role === 'parent' && response.data.utilisateur.parent) {
         localStorage.setItem('parent_id', response.data.utilisateur.parent.id);
-        localStorage.setItem('access_token', response.data.access_token);
+        localStorage.setItem('access_token', response.data.access_token);}
+      switch(response.data.role) {
+        case 'admin':
+          navigate('/admin');
+          break;
+        case 'professeur':
+          navigate('/enseignant/dashboard');
+          break;
+        case 'étudiant':
+          navigate('/etudiant/dashboard');
+          break;
+        case 'parent':
+          navigate('/parent-dashboard');
+          break;
+        default:
+          navigate('/');
       }
       
       

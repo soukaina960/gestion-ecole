@@ -23,6 +23,8 @@ export default function EtudiantList() {
   const [professeurs, setProfesseurs] = useState([]);
   const [selectedProfesseurs, setSelectedProfesseurs] = useState([]);
   const [editing, setEditing] = useState(null);  // Pour suivre l'étudiant en édition
+  const [prenom, setPrenom] = useState("");
+
     
   const handlePaiement = async (etudiantId) => {
   const now = new Date();
@@ -98,6 +100,8 @@ export default function EtudiantList() {
       formData.append('class_id', classId);
       formData.append('montant_a_payer', montantAPayer);
       formData.append('user_id', userId);
+      formData.append('prenom', prenom);
+
 
 
       if (photoProfil) {
@@ -149,8 +153,8 @@ export default function EtudiantList() {
       formData.append('date_naissance', dateNaissance);
       formData.append('sexe', sexe);
       formData.append('adresse', adresse);
-      formData.append('class_id', classId);
-      formData.append('montant_a_payer', montantAPayer);
+      formData.append('prenom', prenom); 
+      formData.append('classe_id', classId); 
   
       // Add professors if any selected
       selectedProfesseurs.forEach(profId => {
@@ -216,144 +220,135 @@ export default function EtudiantList() {
   
 
   return (
-    <div className="container mt-4">
-      <div className="card p-4 shadow-lg">
-        <div className="row mb-3">
-          <div className="col-md-3">
-            <input
-              className="form-control"
-              placeholder="Nom"
-              value={nom}
-              onChange={(e) => setNom(e.target.value)}
-            />
-          </div>
-          <div className="col-md-3">
-            <input
-              className="form-control"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-          <div className="col-md-3">
-            <input
-              className="form-control"
-              placeholder="Matricule"
-              value={matricule}
-              onChange={(e) => setMatricule(e.target.value)}
-            />
-          </div>
-          <div className="col-md-3">
-            <input
-              type="date"
-              className="form-control"
-              placeholder="Date de Naissance"
-              value={dateNaissance}
-              onChange={(e) => setDateNaissance(e.target.value)}
-            />
-          </div>
-        </div>
+<div className=" mt-4">
+   <h3 className="mb-4 text-center">Formulaire d'édition étudiant</h3>
+  <div className="row mb-3">
+    <div className="col-md-3">
+      <input
+        className="form-control"
+        placeholder="Nom"
+        value={nom}
+        onChange={(e) => setNom(e.target.value)}
+      />
+    </div>
+    <div className="col-md-3">
+      <input
+        className="form-control"
+        placeholder="Prénom"
+        value={prenom}
+        onChange={(e) => setPrenom(e.target.value)}
+      />
+    </div>
+    <div className="col-md-3">
+      <input
+        className="form-control"
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+    </div>
+    <div className="col-md-3">
+      <input
+        className="form-control"
+        placeholder="Matricule"
+        value={matricule}
+        onChange={(e) => setMatricule(e.target.value)}
+      />
+    </div>
+  </div>
 
-        {/* Sélectionner la classe, le sexe et les autres informations */}
-        <div className="row mb-3">
-          <div className="col-md-3">
-            <select
-              className="form-select"
-              value={sexe}
-              onChange={(e) => setSexe(e.target.value)}
-            >
-              <option value="M">Masculin</option>
-              <option value="F">Féminin</option>
-            </select>
-          </div>
-          <div className="col-md-3">
-            <input
-              className="form-control"
-              placeholder="Adresse"
-              value={adresse}
-              onChange={(e) => setAdresse(e.target.value)}
-            />
-          </div>
-          <div className="col-md-3">
-            <input type="file" onChange={handleFileChange} />
-          </div>
-          <div className="col-md-3">
-          <select
-            className="form-select"
-            value={userId}
-            onChange={(e) => setUserId(e.target.value)}
-          >
-            <option value="">Sélectionner un utilisateur</option>
-            {utilisateurs && utilisateurs.length > 0 ? (
-              utilisateurs.map((user) => (
-                <option key={user.id} value={user.id}>
-                  {user.name || user.nom || `Utilisateur ${user.id}`}
-                </option>
-              ))
-            ) : (
-              <option disabled>Aucun utilisateur disponible</option>
-            )}
-          </select>
-          </div>
+  <div className="row mb-3">
+    <div className="col-md-3">
+      <input
+        type="date"
+        className="form-control"
+        placeholder="Date de Naissance"
+        value={dateNaissance}
+        onChange={(e) => setDateNaissance(e.target.value)}
+      />
+    </div>
+    <div className="col-md-3">
+      <select
+        className="form-select"
+        value={sexe}
+        onChange={(e) => setSexe(e.target.value)}
+      >
+        <option value="M">Masculin</option>
+        <option value="F">Féminin</option>
+      </select>
+    </div>
+    <div className="col-md-3">
+      <input
+        className="form-control"
+        placeholder="Adresse"
+        value={adresse}
+        onChange={(e) => setAdresse(e.target.value)}
+      />
+    </div>
+    <div className="col-md-3">
+      <input
+        type="file"
+        onChange={handleFileChange}
+        className="form-control"
+      />
+    </div>
+  </div>
 
-          <div className="col-md-3">
-            <select
-              className="form-select"
-              value={classId}
-              onChange={(e) => setClassId(e.target.value)}
-            >
-              <option value="">Sélectionner une classe</option>
-              {classes.map((classe) => (
-                <option key={classe.id} value={classe.id}>
-                  {classe.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        </div>
+  <div className="row mb-3">
+    <div className="col-md-3">
+      <select
+        className="form-select"
+        value={classId}
+        onChange={(e) => setClassId(e.target.value)}
+      >
+        <option value="">Sélectionner une classe</option>
+        {classes.map((classe) => (
+          <option key={classe.id} value={classe.id}>
+            {classe.name}
+          </option>
+        ))}
+      </select>
+    </div>
+    <div className="col-md-3">
+      <input
+        type="number"
+        className="form-control"
+        placeholder="Montant à payer"
+        value={montantAPayer}
+        onChange={(e) => setMontantAPayer(e.target.value)}
+      />
+    </div>
+    <div className="col-md-3">
+      <select
+        multiple
+        className="form-select"
+        value={selectedProfesseurs}
+        onChange={(e) =>
+          setSelectedProfesseurs(
+            Array.from(e.target.selectedOptions, (option) => option.value)
+          )
+        }
+      >
+        {professeurs.map((professeur) => (
+          <option key={professeur.id} value={professeur.id}>
+            {professeur.nom}
+          </option>
+        ))}
+      </select>
+    </div>
+    <div className="col-md-3">
+      {editing ? (
+        <button className="btn btn-warning w-100" onClick={handleUpdateEtudiant}>
+          Mettre à jour
+        </button>
+      ) : null}
+    </div>
+  </div>
 
-        {/* Montant à payer et professeurs */}
-        <div className="row mb-3">
-          <div className="col-md-3">
-            <input
-              type="number"
-              className="form-control"
-              placeholder="Montant à payer"
-              value={montantAPayer}
-              onChange={(e) => setMontantAPayer(e.target.value)}
-            />
-          </div>
-          <div className="col-md-3">
-            <select
-              multiple
-              className="form-select"
-              value={selectedProfesseurs}
-              onChange={(e) => setSelectedProfesseurs(Array.from(e.target.selectedOptions, option => option.value))}
-            >
-              {professeurs.map((professeur) => (
-                <option key={professeur.id} value={professeur.id}>
-                  {professeur.nom} 
-                </option>
-              ))}
-            </select>
-          </div>
-          
-          <div className="col-md-3">
-            {editing ? (
-              <button className="btn btn-warning w-100" onClick={handleUpdateEtudiant}>
-                Mettre à jour
-              </button>
-            ) : (
-              <button className="btn btn-primary w-100" onClick={handleAddEtudiant}>
-                Ajouter l'Étudiant
-              </button>
-            )}
-          </div>
-        </div>
 
         {/* Liste des étudiants */}
         <h2 className="text-center text-primary m-5">Liste des Étudiants</h2>
-        <div className="table-responsive">
+        <div className="table-responsive w-100">
           <table className="table table-striped table-hover">
             <thead className="table-dark">
               <tr>
@@ -388,7 +383,6 @@ export default function EtudiantList() {
                         <span className="badge bg-success">Payé</span>
                       ) : (
                         <>
-                          <span className="badge bg-danger me-2">Non payé</span>
                           <button className="btn btn-sm btn-success" onClick={() => handlePaiement(etudiant.id)}>
                             Payer
                           </button>
@@ -428,6 +422,7 @@ export default function EtudiantList() {
           </table>
         </div>
       </div>
-    </div>
+   
+
   );
 }

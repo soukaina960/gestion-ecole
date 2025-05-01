@@ -1,4 +1,8 @@
 /* styles.css */
+body{
+  background: linear-gradient(to bottom right, #f3e8ff, #dbeafe);
+
+}
 .login-page {
     background: linear-gradient(to bottom right, #f3e8ff, #dbeafe);
     height: 100vh;
