@@ -34,10 +34,12 @@ const Login = () => {
       localStorage.setItem('utilisateur', JSON.stringify(response.data.utilisateur));
       localStorage.setItem('role', response.data.role);
       localStorage.setItem('access_token', response.data.access_token);
+
       
       // Si l'utilisateur est un parent, on stocke aussi l'ID du parent
       if (response.data.role === 'parent' && response.data.utilisateur.parent) {
         localStorage.setItem('parent_id', response.data.utilisateur.parent.id);
+        localStorage.setItem('access_token', response.data.access_token);
       }
       
       

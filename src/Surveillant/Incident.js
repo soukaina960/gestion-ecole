@@ -4,13 +4,17 @@ import axios from 'axios';
 const IncidentList = () => {
   const [incidents, setIncidents] = useState([]);
   const [etudiants, setEtudiants] = useState([]);
-  const [classes, setClasses] = useState([]);
+  const [professeurs, setProfesseurs] = useState([]);
+  const [classrooms, setClassrooms] = useState([]);
+  const [selectedProfesseurId, setSelectedProfesseurId] = useState('');
   const [selectedClassId, setSelectedClassId] = useState('');
-  const [etudiantId, setEtudiantId] = useState('');
+  const [selectedEtudiantId, setSelectedEtudiantId] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState('');
   const [message, setMessage] = useState('');
   const [search, setSearch] = useState('');
+  const [matieres, setMatieres] = useState([]);
+  const [selectedMatiereId, setSelectedMatiereId] = useState('');
 
   useEffect(() => {
     axios.get('http://127.0.0.1:8000/api/incidents')
@@ -19,18 +23,41 @@ const IncidentList = () => {
   }, []);
 
   useEffect(() => {
-    axios.get('http://127.0.0.1:8000/api/classrooms')
-      .then(res => setClasses(res.data))
-      .catch(() => setMessage("Erreur lors du chargement des classes."));
-  }, []);
+    axios.get("http://localhost:8000/api/classrooms")
+      .then((response) => {
+        setClassrooms(response.data);
+      })
+      .catch((error) => {
+        console.error("Erreur lors du chargement des classes:", error);
+      });
 
-  useEffect(() => {
+    axios.get("http://localhost:8000/api/professeurs")
+      .then((response) => {
+        setProfesseurs(response.data);
+      })
+      .catch((error) => {
+        console.error("Erreur lors du chargement des professeurs:", error);
+      });
+
     if (selectedClassId) {
       axios.get(`http://127.0.0.1:8000/api/classrooms/${selectedClassId}/students`)
-        .then(res => setEtudiants(res.data))
-        .catch(() => setMessage("Erreur lors du chargement des étudiants."));
+        .then(res => setEtudiants(res.data));
     }
   }, [selectedClassId]);
+    useEffect(() => {
+      if (selectedClassId && selectedProfesseurId) {
+        axios.get(`http://localhost:8000/api/matieres-par-prof-classe`, {
+          params: {
+            professeur_id: selectedProfesseurId,
+            classe_id: selectedClassId,
+          }
+        }).then(res => {
+          setMatieres(res.data);
+        }).catch(err => {
+          console.error("Erreur lors du chargement des matières:", err);
+        });
+      }
+    }, [selectedClassId, selectedProfesseurId]);
 
   const handleSearch = (e) => {
     setSearch(e.target.value);
@@ -42,15 +69,18 @@ const IncidentList = () => {
   );
 
   const handleAddIncident = () => {
-    if (!etudiantId || !description || !date) {
+    if (!selectedEtudiantId || !description || !date) {
       setMessage("Veuillez remplir tous les champs.");
       return;
     }
 
     axios.post('http://127.0.0.1:8000/api/incidents', {
-      etudiant_id: etudiantId,
+      etudiant_id: selectedEtudiantId,
       description,
-      date: date, // Use the selected date here
+      date: date, 
+      professeur_id: selectedProfesseurId,
+      matiere_id: selectedMatiereId,
+      class_id: selectedClassId// Use the selected date here
     })
       .then(res => {
         setIncidents([...incidents, res.data]);
@@ -84,7 +114,7 @@ const IncidentList = () => {
         style={{ padding: '8px', width: '100%', marginBottom: '10px' }}
       >
         <option value="">Sélectionner une classe</option>
-        {classes.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        {classrooms.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
       </select>
 
       <h3>🔎 Rechercher Étudiant</h3>
@@ -98,8 +128,8 @@ const IncidentList = () => {
 
       <h3>📝 Ajouter un Incident</h3>
       <select
-        value={etudiantId}
-        onChange={(e) => setEtudiantId(e.target.value)}
+        value={selectedEtudiantId}
+        onChange={(e) => setSelectedEtudiantId(e.target.value)}
         style={{ padding: '8px', width: '100%', marginBottom: '10px' }}
       >
         <option value="">Choisir un étudiant</option>
@@ -107,6 +137,39 @@ const IncidentList = () => {
           <option key={et.id} value={et.id}>{et.nom} {et.prenom}</option>
         ))}
       </select>
+      <div>
+          <label htmlFor="professeur_id" >Professeur:</label>
+          <select
+            id="professeur_id"
+            value={selectedProfesseurId}
+            onChange={(e) => setSelectedProfesseurId(e.target.value)}
+            required
+           
+          >
+            <option value="">Choisir un professeur</option>
+            {professeurs.map((professeur) => (
+              <option key={professeur.id} value={professeur.id}>
+                {professeur.nom}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+  <label htmlFor="matiere_id" >Matière:</label>
+  <select
+    id="matiere_id"
+    value={selectedMatiereId}
+    onChange={(e) => setSelectedMatiereId(e.target.value)}
+    required
+  >
+    <option value="">Choisir une matière</option>
+    {matieres.map((matiere) => (
+      <option key={matiere.id} value={matiere.id}>
+        {matiere.nom}
+      </option>
+    ))}
+  </select>
+</div>
 
       <textarea
         value={description}
@@ -145,9 +208,8 @@ const IncidentList = () => {
             const etudiant = etudiants.find(e => e.id === incident.etudiant_id);
             return (
               <tr key={incident.id}>
-                <td style={{ padding: '10px', border: '1px solid #ccc' }}>
-                  {etudiant ? `${etudiant.nom} ${etudiant.prenom}` : 'N/A'}
-                </td>
+<td>{incident.etudiant ? `${incident.etudiant.nom} ${incident.etudiant.prenom}` : 'N/A'}</td>
+
                 <td style={{ padding: '10px', border: '1px solid #ccc' }}>{incident.description}</td>
                 <td style={{ padding: '10px', border: '1px solid #ccc' }}>{incident.date}</td>
                 <td style={{ padding: '10px', border: '1px solid #ccc' }}>

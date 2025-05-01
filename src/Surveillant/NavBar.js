@@ -85,6 +85,10 @@ export default function Sidebar() {
           {/* <BiBell size={20} /> */}
           <Link to="incidentList" style={styles.link}>Liste des incidents</Link>
         </li>
+        <li style={styles.listItem}>
+          {/* <BiBell size={20} /> */}
+          <Link to="reclamationList" style={styles.link}>Liste des reclamations</Link>
+        </li>
       </ul>
       <button style={styles.button}>
         <BiLogOut size={20} />

@@ -5,30 +5,57 @@ const Retard = () => {
   const [etudiants, setEtudiants] = useState([]);
   const [search, setSearch] = useState('');
   const [selectedClassId, setSelectedClassId] = useState('');
-  const [classes, setClasses] = useState([]);
+  const [classrooms, setClassrooms] = useState([]);
   const [message, setMessage] = useState('');
-  
   const [date, setDate] = useState('');
   const [heure, setHeure] = useState('');
   const [selectedEtudiantId, setSelectedEtudiantId] = useState('');
+  const [selectedProfesseurId, setSelectedProfesseurId] = useState('');
   const [editing, setEditing] = useState(false);
-  const [retards, setRetards] = useState([]);  // État pour stocker les retards
-
-  // Charger les classes disponibles
+  const [retards, setRetards] = useState([]);
+  const [professeurs, setProfesseurs] = useState([]);
+    const [matieres, setMatieres] = useState([]);
+    const [selectedMatiereId, setSelectedMatiereId] = useState(''); // Ajouté pour les matières
+  
+  // Charger les classes et les professeurs disponibles
   useEffect(() => {
-    axios.get('http://127.0.0.1:8000/api/classrooms')
-      .then(res => setClasses(res.data))
-      .catch(() => setMessage('Erreur lors du chargement des classes.'));
-  }, []);
+    axios.get("http://localhost:8000/api/classrooms")
+      .then((response) => {
+        setClassrooms(response.data);
+      })
+      .catch((error) => {
+        console.error("Erreur lors du chargement des classes:", error);
+      });
 
-  // Charger les étudiants de la classe sélectionnée
-  useEffect(() => {
+    axios.get("http://localhost:8000/api/professeurs")
+      .then((response) => {
+        setProfesseurs(response.data);
+      })
+      .catch((error) => {
+        console.error("Erreur lors du chargement des professeurs:", error);
+      });
+
     if (selectedClassId) {
       axios.get(`http://127.0.0.1:8000/api/classrooms/${selectedClassId}/students`)
-        .then(res => setEtudiants(res.data))
-        .catch(() => setMessage('Erreur lors du chargement des étudiants.'));
+        .then(res => setEtudiants(res.data));
     }
   }, [selectedClassId]);
+
+  // Charger les matières pour un professeur et une classe donnée
+  useEffect(() => {
+    if (selectedClassId && selectedProfesseurId) {
+      axios.get(`http://localhost:8000/api/matieres-par-prof-classe`, {
+        params: {
+          professeur_id: selectedProfesseurId,
+          classe_id: selectedClassId,
+        }
+      }).then(res => {
+        setMatieres(res.data);
+      }).catch(err => {
+        console.error("Erreur lors du chargement des matières:", err);
+      });
+    }
+  }, [selectedClassId, selectedProfesseurId]);
 
   // Filtrage par recherche
   const handleSearch = (e) => {
@@ -46,28 +73,37 @@ const Retard = () => {
       setMessage('Veuillez sélectionner un étudiant.');
       return;
     }
-  
+    if (!selectedProfesseurId) {
+      setMessage('Veuillez sélectionner un professeur.');
+      return;
+    }
+    
+    const etudiant = etudiants.find(etudiant => etudiant.id === selectedEtudiantId);
+    if (!etudiant) {
+      setMessage('Étudiant non trouvé.');
+      return;
+    }
+    
     const retardData = {
       etudiant_id: selectedEtudiantId,
+      professeur_id: selectedProfesseurId,
+      class_id: selectedClassId,
+      matiere_id: selectedMatiereId,
       date,
       heure,
     };
   
     axios.post('http://127.0.0.1:8000/api/retards', retardData)
       .then(res => {
-        setRetards([...retards, res.data]); // Ajoute le retard à l'état des retards
+        setRetards([...retards, res.data]);
         setMessage('Retard ajouté avec succès.');
-        setSelectedEtudiantId(''); // Réinitialiser l'ID sélectionné
+        setSelectedEtudiantId('');
         setDate('');
         setHeure('');
+        setSelectedProfesseurId('');
       })
       .catch((error) => {
-        if (error.response) {
-          console.log(error.response.data);
-          setMessage(`Erreur : ${error.response.data.message || 'Erreur lors de l\'ajout du retard'}`);
-        } else {
-          setMessage('Erreur lors de l\'ajout du retard.');
-        }
+        setMessage('Erreur lors de l\'ajout du retard.');
       });
   };
 
@@ -77,6 +113,7 @@ const Retard = () => {
     setDate('');
     setHeure('');
     setSelectedEtudiantId('');
+    setSelectedProfesseurId('');
   };
 
   return (
@@ -98,7 +135,7 @@ const Retard = () => {
           style={{ padding: '8px', width: '100%', marginBottom: '16px', borderRadius: '4px', border: '1px solid #ccc' }}
         >
           <option value="">Sélectionner une classe</option>
-          {classes.map(cls => (
+          {classrooms.map(cls => (
             <option key={cls.id} value={cls.id}>
               {cls.name}
             </option>
@@ -135,7 +172,7 @@ const Retard = () => {
                 <button
                   onClick={() => {
                     setEditing(true);
-                    setSelectedEtudiantId(etudiant.id); // Pré-remplir avec l'ID de l'étudiant
+                    setSelectedEtudiantId(etudiant.id); 
                   }}
                   style={{
                     backgroundColor: '#2980b9',
@@ -173,6 +210,34 @@ const Retard = () => {
             onChange={(e) => setHeure(e.target.value)}
             style={{ padding: '8px', width: '100%', marginBottom: '16px', borderRadius: '4px', border: '1px solid #ccc' }}
           />
+
+          <h3 style={{ marginBottom: '10px', color: '#34495e' }}>👨‍🏫 Sélectionner le Professeur</h3>
+          <select
+            value={selectedProfesseurId}
+            onChange={(e) => setSelectedProfesseurId(e.target.value)}
+            style={{ padding: '8px', width: '100%', marginBottom: '16px', borderRadius: '4px', border: '1px solid #ccc' }}
+          >
+            <option value="">Sélectionner un professeur</option>
+            {professeurs.map(prof => (
+              <option key={prof.id} value={prof.id}>
+                {prof.nom} {prof.prenom}
+              </option>
+            ))}
+          </select>
+          <select
+    id="matiere_id"
+    value={selectedMatiereId}
+    onChange={(e) => setSelectedMatiereId(e.target.value)}
+    required
+    
+  >
+    <option value="">Choisir une matière</option>
+    {matieres.map((matiere) => (
+      <option key={matiere.id} value={matiere.id}>
+        {matiere.nom}
+      </option>
+    ))}
+  </select>
 
           <div style={{ display: 'flex', gap: '10px' }}>
             <button

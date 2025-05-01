@@ -10,7 +10,19 @@ const NotesDashboard = () => {
   const [selectedSemestre, setSelectedSemestre] = useState('');
   const [notes, setNotes] = useState({});
   const [error, setError] = useState('');
+  const [selectedEnfantId, setSelectedEnfantId] = useState('');
   const parentId = localStorage.getItem('parent_id'); 
+
+
+
+
+  axios.get('http://127.0.0.1:8000/api/etudiants')
+  .then(res => {
+    const enfantsFiltrés = res.data.filter(enf => enf.parent_id === parseInt(parentId));
+    setEnfants(enfantsFiltrés);
+  })
+  .catch(() => setError('Erreur lors du chargement des enfants.'));
+
 
   useEffect(() => {
     const storedParent = localStorage.getItem('utilisateur');
@@ -27,9 +39,7 @@ const NotesDashboard = () => {
   useEffect(() => {
     if (parent) {
       // Charger les enfants
-      axios.get(`http://127.0.0.1:8000/api/etudiants-par-parent/${parentId}`)
-        .then(res => setEnfants(res.data))
-        .catch(() => setError('Erreur lors du chargement des enfants.'));
+      
 
       // Charger les années
       axios.get('http://127.0.0.1:8000/api/annees_scolaires')
@@ -70,14 +80,45 @@ const NotesDashboard = () => {
       setError("Erreur lors de la récupération des notes.");
     }
   };
-  
-  
+
+  // Fonction pour calculer la moyenne des notes
+  const calculerMoyenne = (note1, note2, note3, note4) => {
+    let somme = 0;
+    let count = 0;
+
+    [note1, note2, note3, note4].forEach(note => {
+      if (note != null) {
+        somme += parseFloat(note);
+        count++;
+      }
+    });
+
+    return count > 0 ? (somme / count).toFixed(2) : '-';
+  };
 
   return (
     <div className="container mt-4">
       <h2>Notes de mes enfants</h2>
 
       {error && <div className="alert alert-danger">{error}</div>}
+      <div className="row mb-4">
+  <div className="col-md-12">
+    <label>Choisir un enfant :</label>
+    <select
+      className="form-control"
+      value={selectedEnfantId}
+      onChange={e => setSelectedEnfantId(e.target.value)}
+    >
+      <option value="">-- Choisir un enfant --</option>
+      {enfants.map(enf => (
+        <option key={enf.id} value={enf.id}>
+          {enf.nom} {enf.prenom}
+        </option>
+      ))}
+    </select>
+  </div>
+</div>
+
 
       <div className="row mb-4">
         <div className="col-md-6">
@@ -124,16 +165,20 @@ const NotesDashboard = () => {
                 </tr>
               </thead>
               <tbody>
-                {notesEtudiant.length > 0 ? notesEtudiant.map((note, index) => (
-                  <tr key={index}>
-                    <td>{note.matiere}</td>
-                    {[note.note1, note.note2, note.note3, note.note4].map((n, i) => (
-                      <td key={i}>{n != null ? parseFloat(n).toFixed(2) : '-'}</td>
-                    ))}
-                    <td>{note.note_finale != null ? parseFloat(note.note_finale).toFixed(2) : '-'}</td>
-                    <td>{note.remarque || '-'}</td>
-                  </tr>
-                )) : (
+                {notesEtudiant.length > 0 ? notesEtudiant.map((note, index) => {
+                  const moyenne = calculerMoyenne(note.note1, note.note2, note.note3, note.note4);
+
+                  return (
+                    <tr key={index}>
+                      <td>{note.matiere}</td>
+                      {[note.note1, note.note2, note.note3, note.note4].map((n, i) => (
+                        <td key={i}>{n != null ? parseFloat(n).toFixed(2) : '-'}</td>
+                      ))}
+                      <td>{moyenne}</td>
+                      <td>{note.remarque || '-'}</td>
+                    </tr>
+                  );
+                }) : (
                   <tr>
                     <td colSpan="7">Aucune note disponible.</td>
                   </tr>

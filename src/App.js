@@ -38,6 +38,11 @@ import AbsenceTable from './Surveillant/ListAbsence';
 import ListeRetards from './Surveillant/ListRetard';
 import ListeIncidents from './Surveillant/ListIncident';
 import Absences from './Parent/Absences';
+import Incidents from './Parent/Incident';
+import ParentProfile from './Parent/ParentProfile';
+import ParentReclamationForm from './Parent/ParentReclamation';
+import SurveillantReclamationList from './Surveillant/ListReclamations';
+import PaiementsParent from './Parent/ParentPayment';
 
 // import MatiereManager from './components/matiere'; // Pour la gestion des matières
 
@@ -49,6 +54,8 @@ function App() {
 
             <Route path="/" element={<Layout />} />
             <Route path="/login" element={<Login />} />
+
+            {/* parent */}
             <Route path="/surveillant" element={<SurveillantLayout />}>
               <Route index element={<SurveillantDashboard />} />
               <Route path="absence" element={<AbsenceList />} />
@@ -59,13 +66,20 @@ function App() {
               <Route path="absenceList" element={<AbsenceTable />} />
               <Route path="retardList" element={<ListeRetards />} />
               <Route path="incidentList" element={<ListeIncidents />} />
-
+              <Route path="reclamationList" element={<SurveillantReclamationList />} />
+              
             </Route>
+
+            {/* parent */}
             <Route path="/" element={<ParentLayout />}>
               <Route path="parent" element={<ParentDashboard />} />
+              <Route path="parent-profile" element={<ParentProfile />} />
               <Route path="absences" element={<Absences />} />
               <Route path="retards" element={<Retards />} />
               <Route path="notes" element={<Notes />} />
+              <Route path="incidents" element={<Incidents />} />
+              <Route path="parent-reclamation" element={<ParentReclamationForm />} />
+              <Route path="parent-paiement" element={<PaiementsParent />} />
             </Route>
  
               {/* <Route path="/matiere" element={<MatiereManager />} /> Page de gestion des matières */}
