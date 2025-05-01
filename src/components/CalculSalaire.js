@@ -10,6 +10,8 @@ function CalculSalaireProfesseur() {
     const [professeurs, setProfesseurs] = useState([]);
     const [etudiants, setEtudiants] = useState([]);
     const [refresh, setRefresh] = useState(false);
+    const [mois, setMois] = useState("");
+
 
     // Récupérer la liste des professeurs et étudiants
     useEffect(() => {
@@ -31,15 +33,19 @@ function CalculSalaireProfesseur() {
 
     // Calculer le salaire
     const handleCalculerSalaire = async () => {
-        if (!selectedProfesseur) {
-            setMessageErreur("Veuillez sélectionner un professeur");
+        if (!selectedProfesseur || !mois) {
+            setMessageErreur("Veuillez sélectionner un professeur et un mois");
             return;
         }
-        
+    
         try {
             const response = await axios.post(
-                `http://127.0.0.1:8000/api/professeurs/${selectedProfesseur}/calculer-salaire`,
-                { prime: parseFloat(prime), pourcentage: parseFloat(pourcentage) }
+                `http://127.0.0.1:8000/api/professeurs/${selectedProfesseur}/calculer-salaire-mensuel`,
+                {
+                    prime: parseFloat(prime),
+                    pourcentage: parseFloat(pourcentage),
+                    mois: parseInt(mois)
+                }
             );
             setSalaire(response.data.salaire);
             setMessageErreur("");
@@ -49,6 +55,7 @@ function CalculSalaireProfesseur() {
             console.error(error);
         }
     };
+    
 
     // Supprimer un étudiant et recalculer automatiquement
     const handleSupprimerEtudiant = async (etudiantId) => {
@@ -95,6 +102,22 @@ function CalculSalaireProfesseur() {
                             </option>
                         ))}
                     </select>
+                </div>
+                <div className="mb-4 col-md-3">
+                <label htmlFor="mois" className="form-label">Mois :</label>
+                <select
+                    id="mois"
+                    value={mois}
+                    onChange={(e) => setMois(e.target.value)}
+                    className="form-select"
+                >
+                    <option value="">Sélectionnez un mois</option>
+                    {Array.from({ length: 12 }, (_, i) => (
+                    <option key={i + 1} value={i + 1}>
+                        {new Date(0, i).toLocaleString("fr-FR", { month: "long" })}
+                    </option>
+                    ))}
+                </select>
                 </div>
 
                 <div className="mb-4 col-md-3">
