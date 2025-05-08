@@ -7,6 +7,10 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import './App.css';
 import CreateAccount from './pages/CreateAccount';
 
+
+// import EntrerNotes from './components/EntrerNotes';
+
+
 // import EntrerNotes from './components/EntrerNotes';
 
 // import AjouterFichier from './components/AjouterFichier';
