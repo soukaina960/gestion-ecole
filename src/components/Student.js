@@ -370,27 +370,28 @@ export default function EtudiantList() {
                     </Link>
                   </td>
                   <td>{etudiant.email}</td>
-                  <td>{etudiant.classroom ? etudiant.classroom.name : 'Aucune classe'}</td>
-                  <td>{etudiant.montant_a_payer}</td>
+                  <td>{etudiant.montant_a_payer} MAD</td>
                   <td>
-                  
-                  {etudiant.professeurs && etudiant.professeurs.length > 0 
-                            ? etudiant.professeurs.map((prof) => prof.nom).join(", ") 
-                            : "Aucun"}                  
+                    {etudiant.professeurs && etudiant.professeurs.length > 0 ? (
+                      etudiant.professeurs.map((prof, index) => (
+                        <span key={prof.id}>{prof.nom}{index < etudiant.professeurs.length - 1 ? ', ' : ''}</span>
+                      ))
+                    ) : (
+                      <span>Aucun professeur assigné</span>
+                    )}
                   </td>
                   <td>
-                      {aPayeCeMois(etudiant.id) ? (
-                        <span className="badge bg-success">Payé</span>
-                      ) : (
-                        <>
-                          <button className="btn btn-sm btn-success" onClick={() => handlePaiement(etudiant.id)}>
-                            Payer
-                          </button>
-                        </>
-                      )}
-
+                    {aPayeCeMois(etudiant.id) ? (
+                      <span className="badge bg-success">Payé</span>
+                    ) : (
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => handlePaiement(etudiant.id)}
+                      >
+                        Payer
+                      </button>
+                    )}
                   </td>
-
                   <td>
   <div className="dropdown">
     <button
