@@ -16,6 +16,8 @@ const IncidentList = () => {
   const [matieres, setMatieres] = useState([]);
   const [selectedMatiereId, setSelectedMatiereId] = useState('');
 
+  const surveillantId = localStorage.getItem('surveillant_id'); // Récupérer l'ID du surveillant depuis le localStorage
+
   useEffect(() => {
     axios.get('http://127.0.0.1:8000/api/incidents')
       .then(res => setIncidents(res.data))
@@ -80,7 +82,9 @@ const IncidentList = () => {
       date: date, 
       professeur_id: selectedProfesseurId,
       matiere_id: selectedMatiereId,
-      class_id: selectedClassId// Use the selected date here
+      class_id: selectedClassId,
+      surveillant_id: surveillantId // Ajout de l'ID du surveillant
+
     })
       .then(res => {
         setIncidents([...incidents, res.data]);
@@ -89,7 +93,7 @@ const IncidentList = () => {
         setDescription('');
         setDate('');
       })
-      .catch(() => setMessage("Erreur lors de l'ajout de l'incident."));
+     
   };
 
   const handleDelete = (id) => {

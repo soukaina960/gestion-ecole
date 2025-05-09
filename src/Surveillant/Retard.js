@@ -14,8 +14,12 @@ const Retard = () => {
   const [editing, setEditing] = useState(false);
   const [retards, setRetards] = useState([]);
   const [professeurs, setProfesseurs] = useState([]);
-    const [matieres, setMatieres] = useState([]);
-    const [selectedMatiereId, setSelectedMatiereId] = useState(''); // Ajouté pour les matières
+  const [matieres, setMatieres] = useState([]);
+  const [selectedMatiereId, setSelectedMatiereId] = useState('');
+
+  const surveillantId = localStorage.getItem('surveillant_id');
+  console.log("Surveillant ID:", surveillantId);
+     
   
   // Charger les classes et les professeurs disponibles
   useEffect(() => {
@@ -91,6 +95,7 @@ const Retard = () => {
       matiere_id: selectedMatiereId,
       date,
       heure,
+      surveillant_id: surveillantId,
     };
   
     axios.post('http://127.0.0.1:8000/api/retards', retardData)

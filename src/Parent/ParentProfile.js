@@ -1,170 +1,100 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 
-const ParentProfile = () => {
+function ParentProfile() {
   const [parent, setParent] = useState({
+    id: '',
     nom: '',
     prenom: '',
     telephone: '',
-    adresse: '',
-    profession: ''
-  });
-
-  const [user, setUser] = useState({
     email: '',
     password: ''
   });
-
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
-
-  const parentId = localStorage.getItem('parent_id');
-
+const parentId = localStorage.getItem('parent_id'); // Assurez-vous que l'ID du parent est stocké dans le localStorage
+  const token = localStorage.getItem('access_token'); // Assurez-vous que le token est stocké dans le localStorage
+  console.log("Parent ID:", parentId);
+  // Charger les infos existantes du parent
   useEffect(() => {
     axios.get(`http://127.0.0.1:8000/api/parents/${parentId}`)
       .then(response => {
-        // Vu que l'API te retourne un OBJET simple
-        setParent(response.data);  // directement response.data
-        setLoading(false);
+        const data = response.data;
+        setParent(prev => ({
+          ...prev,
+          id: data.id,
+          nom: data.nom,
+          prenom: data.prenom,
+          telephone: data.telephone,
+          email: data.email || ''
+        }));
       })
       .catch(error => {
-        setError("Erreur lors du chargement des informations.");
-        setLoading(false);
+        console.error('Erreur de chargement', error);
       });
   }, [parentId]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setParent(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    axios.put(`http://127.0.0.1:8000/api/parent/update/${parentId}`, {
-      ...parent,
-      email: parent.email,  // email ajouté ici
-      password: parent.password // password aussi
-    })
-      .then(response => {
-        setMessage("Informations mises à jour avec succès !");
-        setError('');
-      })
-      .catch(error => {
-        setError("Erreur lors de la mise à jour.");
-        setMessage('');
+  // Fonction de mise à jour
+  const handleUpdate = async () => {
+    try {
+      await axios.put(`http://127.0.0.1:8000/api/parent/update/${parentId}`, {
+        parent: {
+          nom: parent.nom,
+          prenom: parent.prenom,
+          telephone: parent.telephone,
+          email: parent.email,
+          password: parent.password || null // on l'envoie seulement s'il y a une nouvelle valeur
+        },
+        user: {
+          nom: parent.nom,
+          prenom: parent.prenom,
+          telephone: parent.telephone,
+          email: parent.email,
+          password: parent.password || null // on l'envoie seulement s'il y a une nouvelle valeur
+        }
       });
-  };
 
-  if (loading) {
-    return <p>Chargement...</p>;
-  }
+      alert("Profil mis à jour avec succès.");
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour :', error.response?.data || error.message);
+      alert('Erreur lors de la mise à jour');
+    }
+  };
 
   return (
-    <div style={{ padding: "20px", maxWidth: "600px", margin: "auto" }}>
-      <h2>Mon Profil</h2>
-
-      {message && <p style={{ color: "green" }}>{message}</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
-
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: "10px" }}>
-          <label>Nom :</label>
-          <input
-            type="text"
-            name="nom"
-            value={parent.nom || ''}
-            onChange={handleChange}
-            style={{ width: "100%", padding: "8px", marginTop: "5px" }}
-          />
-        </div>
-
-        <div style={{ marginBottom: "10px" }}>
-          <label>Prénom :</label>
-          <input
-            type="text"
-            name="prenom"
-            value={parent.prenom || ''}
-            onChange={handleChange}
-            style={{ width: "100%", padding: "8px", marginTop: "5px" }}
-          />
-        </div>
-
-        <div style={{ marginBottom: "10px" }}>
-          <label>Téléphone :</label>
-          <input
-            type="text"
-            name="telephone"
-            value={parent.telephone || ''}
-            onChange={handleChange}
-            style={{ width: "100%", padding: "8px", marginTop: "5px" }}
-          />
-        </div>
-
-        <div style={{ marginBottom: "10px" }}>
-          <label>Adresse :</label>
-          <input
-            type="text"
-            name="adresse"
-            value={parent.adresse || ''}
-            onChange={handleChange}
-            style={{ width: "100%", padding: "8px", marginTop: "5px" }}
-          />
-        </div>
-
-        <div style={{ marginBottom: "10px" }}>
-          <label>Profession :</label>
-          <input
-            type="text"
-            name="profession"
-            value={parent.profession || ''}
-            onChange={handleChange}
-            style={{ width: "100%", padding: "8px", marginTop: "5px" }}
-          />
-        </div>
-
-        <div style={{ marginBottom: "10px" }}>
-          <label>Email :</label>
-          <input
-            type="email"
-            name="email"
-            value={parent.email || ''}
-            onChange={handleChange}
-            style={{ width: "100%", padding: "8px", marginTop: "5px" }}
-          />
-        </div>
-
-        <div style={{ marginBottom: "10px" }}>
-          <label>Mot de passe :</label>
-          <input
-            type="password"
-            name="password"
-            value={parent.mot_de_passe || ''}
-            onChange={handleChange}
-            style={{ width: "100%", padding: "8px", marginTop: "5px" }}
-          />
-        </div>
-
-        <button
-          type="submit"
-          style={{
-            padding: "10px 20px",
-            backgroundColor: "#4CAF50",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
-          }}
-        >
-          Mettre à jour
-        </button>
-      </form>
+    <div>
+      <h2>Modifier le profil du parent</h2>
+      <input
+        type="text"
+        placeholder="Nom"
+        value={parent.nom}
+        onChange={e => setParent({ ...parent, nom: e.target.value })}
+      />
+      <input
+        type="text"
+        placeholder="Prénom"
+        value={parent.prenom}
+        onChange={e => setParent({ ...parent, prenom: e.target.value })}
+      />
+      <input
+        type="text"
+        placeholder="Téléphone"
+        value={parent.telephone}
+        onChange={e => setParent({ ...parent, telephone: e.target.value })}
+      />
+      <input
+        type="email"
+        placeholder="Email"
+        value={parent.email}
+        onChange={e => setParent({ ...parent, email: e.target.value })}
+      />
+      <input
+        type="password"
+        placeholder="Nouveau mot de passe"
+        value={parent.password}
+        onChange={e => setParent({ ...parent, password: e.target.value })}
+      />
+      <button onClick={handleUpdate}>Mettre à jour</button>
     </div>
   );
-};
+}
 
 export default ParentProfile;

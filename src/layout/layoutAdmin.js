@@ -6,8 +6,8 @@ import {
   FaCog, FaMoon, FaSun, FaUserGraduate, FaUserTie, FaMoneyCheckAlt, FaUserSlash, FaGlobe
 } from "react-icons/fa";
 import { Link } from 'react-router-dom';
-import { ChevronDown } from 'lucide-react'; 
-import { Wallet, ArrowDownCircle, Coins } from 'lucide-react';
+// import { ChevronDown } from 'lucide-react'; 
+// import { Wallet, ArrowDownCircle, Coins } from 'lucide-react';
 import UtilisateurForm from "../components/UtilisateurList";
 import logo from '../images/logo.png';
 import SearchBar from "../components/SearchBar";
@@ -21,7 +21,7 @@ import CalculSalaireProfesseur from "../components/CalculSalaire";
 import GenererEmploiTemps from "../components/EmploiTemps"; // Pour la génération de l'emploi du temps
 import EmploiTempsForm from "../components/EmploiTempsForm"; // Pour la gestion des emplois du temps
 import CreneauList from "../components/crenau"; // Pour la gestion des créneaux
-import { CalendarDays, PlusCircle, Settings } from 'lucide-react';
+// import { CalendarDays, PlusCircle, Settings } from 'lucide-react';
 import DemandeAttestationList from "../components/DemandeAttestationList"; // Pour la gestion des demandes d'attestation
 import ConfigAttestationForm from '../components/ConfigAttestationForm'; // Pour la configuration de l'attestation
 import EmploiTempsParProf from '../components/emploiprof'; // Pour l'emploi du temps des professeurs

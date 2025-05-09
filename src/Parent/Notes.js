@@ -12,16 +12,41 @@ const NotesDashboard = () => {
   const [error, setError] = useState('');
   const [selectedEnfantId, setSelectedEnfantId] = useState('');
   const parentId = localStorage.getItem('parent_id'); 
+  const [bulletin, setBulletin] = useState(null);
+
+  useEffect(() => {
+    if (parentId) {
+      axios.get(`http://127.0.0.1:8000/api/bulletin/parent/${parentId}`)
+        .then(res => {
+          setBulletin(res.data);
+        })
+        .catch(err => {
+          if (err.response && err.response.status === 404) {
+            // Le bulletin n'existe pas encore
+            setBulletin(null); // pas d'erreur, juste pas encore prêt
+          } else {
+            // Autre erreur (ex: serveur down)
+            setError("Erreur lors du chargement du bulletin.");
+          }
+        });
+    }
+  }, [parentId]);
+  
 
 
 
 
-  axios.get('http://127.0.0.1:8000/api/etudiants')
-  .then(res => {
-    const enfantsFiltrés = res.data.filter(enf => enf.parent_id === parseInt(parentId));
-    setEnfants(enfantsFiltrés);
-  })
-  .catch(() => setError('Erreur lors du chargement des enfants.'));
+  useEffect(() => {
+    if (parentId) {
+      axios.get('http://127.0.0.1:8000/api/etudiants')
+        .then(res => {
+          const enfantsFiltrés = res.data.filter(enf => enf.parent_id === parseInt(parentId));
+          setEnfants(enfantsFiltrés);
+        })
+        .catch(() => setError('Erreur lors du chargement des enfants.'));
+    }
+  }, [parentId]);
+  
 
 
   useEffect(() => {
@@ -185,6 +210,27 @@ const NotesDashboard = () => {
                 )}
               </tbody>
             </table>
+            {bulletin && (
+  <div style={{ marginTop: '20px', backgroundColor: '#e8f4ea', padding: '15px', borderRadius: '8px' }}>
+    {bulletin === null && (
+  <div style={{ marginTop: '20px', backgroundColor: '#fff3cd', padding: '15px', borderRadius: '8px' }}>
+    <p><strong>Bulletin :</strong> Le bulletin n'est pas encore disponible.</p>
+  </div>
+)}
+
+{bulletin && (
+  <div style={{ marginTop: '20px', backgroundColor: '#e8f4ea', padding: '15px', borderRadius: '8px' }}>
+    <p><strong>Moyenne générale :</strong> 
+      {!isNaN(parseFloat(bulletin.moyenne_generale)) 
+        ? parseFloat(bulletin.moyenne_generale).toFixed(2) 
+        : 'Non disponible'}
+    </p>
+  </div>
+)}
+
+  </div>
+)}
+
           </div>
         );
       })}

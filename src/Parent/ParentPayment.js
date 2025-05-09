@@ -8,6 +8,8 @@ const ParentProfile = () => {
   const [error, setError] = useState('');
   const parentId = localStorage.getItem('parent_id');
   const token = localStorage.getItem('access_token'); 
+  console.log("Parent ID:", parentId);
+
 
   // Fonction pour récupérer les paiements en fonction du mois sélectionné
   const handleMoisChange = (e) => {
@@ -45,7 +47,7 @@ const ParentProfile = () => {
   };
 
   // Fonction pour générer le reçu PDF
-  const generateReceipt = (paiement_id) => {
+  const generateReceipt = () => {
     window.open(`http://127.0.0.1:8000/api/paiement/receipt/${parentId}/${mois}`, '_blank');
   };
 

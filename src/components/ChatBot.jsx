@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
-import { Bot, User, Send, X, Loader2 } from 'lucide-react';
+// import { Bot, User, Send, X, Loader2 } from 'lucide-react';
 
 const ChatBot = () => {
   const [messages, setMessages] = useState([

@@ -14,6 +14,8 @@ const Absence = () => {
   const [matieres, setMatieres] = useState([]);
   const [selectedMatiereId, setSelectedMatiereId] = useState('');
 
+  const surveillantId = localStorage.getItem('surveillant_id'); // Récupérer l'ID du surveillant depuis le localStorage
+  console.log("Surveillant ID:", surveillantId);
   useEffect(() => {
     if (selectedClassId && selectedProfesseurId) {
       axios.get(`http://localhost:8000/api/matieres-par-prof-classe`, {
@@ -61,11 +63,14 @@ const Absence = () => {
       date: formattedDate,
       professeur_id: selectedProfesseurId,
       matiere_id: selectedMatiereId,
-      class_id: selectedClassId,
+      class_id: selectedClassId, // <-- corrigé ici
       etudiant_id: selectedEtudiantId,
       motif: motif,
-      justifiee: isJustifiee ? "oui" : "non"
+      justifiee: isJustifiee ? "oui" : "non",
+      surveillant_id: surveillantId // Ajout de l'ID du surveillant
     };
+    
+    
 
     console.log('Données envoyées:', dataToSend);
 

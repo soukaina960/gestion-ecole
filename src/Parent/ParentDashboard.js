@@ -4,15 +4,15 @@ import axios from 'axios';
 const ParentDashboard = () => {
   const [parent, setParent] = useState(null);
   const [stats, setStats] = useState({});
-  const [derniers, setDerniers] = useState([]); // Initialiser comme tableau vide
+  const [derniers, setDerniers] = useState([]);
+  const [evenements, setEvenements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
     const utilisateurId = localStorage.getItem('utilisateurId');
-    const parentId = localStorage.getItem('parent_id'); // ✅ ici on utilise le même nom que dans Login.js
-    console.log("ID du parent récupéré :", parentId);
+    const parentId = localStorage.getItem('parent_id');
 
     if (!token || !utilisateurId) {
       setErrorMessage('Utilisateur non authentifié.');
@@ -20,23 +20,20 @@ const ParentDashboard = () => {
       return;
     }
 
-    // Récupérer les données de l'utilisateur et du parent en utilisant l'ID de l'utilisateur
     const fetchUserData = async () => {
       if (parentId) {
         try {
           const response = await axios.get(`http://127.0.0.1:8000/api/parents/${parentId}`);
-          console.log("Données du parent :", response.data);
-          setParent(response.data); // Mettre à jour le state 'parent' avec les données reçues
-          setLoading(false); // Fin du chargement
+          setParent(response.data);
+          setLoading(false);
         } catch (error) {
           console.error("Erreur lors de la récupération des données du parent", error);
           setErrorMessage('Erreur lors de la récupération des données.');
           setLoading(false);
         }
       }
-    }
+    };
 
-    // Fetch Parent Dashboard Data
     const fetchParentData = async () => {
       try {
         const response = await axios.get(`http://127.0.0.1:8000/api/parent-dashboard/${parentId}`, {
@@ -44,20 +41,27 @@ const ParentDashboard = () => {
             Authorization: `Bearer ${token}`,
           },
         });
-
         const data = response.data;
-        setStats(data.stats); 
-        setDerniers(Array.isArray(data.derniers) ? data.derniers : []); // S'assurer que 'derniers' est un tableau
-        setLoading(false);
+        setStats(data.stats);
+        setDerniers(Array.isArray(data.derniers) ? data.derniers : []);
       } catch (error) {
         console.error("Erreur lors de la récupération des données", error);
         setErrorMessage('Erreur lors de la récupération des données.');
-        setLoading(false);
       }
     };
 
-    fetchParentData();
+    const fetchEvenements = async () => {
+      try {
+        const response = await axios.get(`http://127.0.0.1:8000/api/evenements`);
+        setEvenements(response.data);
+      } catch (error) {
+        console.error("Erreur lors de la récupération des événements", error);
+      }
+    };
+
     fetchUserData();
+    fetchParentData();
+    fetchEvenements();
   }, []);
 
   if (loading) return <p>Chargement...</p>;
@@ -103,10 +107,11 @@ const ParentDashboard = () => {
       fontSize: '28px',
       fontWeight: 'bold',
     },
-    recentSection: {
+    section: {
       backgroundColor: '#f8f9fa',
       padding: '20px',
       borderRadius: '12px',
+      marginTop: '30px',
     },
     eventItem: {
       background: 'white',
@@ -115,6 +120,10 @@ const ParentDashboard = () => {
       marginBottom: '10px',
       boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
       fontSize: '15px',
+    },
+    sectionTitle: {
+      marginBottom: '15px',
+      color: '#34495e',
     },
   };
 
@@ -128,10 +137,9 @@ const ParentDashboard = () => {
   return (
     <div style={styles.container}>
       <h2 style={styles.title}>
-  Bienvenue dans votre espace parent : {parent?.nom || 'Chargement...'}
-</h2>
+        Bienvenue dans votre espace parent : {parent?.nom || 'Chargement...'}
+      </h2>
 
-  
       <div style={styles.cardsContainer}>
         <div style={{ ...styles.card, backgroundColor: cardColors.blue }}>
           <h3 style={styles.h3}>Moyenne</h3>
@@ -150,9 +158,10 @@ const ParentDashboard = () => {
           <p style={styles.p}>{stats.incidents}</p>
         </div>
       </div>
-  
-      <div style={styles.recentSection}>
-        <h3 style={{ marginBottom: '15px', color: '#34495e' }}>Derniers événements</h3>
+
+      {/* Derniers événements */}
+      <div style={styles.section}>
+        <h3 style={styles.sectionTitle}>Derniers événements</h3>
         <ul style={{ listStyle: 'none', padding: 0 }}>
           {derniers.length > 0 ? (
             derniers.map((item, index) => (
@@ -170,6 +179,24 @@ const ParentDashboard = () => {
             ))
           ) : (
             <p>Aucun événement récent.</p>
+          )}
+        </ul>
+      </div>
+
+      {/* Tous les événements */}
+      <div style={styles.section}>
+        <h3 style={styles.sectionTitle}>Événements de l’établissement</h3>
+        <ul style={{ listStyle: 'none', padding: 0 }}>
+          {evenements.length > 0 ? (
+            evenements.map((ev, index) => (
+              <li key={index} style={styles.eventItem}>
+                📅 <strong>{ev.titre}</strong> - {ev.date_debut} → {ev.date_fin}<br />
+                📍 Lieu : {ev.lieu}<br />
+                📝 {ev.description}
+              </li>
+            ))
+          ) : (
+            <p>Aucun événement disponible.</p>
           )}
         </ul>
       </div>

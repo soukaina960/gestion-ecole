@@ -54,6 +54,10 @@ export default function Sidebar() {
           <Link to="" style={styles.link}>Accueil</Link>
         </li>
         <li style={styles.listItem}>
+          <BiHome size={20} />
+          <Link to="surveillant-profile" style={styles.link}>Accueil</Link>
+        </li>
+        <li style={styles.listItem}>
           <BiClipboard size={20} />
           <Link to="absence" style={styles.link}>Absences</Link>
         </li>
@@ -63,15 +67,7 @@ export default function Sidebar() {
         </li>
         <li style={styles.listItem}>
           <BiErrorCircle size={20} />
-          <Link to="incident" style={styles.link}>Incidents</Link>
-        </li>
-        <li style={styles.listItem}>
-          <BiCalendar size={20} />
-          <Link to="emploi" style={styles.link}>Emploi</Link>
-        </li>
-        <li style={styles.listItem}>
-          <BiBell size={20} />
-          <Link to="notification" style={styles.link}>Notifications</Link>
+          <Link to="incidents-surveillant" style={styles.link}>Incidents</Link>
         </li>
         <li style={styles.listItem}>
           {/* <BiBell size={20} /> */}
@@ -85,9 +81,10 @@ export default function Sidebar() {
           {/* <BiBell size={20} /> */}
           <Link to="incidentList" style={styles.link}>Liste des incidents</Link>
         </li>
+        
         <li style={styles.listItem}>
           {/* <BiBell size={20} /> */}
-          <Link to="reclamationList" style={styles.link}>Liste des reclamations</Link>
+          <Link to="bulletin-generate" style={styles.link}>Bulletin generate</Link>
         </li>
       </ul>
       <button style={styles.button}>
