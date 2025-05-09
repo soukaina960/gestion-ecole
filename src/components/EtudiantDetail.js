@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import axios from "axios";
-// import { jsPDF } from "jspdf";
+ import { jsPDF } from "jspdf";
 
 export default function EtudiantDetail() {
   const { id } = useParams();

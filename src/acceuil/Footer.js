@@ -10,7 +10,6 @@ import {
 import { motion, useAnimation } from "framer-motion";
 import { useInView } from "react-intersection-observer";
 
-import "./footer.css";
 const styles = {
   footer: {
     background: "linear-gradient(90deg, rgb(186, 85, 236), rgb(135, 206, 250))",
@@ -99,7 +98,9 @@ const styles = {
   }
 };
 
+
 import "./footer.css";
+
 
 
 const Footer = () => {
@@ -232,7 +233,6 @@ const Footer = () => {
                 rel="noopener noreferrer"
                 variants={itemVariants}
                 whileHover="hover"
-                // variants={socialVariants}
               >
                 {social.icon}
               </motion.a>

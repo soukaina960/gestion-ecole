@@ -1,477 +1,399 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
+import api from '../services/api';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
-const API_CONFIG = {
-  BASE_URL: process.env.REACT_APP_API_URL || 'http://127.0.0.1:8000/api',
-  ENDPOINTS: {
-    ANNEES: '/annees_scolaires',
-    SEMESTRES: '/annees/:anneeId/semestres',
-    CLASSES: '/classes',
-    FILIERES: '/classes/:classeId/filieres',
-    MATIERES: '/professeurs/:professeurId/matieres',
-    FICHIERS: '/fichiers-pedagogiques'
-  }
-};
+const JOURS_SEMAINE = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
 
-const AjouterFichier = () => {
+function AjouterExamen() {
   const navigate = useNavigate();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState('');
   const [utilisateur, setUtilisateur] = useState(null);
-  const [annees, setAnnees] = useState([]);
-  const [semestres, setSemestres] = useState([]);
-  const [classes, setClasses] = useState([]);
-  const [matieres, setMatieres] = useState([]);
-  const [typesFichier] = useState(['cours', 'devoir', 'examen', 'corrigé', 'ressource']);
-  const [filieres, setFilieres] = useState([]);
-  const [selectedAnnee, setSelectedAnnee] = useState("");
-  const [selectedSemestre, setSelectedSemestre] = useState("");
-  const [selectedClasse, setSelectedClasse] = useState("");
-  const [selectedMatiere, setSelectedMatiere] = useState("");
-  const [selectedType, setSelectedType] = useState("cours");
-  const [selectedFiliere, setSelectedFiliere] = useState("");
-  const [fichier, setFichier] = useState(null);
-  const [fichiersListe, setFichiersListe] = useState([]);
+  
+  // États pour les sélections
+  const [selectedClasse, setSelectedClasse] = useState('');
+  const [selectedFiliere, setSelectedFiliere] = useState('');
   const [isLycee, setIsLycee] = useState(false);
-  const [loading, setLoading] = useState({
-    annees: false,
-    semestres: false,
-    classes: false,
-    filieres: false,
-    matieres: false,
-    fichiers: false,
-    submission: false,
-  });
+  
+  // États pour les données
+  const [classes, setClasses] = useState([]);
+  const [filieres, setFilieres] = useState([]);
+  const [matieres, setMatieres] = useState([]);
   const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(null);
+  const [professeurId, setProfesseurId] = useState(null);
+  
+  // États de chargement
+  const [isLoadingClasses, setIsLoadingClasses] = useState(true);
+  const [isLoadingFilieres, setIsLoadingFilieres] = useState(false);
+  const [isLoadingMatieres, setIsLoadingMatieres] = useState(false);
 
-  const handleApiError = (error, context) => {
-    console.error(`Erreur ${context}:`, error);
-    setError(error.response?.data?.message || `Erreur lors de ${context}`);
+  // État du formulaire
+  const [form, setForm] = useState({
+    classe_id: '',
+    matiere_id: '',
+    professeur_id: '',
+    filiere_id: '',
+    date: '',
+    jour: '',
+    heure_debut: '',
+    heure_fin: ''
+  });
+
+  // Récupérer l'ID du professeur à partir de l'ID utilisateur
+  const fetchProfesseurId = async (userId) => {
+    try {
+      const response = await api.get(`/professeurs?user=${userId}`);
+      if (response.data && response.data.length > 0) {
+        const profId = response.data[0].id;
+        localStorage.setItem("professeur_id", profId);
+        return profId;
+      }
+      throw new Error("Professeur non trouvé");
+    } catch (error) {
+      console.error("Erreur fetchProfesseurId:", error);
+      setError("Votre compte professeur n'est pas configuré");
+      return null;
+    }
   };
 
+  // Charger l'utilisateur et l'ID professeur
   useEffect(() => {
-    const userData = localStorage.getItem("utilisateur");
-    if (userData) {
-      setUtilisateur(JSON.parse(userData));
-    }
+    const loadUserData = async () => {
+      try {
+        const userData = localStorage.getItem("utilisateur");
+        if (userData) {
+          const user = JSON.parse(userData);
+          setUtilisateur(user);
+          
+          if (user?.role === "professeur") {
+            const profId = await fetchProfesseurId(user.id);
+            if (profId) {
+              setProfesseurId(profId);
+              setForm(prev => ({ ...prev, professeur_id: profId }));
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Erreur de chargement utilisateur", err);
+        setError("Erreur de chargement des données");
+      }
+    };
+
+    loadUserData();
   }, []);
 
+  // Charger les classes
   useEffect(() => {
-    const fetchAnnees = async () => {
-      setLoading(prev => ({ ...prev, annees: true }));
+    const loadClasses = async () => {
       try {
-        const res = await axios.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ANNEES}`);
-        setAnnees(res.data);
-      } catch (err) {
-        handleApiError(err, "chargement des années");
+        const response = await api.get('/classes');
+        setClasses(response.data);
+      } catch (error) {
+        console.error("Erreur chargement classes", error);
+        setError("Erreur lors du chargement des classes");
       } finally {
-        setLoading(prev => ({ ...prev, annees: false }));
+        setIsLoadingClasses(false);
       }
     };
-    fetchAnnees();
+
+    loadClasses();
   }, []);
 
+  // Charger les filières si classe secondaire
   useEffect(() => {
-    const fetchSemestres = async () => {
-      if (!selectedAnnee) return setSemestres([]);
-      setLoading(prev => ({ ...prev, semestres: true }));
-      try {
-        const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.SEMESTRES.replace(':anneeId', selectedAnnee)}`;
-        const res = await axios.get(url);
-        setSemestres(res.data);
-      } catch (err) {
-        handleApiError(err, "chargement des semestres");
-      } finally {
-        setLoading(prev => ({ ...prev, semestres: false }));
-      }
-    };
-    fetchSemestres();
-  }, [selectedAnnee]);
+    const loadFilieres = async () => {
+      if (!selectedClasse) return;
 
-  useEffect(() => {
-    const fetchClasses = async () => {
-      if (!selectedAnnee || !selectedSemestre) return setClasses([]);
-      setLoading(prev => ({ ...prev, classes: true }));
-      try {
-        const res = await axios.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CLASSES}?annee=${selectedAnnee}`);
-        setClasses(res.data);
-      } catch (err) {
-        handleApiError(err, "chargement des classes");
-      } finally {
-        setLoading(prev => ({ ...prev, classes: false }));
-      }
-    };
-    fetchClasses();
-  }, [selectedAnnee, selectedSemestre]);
-
-  useEffect(() => {
-    const checkLyceeAndFetchFilieres = async () => {
-      if (!selectedClasse) return setIsLycee(false);
       const classe = classes.find(c => c.id === parseInt(selectedClasse));
-      const isLycee = classe?.niveau === "Secondaire";
-      setIsLycee(isLycee);
-      if (!isLycee) return setFilieres([]);
+      setIsLycee(classe?.niveau === "Secondaire");
 
-      setLoading(prev => ({ ...prev, filieres: true }));
-      try {
-        const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.FILIERES.replace(':classeId', selectedClasse)}`;
-        const res = await axios.get(url);
-        const filieresData = res.data.filiere ? [res.data.filiere] : res.data.filieres || [];
-        setFilieres(filieresData);
-        if (filieresData.length) setSelectedFiliere(filieresData[0].id);
-      } catch (err) {
-        handleApiError(err, "chargement des filières");
-      } finally {
-        setLoading(prev => ({ ...prev, filieres: false }));
+      if (classe?.niveau === "Secondaire") {
+        setIsLoadingFilieres(true);
+        try {
+          const response = await axios.get(
+            `http://127.0.0.1:8000/api/classes/${selectedClasse}/filieres`
+          );
+          const filieresData = response.data.filiere ? 
+            [response.data.filiere] : 
+            response.data.filieres || [];
+          
+          setFilieres(filieresData);
+          setForm(prev => ({ 
+            ...prev, 
+            filiere_id: filieresData[0]?.id || '',
+            matiere_id: ''
+          }));
+        } catch (err) {
+          console.error("Erreur chargement filières:", err);
+          setFilieres([]);
+        } finally {
+          setIsLoadingFilieres(false);
+        }
+      } else {
+        setFilieres([]);
+        setForm(prev => ({ ...prev, filiere_id: '' }));
       }
     };
-    checkLyceeAndFetchFilieres();
+
+    loadFilieres();
   }, [selectedClasse, classes]);
 
+  // Charger les matières
   useEffect(() => {
-    const fetchMatieres = async () => {
-      if (!selectedClasse || !utilisateur?.id) return setMatieres([]);
-      setLoading(prev => ({ ...prev, matieres: true }));
+    const loadMatieres = async () => {
+      if (!selectedClasse || !professeurId) return;
+
+      setIsLoadingMatieres(true);
       try {
-        const url = isLycee && selectedFiliere
-          ? `${API_CONFIG.BASE_URL}/professeurs/${utilisateur.id}/classes/${selectedClasse}/filieres/${selectedFiliere}/matieres`
-          : `${API_CONFIG.BASE_URL}/professeurs/${utilisateur.id}/classes/${selectedClasse}/matieres`;
-        const res = await axios.get(url);
-        setMatieres(res.data);
+        let apiUrl;
+        if (isLycee && form.filiere_id) {
+          apiUrl = `http://127.0.0.1:8000/api/professeurs/${professeurId}/classes/${selectedClasse}/filieres/${form.filiere_id}/matieres`;
+        } else {
+          apiUrl = `http://127.0.0.1:8000/api/professeurs/${professeurId}/classes/${selectedClasse}/matieres`;
+        }
+
+        const response = await axios.get(apiUrl);
+        setMatieres(response.data);
+        setForm(prev => ({ ...prev, matiere_id: '' }));
       } catch (err) {
-        handleApiError(err, "chargement des matières");
+        console.error("Erreur chargement matières:", err);
+        setMatieres([]);
       } finally {
-        setLoading(prev => ({ ...prev, matieres: false }));
+        setIsLoadingMatieres(false);
       }
     };
-    fetchMatieres();
-  }, [selectedClasse, selectedFiliere, isLycee, utilisateur]);
 
-  const fetchFichiers = useCallback(async () => {
-    if (!utilisateur?.id || !selectedClasse || !selectedSemestre || !selectedMatiere) return;
-    setLoading(prev => ({ ...prev, fichiers: true }));
-    try {
-      const res = await axios.get(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.FICHIERS}`, {
-        params: {
-          classe_id: selectedClasse,
-          semestre_id: selectedSemestre,
-          matiere_id: selectedMatiere
-        },
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-      });
-      setFichiersListe(res.data.data || res.data);
-    } catch (err) {
-      handleApiError(err, "chargement des fichiers");
-    } finally {
-      setLoading(prev => ({ ...prev, fichiers: false }));
-    }
-  }, [utilisateur, selectedClasse, selectedSemestre, selectedMatiere]);
+    loadMatieres();
+  }, [selectedClasse, professeurId, isLycee, form.filiere_id]);
 
-  useEffect(() => {
-    fetchFichiers();
-  }, [fetchFichiers]);
-
-  const validateFile = (file) => {
-    if (!file) return setError("Veuillez sélectionner un fichier");
-    const validTypes = [
-      'application/pdf', 'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/vnd.ms-powerpoint',
-      'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-    ];
-    if (!validTypes.includes(file.type)) {
-      return setError("Type de fichier non supporté");
+  const handleChange = e => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+    
+    if (name === 'classe_id') {
+      setSelectedClasse(value);
+      setForm(prev => ({ 
+        ...prev, 
+        classe_id: value,
+        matiere_id: '',
+        filiere_id: '' 
+      }));
     }
-    if (file.size > 10 * 1024 * 1024) {
-      return setError("Fichier trop volumineux (>10MB)");
-    }
-    return true;
   };
 
-  const handleSubmit = async (e) => {
+  const validateForm = () => {
+    if (!form.classe_id || !form.matiere_id || !form.date || 
+        !form.jour || !form.heure_debut || !form.heure_fin) {
+      return "Tous les champs sont obligatoires";
+    }
+
+    const now = new Date();
+    const startDate = new Date(`${form.date}T${form.heure_debut}`);
+    const endDate = new Date(`${form.date}T${form.heure_fin}`);
+
+    if (startDate >= endDate) {
+      return "L'heure de fin doit être après l'heure de début";
+    }
+
+    if (startDate < now) {
+      return "La date doit être dans le futur";
+    }
+
+    return null;
+  };
+
+  const handleSubmit = async e => {
     e.preventDefault();
-    setError(null);
-    setSuccess(null);
-    if (!validateFile(fichier)) return;
-
-    const formData = new FormData();
-    formData.append('fichier', fichier); // Envoie du fichier avec le nom 'fichier'
-    formData.append('type_fichier', selectedType);
-    formData.append('classe_id', selectedClasse);
-    formData.append('semestre_id', selectedSemestre);
-    formData.append('matiere_id', selectedMatiere);
-    formData.append('professeur_id', utilisateur?.id);
-
-    try {
-        setLoading(prev => ({ ...prev, submission: true }));
-        await axios.post(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.FICHIERS}`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-                'Authorization': `Bearer ${localStorage.getItem('token')}`
-            }
-        });
-        setSuccess("Fichier envoyé avec succès !");
-        setFichier(null);
-        e.target.reset();
-        fetchFichiers();
-    } catch (err) {
-        handleApiError(err, "l'envoi du fichier");
-    } finally {
-        setLoading(prev => ({ ...prev, submission: false }));
+    setSubmitError('');
+    
+    const validationError = validateForm();
+    if (validationError) {
+      setSubmitError(validationError);
+      return;
     }
-};
 
-  const handleDownload = (id) => {
-    window.open(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.FICHIERS}/${id}/download`, '_blank');
-  };
+    setIsSubmitting(true);
 
-  const handleDelete = async (id) => {
-    if (!window.confirm("Confirmer la suppression ?")) return;
     try {
-      await axios.delete(`${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.FICHIERS}/${id}`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      await api.post('/examens', form);
+      navigate('/', { 
+        state: { 
+          message: 'Examen ajouté avec succès',
+          type: 'success'
+        } 
       });
-      setSuccess("Fichier supprimé !");
-      fetchFichiers();
-    } catch (err) {
-      handleApiError(err, "la suppression");
+    } catch (error) {
+      console.error("Erreur création examen", error);
+      setSubmitError(error.response?.data?.message || "Erreur lors de la création");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setError(null);
-      setSuccess(null);
-    }, 5000);
-    return () => clearTimeout(timer);
-  }, [error, success]);
+  if (isLoadingClasses || !utilisateur) {
+    return <div className="container mx-auto p-4">Chargement...</div>;
+  }
+
+  if (utilisateur?.role !== "professeur") {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
+          Accès réservé aux professeurs
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto p-4">
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
+          {error}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mt-4">
-      <h2 className="mb-4">Gestion des fichiers pédagogiques</h2>
-      {error && <div className="alert alert-danger">{error}</div>}
-      {success && <div className="alert alert-success">{success}</div>}
-      <div className="card mb-4">
-        <div className="card-header bg-primary text-white">
-          <h5>Ajouter un fichier</h5>
+    <div className="container mx-auto p-4 max-w-2xl">
+      <h2 className="text-2xl font-bold mb-6 text-center">Ajouter un Examen</h2>
+      
+      {submitError && (
+        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded">
+          {submitError}
         </div>
-        <div className="card-body">
-          <form onSubmit={handleSubmit}>
-            <div className="row mb-3">
-              <div className="col-md-3">
-                <div className="form-group">
-                  <label>Année Scolaire *</label>
-                  <select
-                    className="form-control"
-                    value={selectedAnnee}
-                    onChange={(e) => {
-                      setSelectedAnnee(e.target.value);
-                      setSelectedSemestre("");
-                      setSelectedClasse("");
-                      setSelectedMatiere("");
-                    }}
-                    disabled={loading.annees}
-                    required
-                  >
-                    <option value="">-- Choisir --</option>
-                    {annees.map(a => (
-                      <option key={a.id} value={a.id}>{a.annee}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="col-md-3">
-                <div className="form-group">
-                  <label>Semestre *</label>
-                  <select
-                    className="form-control"
-                    value={selectedSemestre}
-                    onChange={(e) => {
-                      setSelectedSemestre(e.target.value);
-                      setSelectedClasse("");
-                      setSelectedMatiere("");
-                    }}
-                    disabled={!selectedAnnee || loading.semestres}
-                    required
-                  >
-                    <option value="">-- Choisir --</option>
-                    {semestres.map(s => (
-                      <option key={s.id} value={s.id}>{s.nom}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="col-md-3">
-                <div className="form-group">
-                  <label>Classe *</label>
-                  <select
-                    className="form-control"
-                    value={selectedClasse}
-                    onChange={(e) => {
-                      setSelectedClasse(e.target.value);
-                      setSelectedMatiere("");
-                    }}
-                    disabled={!selectedSemestre || loading.classes}
-                    required
-                  >
-                    <option value="">-- Choisir --</option>
-                    {classes.map(c => (
-                      <option key={c.id} value={c.id}>{c.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              {isLycee && filieres.length > 0 && (
-                <div className="col-md-3">
-                  <div className="form-group">
-                    <label>Filière *</label>
-                    <select
-                      className="form-control"
-                      value={selectedFiliere}
-                      onChange={(e) => setSelectedFiliere(e.target.value)}
-                      disabled={loading.filieres}
-                      required
-                    >
-                      {filieres.map(f => (
-                        <option key={f.id} value={f.id}>{f.nom}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+      )}
+      
+      <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-md">
+        {/* Champs du formulaire */}
+        <div className="form-group">
+          <label className="block mb-2 font-medium">Classe :</label>
+          <select 
+            name="classe_id" 
+            onChange={handleChange} 
+            value={form.classe_id} 
+            required
+            className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+            disabled={isLoadingClasses}
+          >
+            <option value="">-- Choisir une classe --</option>
+            {classes.map(c => (
+              <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {isLycee && (
+          <div className="form-group">
+            <label className="block mb-2 font-medium">Filière :</label>
+            <select 
+              name="filiere_id" 
+              onChange={handleChange} 
+              value={form.filiere_id} 
+              required
+              className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+              disabled={isLoadingFilieres}
+            >
+              {filieres.length > 0 ? (
+                filieres.map(f => (
+                  <option key={f.id} value={f.id}>{f.nom}</option>
+                ))
+              ) : (
+                <option value="">Aucune filière disponible</option>
               )}
-            </div>
-            <div className="row mb-3">
-              <div className="col-md-4">
-                <div className="form-group">
-                  <label>Matière *</label>
-                  <select
-                    className="form-control"
-                    value={selectedMatiere}
-                    onChange={(e) => setSelectedMatiere(e.target.value)}
-                    disabled={!selectedClasse || loading.matieres}
-                    required
-                  >
-                    <option value="">-- Choisir --</option>
-                    {matieres.map(m => (
-                      <option key={m.id} value={m.id}>{m.nom}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="col-md-3">
-                <div className="form-group">
-                  <label>Type de fichier *</label>
-                  <select
-                    className="form-control"
-                    value={selectedType}
-                    onChange={(e) => setSelectedType(e.target.value)}
-                    required
-                  >
-                    {typesFichier.map(type => (
-                      <option key={type} value={type}>
-                        {type.charAt(0).toUpperCase() + type.slice(1)}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              <div className="col-md-5">
-                <div className="form-group">
-                  <label>Fichier *</label>
-                  <input
-                    type="file"
-                    className="form-control"
-                    onChange={(e) => setFichier(e.target.files[0])}
-                    accept=".pdf,.doc,.docx,.ppt,.pptx"
-                    required
-                  />
-                  <small className="text-muted">Formats acceptés: PDF, DOC, DOCX, PPT, PPTX (max 10MB)</small>
-                </div>
-              </div>
-            </div>
-            <div className="row">
-              <div className="col-md-12 d-flex justify-content-end">
-                <button
-                  type="submit"
-                  className="btn btn-primary"
-                  disabled={loading.submission}
-                >
-                  {loading.submission ? (
-                    <>
-                      <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                      Envoi en cours...
-                    </>
-                  ) : 'Envoyer le fichier'}
-                </button>
-              </div>
-            </div>
-          </form>
+            </select>
+          </div>
+        )}
+
+        <div className="form-group">
+          <label className="block mb-2 font-medium">Matière :</label>
+          <select 
+            name="matiere_id" 
+            onChange={handleChange} 
+            value={form.matiere_id} 
+            required
+            className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+            disabled={isLoadingMatieres}
+          >
+            <option value="">-- Choisir une matière --</option>
+            {matieres.map(m => (
+              <option key={m.id} value={m.id}>{m.nom}</option>
+            ))}
+          </select>
         </div>
-      </div>
-      <div className="card">
-        <div className="card-header bg-primary text-white">
-          <h5>Mes fichiers</h5>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="form-group">
+            <label className="block mb-2 font-medium">Date :</label>
+            <input 
+              type="date" 
+              name="date" 
+              onChange={handleChange} 
+              value={form.date}
+              required
+              min={new Date().toISOString().split('T')[0]}
+              className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500" 
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="block mb-2 font-medium">Jour :</label>
+            <select
+              name="jour" 
+              onChange={handleChange} 
+              value={form.jour}
+              required
+              className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="">-- Choisir un jour --</option>
+              {JOURS_SEMAINE.map(jour => (
+                <option key={jour} value={jour}>{jour}</option>
+              ))}
+            </select>
+          </div>
         </div>
-        <div className="card-body">
-          {loading.fichiers ? (
-            <div className="text-center">
-              <div className="spinner-border" role="status">
-                <span className="visually-hidden">Chargement...</span>
-              </div>
-            </div>
-          ) : fichiersListe.length > 0 ? (
-            <div className="table-responsive">
-              <table className="table table-striped">
-                <thead>
-                  <tr>
-                    <th>Nom</th>
-                    <th>Type</th>
-                    <th>Matière</th>
-                    <th>Date</th>
-                    <th>Taille</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {fichiersListe.map(f => (
-                    <tr key={f.id}>
-                      <td>{f.nom_fichier}</td>
-                      <td>
-                        <span className={`badge bg-${f.type === 'cours' ? 'primary' : f.type === 'devoir' ? 'warning' : 'danger'}`}>
-                          {f.type}
-                        </span>
-                      </td>
-                      <td>{f.matiere?.nom || '-'}</td>
-                      <td>{new Date(f.created_at).toLocaleDateString()}</td>
-                      <td>{(f.taille_fichier / 1024).toFixed(1)} KB</td>
-                      <td>
-                        <button 
-                          className="btn btn-sm btn-success me-2"
-                          onClick={() => handleDownload(f.id)}
-                        >
-                          <i className="bi bi-download me-1"></i>Télécharger
-                        </button>
-                        <button
-                          className="btn btn-sm btn-danger"
-                          onClick={() => handleDelete(f.id)}
-                        >
-                          <i className="bi bi-trash me-1"></i>Supprimer
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="alert alert-info">Aucun fichier disponible pour les critères sélectionnés</div>
-          )}
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="form-group">
+            <label className="block mb-2 font-medium">Heure Début :</label>
+            <input 
+              type="time" 
+              name="heure_debut" 
+              onChange={handleChange} 
+              value={form.heure_debut}
+              required
+              className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="form-group">
+            <label className="block mb-2 font-medium">Heure Fin :</label>
+            <input 
+              type="time" 
+              name="heure_fin" 
+              onChange={handleChange} 
+              value={form.heure_fin}
+              required
+              className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
-      </div>
+
+        <div className="flex justify-end">
+          <button 
+            type="submit" 
+            disabled={isSubmitting}
+            className={`px-6 py-2 rounded text-white font-medium ${
+              isSubmitting ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'
+            }`}
+          >
+            {isSubmitting ? 'Envoi en cours...' : 'Ajouter l\'examen'}
+          </button>
+        </div>
+      </form>
     </div>
   );
-};
+}
 
-export default AjouterFichier;
+export default AjouterExamen;
