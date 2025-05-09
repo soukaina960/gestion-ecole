@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const IncidentList = () => {
+  const [etudiantId, setEtudiantId] = useState(null);
   const [incidents, setIncidents] = useState([]);
   const [etudiants, setEtudiants] = useState([]);
   const [professeurs, setProfesseurs] = useState([]);

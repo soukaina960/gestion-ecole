@@ -17,7 +17,7 @@ import Login from './Login';
 import CreateAccount from './pages/CreateAccount';
 import Dashboard from './components/Dashboard';
 import Fonctionnaliter from './acceuil/Fonctionnaliter';
-
+import ComparaisonRestesParMois from './components/ComparaisonRestesParMois'
 // Admin components
 import CreneauList from './components/crenau';
 import EmploiTempsForm from './components/EmploiTempsForm';
@@ -36,6 +36,7 @@ import Evenements from './components/evenementGestion';
 import EmploiTempsParProf from './components/emploiprof';
 import AjouterExamen from './components/AjouterExamen';
 import DemandeAttestationList from './components/DemandeAttestationList';
+
 
 // Surveillant components
 import SurveillantDashboard from './Surveillant/SurveillantDashboard';
@@ -69,6 +70,7 @@ import EtudiantInfos from './components/Etudiant/EtudiantInfos';
 import EtudiantPayer from './components/Etudiant/EtudiantPayer';
 import ListeDemandesEtudiant from './components/Etudiant/MesDemandes';
 import DemanderAttestation from './components/Etudiant/DemandeEtudiant';
+import DiagrammeLigneRestes from './components/ComparaisonRestesParMois';
 
 function App() {
   return (
@@ -79,7 +81,10 @@ function App() {
         <Route path="/login" element={<Login />} />
         <Route path="/chart" element={<ChatBot />} />
         <Route path="/creer-compte" element={<CreateAccount />} />
-
+        <Route path="matiere" element={<MatiereManager />} />
+        <Route path="filiere" element={<FiliereManager />} />
+        <Route path="charge" element={<ChargeForm />} />
+        <Route path='/ComparaisonRestesParMois' element={<DiagrammeLigneRestes />} />
         {/* Surveillant routes */}
         <Route path="/surveillant" element={<SurveillantLayout />}>
           <Route index element={<SurveillantDashboard />} />
