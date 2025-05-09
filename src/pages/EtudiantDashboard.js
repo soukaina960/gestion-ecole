@@ -7,6 +7,8 @@ import EtudiantInfos from '../components/Etudiant/EtudiantInfos';
 import DemandeAttestation from '../components/Etudiant/DemandeAttestation'; // Assuming you have a component for this
 import './DashboardEtudiant.css'; // Assuming you have a CSS file for styles
 import MesExamens from '../components/Etudiant/MesExamens';
+import EtudiantQuiz from '../components/Etudiant/EtudiantQuiz'; // Assuming you have a component for this
+import EmploiDuTemps from '../components/Etudiant/EmploiDuTemps';
 
 const EtudiantDashboard = () => {
     const [utilisateur, setUtilisateur] = useState(null);
@@ -80,6 +82,21 @@ const EtudiantDashboard = () => {
                         demande attestation
                     </button>
                     <button 
+                        onClick={() => handleSectionChange("quiz")}
+                        className="sidebar-button"
+                    >
+                        quiz
+                    </button>
+                    <button 
+                        onClick={() => handleSectionChange("EmploiDuTemps")}
+                        className="sidebar-button"
+                    >
+                        Emploi du temps 
+
+                    </button>
+
+
+                    <button 
                         onClick={() => handleSectionChange("infos")}
                         className="sidebar-button"
                     >
@@ -99,6 +116,11 @@ const EtudiantDashboard = () => {
                 {activeSection === "notes" && <EtudiantNotes />}
                 {activeSection === "absences" && <EtudiantAbsences />}
                 {activeSection === "examens" && <MesExamens />}
+
+                   {activeSection === "quiz" && <EtudiantQuiz />}
+                {activeSection === "EmploiDuTemps" && <EmploiDuTemps />} {/* Assuming you have a component for this */}
+
+                 
                 {activeSection === "attestation" && <DemandeAttestation />}
                 {activeSection === "infos" && <EtudiantInfos />}
                

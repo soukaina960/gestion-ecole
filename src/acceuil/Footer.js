@@ -99,6 +99,10 @@ const styles = {
 };
 
 
+<<<<<<< HEAD
+=======
+
+>>>>>>> 4ff383b4df22939c6201cdb25dd2d9a2fa2fbfa6
 
 const Footer = () => {
   const controls = useAnimation();
@@ -230,7 +234,7 @@ const Footer = () => {
                 rel="noopener noreferrer"
                 variants={itemVariants}
                 whileHover="hover"
-                // variants={socialVariants}
+                variants={socialVariants}
               >
                 {social.icon}
               </motion.a>

@@ -230,6 +230,7 @@ export default function EtudiantList() {
     return matchesSearch && matchesClass;
   });
   return (
+<<<<<<< HEAD
     <div className="container-fluid py-4">
       <div className="row mb-4 align-items-center">
         <div className="col-md-6">
@@ -262,6 +263,206 @@ export default function EtudiantList() {
                 <option key={classe.id} value={classe.id}>
                   {classe.name}
                 </option>
+=======
+<div className=" mt-4">
+   <h3 className="mb-4 text-center">Formulaire d'édition étudiant</h3>
+  <div className="row mb-3">
+    <div className="col-md-3">
+      <input
+        className="form-control"
+        placeholder="Nom"
+        value={nom}
+        onChange={(e) => setNom(e.target.value)}
+      />
+    </div>
+    <div className="col-md-3">
+      <input
+        className="form-control"
+        placeholder="Prénom"
+        value={prenom}
+        onChange={(e) => setPrenom(e.target.value)}
+      />
+    </div>
+    <div className="col-md-3">
+      <input
+        className="form-control"
+        placeholder="Email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+    </div>
+    <div className="col-md-3">
+      <input
+        className="form-control"
+        placeholder="Matricule"
+        value={matricule}
+        onChange={(e) => setMatricule(e.target.value)}
+      />
+    </div>
+  </div>
+
+  <div className="row mb-3">
+    <div className="col-md-3">
+      <input
+        type="date"
+        className="form-control"
+        placeholder="Date de Naissance"
+        value={dateNaissance}
+        onChange={(e) => setDateNaissance(e.target.value)}
+      />
+    </div>
+    <div className="col-md-3">
+      <select
+        className="form-select"
+        value={sexe}
+        onChange={(e) => setSexe(e.target.value)}
+      >
+        <option value="M">Masculin</option>
+        <option value="F">Féminin</option>
+      </select>
+    </div>
+    <div className="col-md-3">
+      <input
+        className="form-control"
+        placeholder="Adresse"
+        value={adresse}
+        onChange={(e) => setAdresse(e.target.value)}
+      />
+    </div>
+    <div className="col-md-3">
+      <input
+        type="file"
+        onChange={handleFileChange}
+        className="form-control"
+      />
+    </div>
+  </div>
+
+  <div className="row mb-3">
+    <div className="col-md-3">
+      <select
+        className="form-select"
+        value={classId}
+        onChange={(e) => setClassId(e.target.value)}
+      >
+        <option value="">Sélectionner une classe</option>
+        {classes.map((classe) => (
+          <option key={classe.id} value={classe.id}>
+            {classe.name}
+          </option>
+        ))}
+      </select>
+    </div>
+    <div className="col-md-3">
+      <input
+        type="number"
+        className="form-control"
+        placeholder="Montant à payer"
+        value={montantAPayer}
+        onChange={(e) => setMontantAPayer(e.target.value)}
+      />
+    </div>
+    <div className="col-md-3">
+      <select
+        multiple
+        className="form-select"
+        value={selectedProfesseurs}
+        onChange={(e) =>
+          setSelectedProfesseurs(
+            Array.from(e.target.selectedOptions, (option) => option.value)
+          )
+        }
+      >
+        {professeurs.map((professeur) => (
+          <option key={professeur.id} value={professeur.id}>
+            {professeur.nom}
+          </option>
+        ))}
+      </select>
+    </div>
+    <div className="col-md-3">
+      {editing ? (
+        <button className="btn btn-warning w-100" onClick={handleUpdateEtudiant}>
+          Mettre à jour
+        </button>
+      ) : null}
+    </div>
+  </div>
+
+
+        {/* Liste des étudiants */}
+        <h2 className="text-center text-primary m-5">Liste des Étudiants</h2>
+        <div className="table-responsive w-100">
+          <table className="table table-striped table-hover">
+            <thead className="table-dark">
+              <tr>
+                <th>Nom</th>
+                <th>Email</th>
+                <th>Classe</th>
+                <th>Montant</th>
+                <th>Professeurs</th>
+                <th>Paiement</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {etudiants.map((etudiant) => (
+                <tr key={etudiant.id}>
+                  <td>
+                    <Link to={`/etudiants/${etudiant.id}`} className="text-decoration-none text-primary">
+                      {etudiant.nom}
+                    </Link>
+                  </td>
+                  <td>{etudiant.email}</td>
+                  <td>{etudiant.montant_a_payer} MAD</td>
+                  <td>
+                    {etudiant.professeurs && etudiant.professeurs.length > 0 ? (
+                      etudiant.professeurs.map((prof, index) => (
+                        <span key={prof.id}>{prof.nom}{index < etudiant.professeurs.length - 1 ? ', ' : ''}</span>
+                      ))
+                    ) : (
+                      <span>Aucun professeur assigné</span>
+                    )}
+                  </td>
+                  <td>
+                    {aPayeCeMois(etudiant.id) ? (
+                      <span className="badge bg-success">Payé</span>
+                    ) : (
+                      <button
+                        className="btn btn-primary btn-sm"
+                        onClick={() => handlePaiement(etudiant.id)}
+                      >
+                        Payer
+                      </button>
+                    )}
+                  </td>
+                  <td>
+  <div className="dropdown">
+    <button
+      className="btn btn-light dropdown-toggle"
+      type="button"
+      data-bs-toggle="dropdown"
+      aria-expanded="false"
+    >
+      <FaEye /> {/* Tu peux aussi mettre juste l'icône ici si tu veux un bouton minimal */}
+    </button>
+    <ul className="dropdown-menu">
+     
+      <li>
+        <button className="dropdown-item" onClick={() => handleEditEtudiant(etudiant)}>
+          <FaEdit className="me-2" /> Modifier
+        </button>
+      </li>
+      <li>
+        <button className="dropdown-item text-danger" onClick={() => handleDeleteEtudiant(etudiant.id)}>
+          <FaTrash className="me-2" /> Supprimer
+        </button>
+      </li>
+    </ul>
+  </div>
+</td>
+                </tr>
+>>>>>>> 4ff383b4df22939c6201cdb25dd2d9a2fa2fbfa6
               ))}
             </select>
           </div>

@@ -20,6 +20,7 @@ import EmploiTemps from "../components/EmploiTemps";
 import Dashboard from "../components/Dashboard";
 import ChargeForm from "../components/charge";
 import CalculSalaireProfesseur from "../components/CalculSalaire";
+<<<<<<< HEAD
 import GenererEmploiTemps from "../components/EmploiTemps";
 import EmploiTempsForm from "../components/EmploiTempsForm";
 import CreneauList from "../components/crenau";
@@ -28,6 +29,17 @@ import ConfigAttestationForm from '../components/ConfigAttestationForm';
 import EmploiTempsParProf from '../components/emploiprof';
 import Evenements from '../components/evenementGestion';
 import MatiereManager from "../components/matiere";
+=======
+import GenererEmploiTemps from "../components/EmploiTemps"; // Pour la génération de l'emploi du temps
+import EmploiTempsForm from "../components/EmploiTempsForm"; // Pour la gestion des emplois du temps
+import CreneauList from "../components/crenau"; // Pour la gestion des créneaux
+import { CalendarDays, PlusCircle, Settings } from 'lucide-react';
+import DemandeAttestationList from "../components/DemandeAttestationList"; // Pour la gestion des demandes d'attestation
+import ConfigAttestationForm from '../components/ConfigAttestationForm'; // Pour la configuration de l'attestation
+import EmploiTempsParProf from '../components/EmploiTemps'; // Pour l'emploi du temps des professeurs
+import Evenements from '../components/evenementGestion'; // Pour la gestion des événements
+
+>>>>>>> 4ff383b4df22939c6201cdb25dd2d9a2fa2fbfa6
 
 const AdminLayout = () => {
   const [activePage, setActivePage] = useState("reports");
