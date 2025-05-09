@@ -2,12 +2,14 @@ import React, { useState, useEffect, useRef } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import './layoutAdmin.css';
 import axios from 'axios';
-import { FaChevronDown, FaChevronUp, FaUsers, FaChalkboardTeacher, 
-         FaMoneyBill, FaChartBar, FaCog, FaMoon, FaSun, 
-         FaUserGraduate, FaUserTie, FaMoneyCheckAlt, FaGlobe,
-         FaSearch, FaSignOutAlt, FaBook } from "react-icons/fa";
+import { 
+  FaChevronDown, FaChevronUp, FaUsers, FaChalkboardTeacher, 
+  FaMoneyBill, FaChartBar, FaCog, FaMoon, FaSun, 
+  FaUserGraduate, FaUserTie, FaMoneyCheckAlt, FaGlobe,
+  FaSearch, FaSignOutAlt, FaBook 
+} from "react-icons/fa";
 import { Link } from 'react-router-dom';
-import { ChevronDown, CalendarDays, Wallet } from 'lucide-react';
+import { ChevronDown, CalendarDays, Wallet, PlusCircle, Settings } from 'lucide-react';
 import { MdSchool } from "react-icons/md";
 
 // Import des composants
@@ -20,26 +22,15 @@ import EmploiTemps from "../components/EmploiTemps";
 import Dashboard from "../components/Dashboard";
 import ChargeForm from "../components/charge";
 import CalculSalaireProfesseur from "../components/CalculSalaire";
-<<<<<<< HEAD
+import DemandeAttestationList from "../components/DemandeAttestationList";
+import ConfigAttestationForm from '../components/ConfigAttestationForm';
+import EmploiTempsParProf from '../components/emploiparprof';
+import Evenements from '../components/evenementGestion';
+import MatiereManager from "../components/matiere";
 import GenererEmploiTemps from "../components/EmploiTemps";
 import EmploiTempsForm from "../components/EmploiTempsForm";
 import CreneauList from "../components/crenau";
-import DemandeAttestationList from "../components/DemandeAttestationList";
-import ConfigAttestationForm from '../components/ConfigAttestationForm';
-import EmploiTempsParProf from '../components/emploiprof';
-import Evenements from '../components/evenementGestion';
-import MatiereManager from "../components/matiere";
-=======
-import GenererEmploiTemps from "../components/EmploiTemps"; // Pour la génération de l'emploi du temps
-import EmploiTempsForm from "../components/EmploiTempsForm"; // Pour la gestion des emplois du temps
-import CreneauList from "../components/crenau"; // Pour la gestion des créneaux
-import { CalendarDays, PlusCircle, Settings } from 'lucide-react';
-import DemandeAttestationList from "../components/DemandeAttestationList"; // Pour la gestion des demandes d'attestation
-import ConfigAttestationForm from '../components/ConfigAttestationForm'; // Pour la configuration de l'attestation
-import EmploiTempsParProf from '../components/EmploiTemps'; // Pour l'emploi du temps des professeurs
-import Evenements from '../components/evenementGestion'; // Pour la gestion des événements
-
->>>>>>> 4ff383b4df22939c6201cdb25dd2d9a2fa2fbfa6
+import DiagrammeLigneRestes from '../components/ComparaisonRestesParMois';
 
 const AdminLayout = () => {
   const [activePage, setActivePage] = useState("reports");
@@ -52,11 +43,18 @@ const AdminLayout = () => {
   const [showRetardsModal, setShowRetardsModal] = useState(false);
   const [etudiantsEnRetard, setEtudiantsEnRetard] = useState([]);
   const dropdownRef = useRef(null);
-
+  const handleLogout = () => {
+    // Supprimer le token ou les infos de session
+    localStorage.removeItem('authToken');
+    // Rediriger vers la page de login
+    window.location.href = '/login';
+  };
   const handleMenuItemClick = (page) => {
     setActivePage(page);
     setOpen(false);
   };
+ 
+  
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -164,6 +162,7 @@ const AdminLayout = () => {
       case "evenements": return <Evenements />;
       case "matiere": return <MatiereManager />;
       case "filiere": return <FiliereManager />;
+      case"diagramme": return <DiagrammeLigneRestes />;
       default: return <Dashboard />;
     }
   };
@@ -205,7 +204,7 @@ const AdminLayout = () => {
             {darkMode ? <FaSun /> : <FaMoon />}
           </button>
 
-          <button className="logout-btn mb-3">
+          <button className="logout-btn mb-3" onClick={handleLogout}>
             <FaSignOutAlt />
           </button>
         </div>
@@ -216,14 +215,33 @@ const AdminLayout = () => {
         {/* Sidebar */}
         <div className="sidebar">
           <div className="sidebar-menu">
-            <button 
-              className={`sidebar-button ${activePage === "reports" ? "active" : ""}`}
-              onClick={() => setActivePage("reports")}
-            >
-              <FaChartBar className="sidebar-icon" />
-              <span>Dashboard</span>
-            </button>
+          <div className="dropdown-container">
+  <button
+    className={`sidebar-button ${activePage === "dropdown" ? "active" : ""}`}
+    onClick={() => setActivePage(activePage === "dropdown" ? "" : "dropdown")}
+  >
+    <FaChartBar className="sidebar-icon" />
+    <span>Dashboard</span>
+    <ChevronDown className={`dropdown-arrow ${activePage === "dropdown" ? "rotate" : ""}`} />
+  </button>
 
+  {activePage === "dropdown" && (
+    <div className="dropdown-menu w-100">
+                <button 
+                  className={`sidebar-button ${activePage === "reports" ? "active" : ""}`}
+                  onClick={() => setActivePage("reports")}
+                >
+                  Tableau de bord principal
+                </button>
+                <button 
+                  className={`sidebar-button ${activePage === "diagramme" ? "active" : ""}`}
+                  onClick={() => setActivePage("diagramme")}
+                >
+                  Diagramme des Restes
+                </button>
+              </div>
+            )}
+          </div>
             <button 
               className={`sidebar-button ${activePage === "users" ? "active" : ""}`}
               onClick={() => setActivePage("users")}

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import axios from 'axios';
+import "bootstrap/dist/css/bootstrap.min.css";
+import "bootstrap-dark-5/dist/css/bootstrap-dark.min.css"; // Pour le dark mode Bootstrap
 import {
   FaUsers, FaChalkboardTeacher, FaClock, FaMoneyBill, FaChartBar,
   FaCog, FaMoon, FaSun, FaUserGraduate, FaUserTie, FaMoneyCheckAlt, FaUserSlash, FaGlobe
@@ -25,7 +27,6 @@ import { CalendarDays, PlusCircle, Settings } from 'lucide-react';
 import DemandeAttestationList from "../components/DemandeAttestationList"; // Pour la gestion des demandes d'attestation
 import ConfigAttestationForm from '../components/ConfigAttestationForm'; // Pour la configuration de l'attestation
 import Evenements from '../components/evenementGestion'; // Pour la gestion des événements
-import EmploiTempsParProf from '../components/EmploiProf';
 
 
 const AdminLayout = () => {
@@ -104,10 +105,16 @@ const AdminLayout = () => {
       .catch((err) => console.error("Erreur chargement absences:", err));
   }, []);
 
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", darkMode);
-    document.body.classList.toggle("dark", darkMode);
-  }, [darkMode]);
+  // Remplacez votre useEffect pour le dark mode par :
+useEffect(() => {
+  if (darkMode) {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    document.body.classList.add('dark-theme');
+  } else {
+    document.documentElement.removeAttribute('data-theme');
+    document.body.classList.remove('dark-theme');
+  }
+}, [darkMode]);
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);

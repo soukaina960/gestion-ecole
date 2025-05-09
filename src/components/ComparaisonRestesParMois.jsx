@@ -90,7 +90,7 @@ const DiagrammeLigneRestes = () => {
   }
 
   return (
-    <div className="p-4 bg-white shadow rounded" aria-label="Graphique d'évolution du reste mensuel">
+    <div className="p-4 bg-white shadow rounded w-100" aria-label="Graphique d'évolution du reste mensuel">
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Évolution du reste mensuel ({annee})</h2>
         <select 

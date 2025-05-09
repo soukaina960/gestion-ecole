@@ -578,3 +578,59 @@
       padding-bottom: 70px;
     }
   }
+  /* Dark Mode Styles */
+.admin-layout.dark {
+  --bg-color: #1a1a1a;
+  --text-color: #f0f0f0;
+  --sidebar-bg: #222;
+  --sidebar-text: #eee;
+  --nav-bg: #252525;
+  --card-bg: #2d2d2d;
+  --border-color: #444;
+}
+
+/* Light Mode Styles (par défaut) */
+.admin-layout {
+  --bg-color: #f8f9fa;
+  --text-color: #333;
+  --sidebar-bg: #343a40;
+  --sidebar-text: rgba(255, 255, 255, 0.8);
+  --nav-bg: #ffffff;
+  --card-bg: #ffffff;
+  --border-color: #dee2e6;
+}
+
+/* Application des variables CSS */
+.admin-layout,
+.admin-layout.dark {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+.top-nav {
+  background-color: var(--nav-bg);
+}
+
+.sidebar {
+  background-color: var(--sidebar-bg);
+  color: var(--sidebar-text);
+}
+
+/* Ajoutez d'autres éléments qui doivent changer de couleur */
+.content {
+  background-color: var(--bg-color);
+}
+
+.card {
+  background-color: var(--card-bg);
+  border-color: var(--border-color);
+}
+
+/* Style pour les boutons et autres éléments */
+.sidebar-button {
+  color: var(--sidebar-text);
+}
+
+.sidebar-button:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
