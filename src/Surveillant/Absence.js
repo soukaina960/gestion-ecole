@@ -16,7 +16,7 @@ const Absence = () => {
   const [selectedMatiereId, setSelectedMatiereId] = useState('');
 
   const surveillantId = localStorage.getItem('surveillant_id'); // Récupérer l'ID du surveillant depuis le localStorage
-
+console.log("Surveillant ID:", surveillantId); // Vérification de l'ID du surveillant
   useEffect(() => {
     if (selectedClassId && selectedProfesseurId) {
       axios.get(`http://localhost:8000/api/matieres-par-prof-classe`, {
