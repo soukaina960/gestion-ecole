@@ -1,11 +1,11 @@
-// Librairies & CSS
+// Librairies & UtilisateurFormSS
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 
 
 // CSS & Bootstrap
 
-import Layout from './acceuil/Layout';
+
 import SurveillantLayout from './Surveillant/SurveillantLayout';
 import ParentLayout from './Parent/ParentLayout';
 
@@ -14,22 +14,17 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import './App.css';
 
 
-// Composants communs
-import ProtectedRoute from './components/ProtectedRoute';
-import Navbar from './acceuil/Navbar';
-import Footer from './acceuil/Footer';
+
 
 // Layouts
-import Layout from './acceuil/Layout';
-import SurveillantLayout from './Surveillant/SurveillantLayout';
-import ParentLayout from './Parent/ParentLayout';
-import AdminLayout from './layout/layoutAdmin';
+
+
+
 
 // Composants partagés
 import Acceuil from './acceuil/index';
 import ProtectedRoute from './components/ProtectedRoute';
-import ChatBot from './components/ChatBot';
-import Fonctionnaliter from './acceuil/Fonctionnaliter';
+
 
 
 // Pages générales
@@ -40,38 +35,13 @@ import Fonctionnaliter from './acceuil/Fonctionnaliter';
 import Dashboard from './components/Dashboard';
 
 // Dashboards
-import AdminDashboard from './pages/AdminDashboard';
-import EnseignantDashboard from './pages/EnseignantDashboard';
-import EtudiantDashboard from './pages/EtudiantDashboard';
-import ParentDashboard from './Parent/ParentDashboard';
-import SurveillantDashboard from './Surveillant/SurveillantDashboard';
 
 // Surveillant
-import AbsenceList from './Surveillant/Absence';
-import RetardList from './Surveillant/Retard';
-import IncidentList from './Surveillant/Incident';
+
 import AbsenceSanctionTable from './Surveillant/ListAbsence';
-import ListeRetards from './Surveillant/ListRetard';
-import ListeIncidents from './Surveillant/ListIncident';
-import SurveillantReclamationList from './Surveillant/ListReclamations';
-import AjouterExamen from './components/AjouterExamen';
 import SurveillantProfile from './Surveillant/SurveillantProfile';
 import BulletinForm from './Surveillant/Bulletin';
 
-// Parent
-import ParentProfile from './Parent/ParentProfile';
-import Absences from './Parent/Absences';
-import Retards from './Parent/Retards';
-import Notes from './Parent/Notes';
-import Incidents from './Parent/Incident';
-import ParentReclamationForm from './Parent/ParentReclamation';
-import PaiementsParent from './Parent/ParentPayment';
-
-// Admin - Gestion
-import CreneauList from './components/crenau';
-import EmploiTempsForm from './components/EmploiTempsForm';
-import GenererEmploiTemps from './components/EmploiTemps';
-import EmploiDuTempsComplet from './components/listeemploi';
 
 
 // Admin components
@@ -88,41 +58,36 @@ import MatiereManager from './components/matiere';
 
 // Étudiant
 
-import AjouterFichier from './components/AjouterFichier';
-import EnregistrerAbsence from './components/EnregistrerAbsence';
-import EtudiantDetail from './components/EtudiantDetail';
-import ProfesseurDetail from './components/ProfDetail';
+
 import EmploiDuTempsComplet from './components/listeemploi';
 import GenererEmploiTemps from './components/EmploiTemps';
-import Evenements from './components/evenementGestion';
 import AjouterExamen from './components/AjouterExamen';
-import DemandeAttestationList from './components/DemandeAttestationList';
 
+import EnseignantDashboard from './pages/EnseignantDashboard';
 // Surveillant components
 import SurveillantDashboard from './Surveillant/SurveillantDashboard';
 import AbsenceList from './Surveillant/Absence';
-import EmploiList from './Surveillant/EmploiSur';
 import IncidentList from './Surveillant/Incident';
 import RetardList from './Surveillant/Retard';
-import NotificationList from './Surveillant/Notification';
-import AbsenceTable from './Surveillant/ListAbsence';
 import ListeRetards from './Surveillant/ListRetard';
 import ListeIncidents from './Surveillant/ListIncident';
 import SurveillantReclamationList from './Surveillant/ListReclamations';
 
 // Parent components
-import ParentDashboard from './Parent/ParentDashboard';
-import Notes from './Parent/Notes';
-import Retards from './Parent/Retards';
-import Absences from './Parent/Absences';
-import Incidents from './Parent/Incident';
-import ParentProfile from './Parent/ParentProfile';
-import ParentReclamationForm from './Parent/ParentReclamation';
-import PaiementsParent from './Parent/ParentPayment';
+
+
+// import ParentDashboard from './Parent/ParentDashboard';
+// import Notes from './Parent/Notes';
+// import Retards from './Parent/Retards';
+// import Absences from './Parent/Absences';
+// import Incidents from './Parent/Incident';
+// import ParentProfile from './Parent/ParentProfile';
+// import ParentReclamationForm from './Parent/ParentReclamation';
+// import PaiementsParent from './Parent/ParentPayment';
 
 // Etudiant components
 import EtudiantDashboard from './pages/EtudiantDashboard';
-import EnseignantDashboard from './pages/EnseignantDashboard';
+
 
 import EtudiantCours from './components/Etudiant/EtudiantCours';
 import EtudiantNotes from './components/Etudiant/EtudiantNotes';
@@ -142,7 +107,7 @@ import ProfesseurDetail from './components/ProfDetail';
 import DemandeAttestationList from './components/DemandeAttestationList';
 import ChatBot from './components/ChatBot';
 import Evenements from './components/evenementGestion';
-import EmploiTempsParProf from './components/emploiprof';
+import EmploiTempsParProf from './components/emploiparprof';
 
 // Styles
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -267,56 +232,15 @@ function App() {
 
 
         {/* Protected parent routes */}
-        <Route path="/parent" element={<ParentLayout />}>
-          <Route path="" element={<ParentDashboard />} />
-          <Route path="parent-profile" element={<ParentProfile />} />
-          <Route path="absences-parent" element={<Absences />} />
-          <Route path="retards-parent" element={<Retards />} />
-          <Route path="notes-parent" element={<Notes />} />
-          <Route path="incidents-parent" element={<Incidents />} />
-          <Route path="parent-reclamation" element={<ParentReclamationForm />} />
-          <Route path="parent-paiement" element={<PaiementsParent />} />
-        </Route>
+        <Route path="/parent" element={<ParentLayout />} />
+
 
         {/* Protected surveillant routes */}
-        <Route path="/surveillant" element={<SurveillantLayout />}>
-          <Route path="" element={<SurveillantDashboard />} />
-          <Route path="surveillant-profile" element={<SurveillantProfile />} />
-          <Route path="absences" element={<AbsenceList />} />
-          <Route path="retards" element={<RetardList />} />
-          <Route path="incidents-surveillant" element={<IncidentList />} />
-          <Route path='reclamationList' element={<SurveillantReclamationList />} />
-          <Route path="absenceList" element={<AbsenceSanctionTable />} />
-          <Route path="retardList" element={<ListeRetards />} />
-          <Route path="incidentList" element={<ListeIncidents />} />
-          <Route path="bulletin-generate" element={<BulletinForm />} />
-        </Route>
+        <Route path="/surveillant" element={<SurveillantLayout />} />
 
         {/* Parent routes */}
-        <Route path="/parent" element={<ProtectedRoute allowedRoles={['parent']}><ParentLayout /></ProtectedRoute>}>
-          <Route index element={<ParentDashboard />} />
-          <Route path="profile" element={<ParentProfile />} />
-          <Route path="absences" element={<Absences />} />
-          <Route path="retards" element={<Retards />} />
-          <Route path="notes" element={<Notes />} />
-          <Route path="incidents" element={<Incidents />} />
-          <Route path="reclamation" element={<ParentReclamationForm />} />
-          <Route path="paiement" element={<PaiementsParent />} />
-        </Route>
 
-        {/* Surveillant routes */}
-        <Route path="/surveillant" element={<ProtectedRoute allowedRoles={['surveillant']}><SurveillantLayout /></ProtectedRoute>}>
-          <Route index element={<SurveillantDashboard />} />
-          <Route path="absence" element={<AbsenceList />} />
-          <Route path="retard" element={<RetardList />} />
-          <Route path="incident" element={<IncidentList />} />
-          <Route path="emploi" element={<EmploiList />} />
-          <Route path="notification" element={<NotificationList />} />
-          <Route path="absenceList" element={<AbsenceTable />} />
-          <Route path="retardList" element={<ListeRetards />} />
-          <Route path="incidentList" element={<ListeIncidents />} />
-          <Route path="reclamationList" element={<SurveillantReclamationList />} />
-        </Route>
+
 
         {/* Route 404 - Add this if you have a NotFound component */}
         {/* <Route path="*" element={<NotFound />} /> */}

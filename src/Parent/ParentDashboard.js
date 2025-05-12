@@ -1,204 +1,129 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  CartesianGrid,
+  ResponsiveContainer,
+  Cell, // ✅ ICI l'ajout de Cell
+} from 'recharts';
+
 
 const ParentDashboard = () => {
   const [parent, setParent] = useState(null);
   const [stats, setStats] = useState({});
-  const [derniers, setDerniers] = useState([]);
-  const [evenements, setEvenements] = useState([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
     const token = localStorage.getItem('access_token');
-    const utilisateurId = localStorage.getItem('utilisateurId');
     const parentId = localStorage.getItem('parent_id');
 
-    if (!token || !utilisateurId) {
+    if (!token || !parentId) {
       setErrorMessage('Utilisateur non authentifié.');
       setLoading(false);
       return;
     }
 
     const fetchUserData = async () => {
-      if (parentId) {
-        try {
-          const response = await axios.get(`http://127.0.0.1:8000/api/parents/${parentId}`);
-          setParent(response.data);
-          setLoading(false);
-        } catch (error) {
-          console.error("Erreur lors de la récupération des données du parent", error);
-          setErrorMessage('Erreur lors de la récupération des données.');
-          setLoading(false);
-        }
+      try {
+        const response = await axios.get(`http://127.0.0.1:8000/api/parents/${parentId}`);
+        setParent(response.data);
+      } catch (error) {
+        setErrorMessage('Erreur lors de la récupération des données du parent.');
       }
     };
 
     const fetchParentData = async () => {
       try {
         const response = await axios.get(`http://127.0.0.1:8000/api/parent-dashboard/${parentId}`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         });
-        const data = response.data;
-        setStats(data.stats);
-        setDerniers(Array.isArray(data.derniers) ? data.derniers : []);
+        setStats(response.data.stats);
       } catch (error) {
-        console.error("Erreur lors de la récupération des données", error);
-        setErrorMessage('Erreur lors de la récupération des données.');
-      }
-    };
-
-    const fetchEvenements = async () => {
-      try {
-        const response = await axios.get(`http://127.0.0.1:8000/api/evenements`);
-        setEvenements(response.data);
-      } catch (error) {
-        console.error("Erreur lors de la récupération des événements", error);
+        setErrorMessage('Erreur lors de la récupération des statistiques.');
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchUserData();
     fetchParentData();
-    fetchEvenements();
   }, []);
 
-  if (loading) return <p>Chargement...</p>;
-  if (errorMessage) return <p>{errorMessage}</p>;
+  if (loading) return <p style={{ textAlign: 'center' }}>Chargement...</p>;
+  if (errorMessage) return <p style={{ textAlign: 'center', color: 'red' }}>{errorMessage}</p>;
 
-  const styles = {
-    container: {
-      padding: '30px',
-      fontFamily: "'Segoe UI', sans-serif",
-      color: '#333',
-    },
-    title: {
-      textAlign: 'center',
-      marginBottom: '30px',
-      color: '#2c3e50',
-    },
-    cardsContainer: {
-      display: 'flex',
-      flexWrap: 'wrap',
-      gap: '20px',
-      justifyContent: 'center',
-      marginBottom: '40px',
-    },
-    card: {
-      width: '200px',
-      height: '120px',
-      borderRadius: '12px',
-      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-      padding: '20px',
-      color: 'white',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-    h3: {
-      margin: 0,
-      fontSize: '18px',
-      fontWeight: 600,
-    },
-    p: {
-      margin: '8px 0 0',
-      fontSize: '28px',
-      fontWeight: 'bold',
-    },
-    section: {
-      backgroundColor: '#f8f9fa',
-      padding: '20px',
-      borderRadius: '12px',
-      marginTop: '30px',
-    },
-    eventItem: {
-      background: 'white',
-      padding: '12px 15px',
-      borderRadius: '8px',
-      marginBottom: '10px',
-      boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
-      fontSize: '15px',
-    },
-    sectionTitle: {
-      marginBottom: '15px',
-      color: '#34495e',
-    },
+  const graphData = [
+    { name: 'Moyenne', value: stats.moyenne },
+    { name: 'Retards', value: stats.retards },
+    { name: 'Notes', value: stats.notes },
+    { name: 'Incidents', value: stats.incidents },
+  ];
+
+  const containerStyle = {
+    padding: '50px',
+    fontFamily: 'Poppins, sans-serif',
+    background: 'linear-gradient(to right, #fdfbfb, #ebedee)',
+    minHeight: '100vh',
+    color: '#34495e',
   };
 
-  const cardColors = {
-    blue: '#3498db',
-    orange: '#e67e22',
-    green: '#27ae60',
-    red: '#e74c3c',
+  const titleStyle = {
+    textAlign: 'center',
+    fontSize: '28px',
+    color: '#2c3e50',
+    fontWeight: '600',
+    marginBottom: '40px',
+    borderBottom: '2px solid #3498db',
+    paddingBottom: '10px',
+    width: 'fit-content',
+    margin: '0 auto 40px auto',
+  };
+
+  const chartContainerStyle = {
+    boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+    borderRadius: '12px',
+    backgroundColor: '#ffffff',
+    padding: '20px',
+    height: 350,
   };
 
   return (
-    <div style={styles.container}>
-      <h2 style={styles.title}>
-        Bienvenue dans votre espace parent : {parent?.nom || 'Chargement...'}
+    <div style={containerStyle}>
+      <h2 style={titleStyle}>
+        Bienvenue dans votre espace parent : <span style={{ color: '#2980b9' }}>{parent?.nom}</span>
       </h2>
 
-      <div style={styles.cardsContainer}>
-        <div style={{ ...styles.card, backgroundColor: cardColors.blue }}>
-          <h3 style={styles.h3}>Moyenne</h3>
-          <p style={styles.p}>{stats.moyenne}</p>
-        </div>
-        <div style={{ ...styles.card, backgroundColor: cardColors.orange }}>
-          <h3 style={styles.h3}>Retards</h3>
-          <p style={styles.p}>{stats.retards}</p>
-        </div>
-        <div style={{ ...styles.card, backgroundColor: cardColors.green }}>
-          <h3 style={styles.h3}>Notes</h3>
-          <p style={styles.p}>{stats.notes}</p>
-        </div>
-        <div style={{ ...styles.card, backgroundColor: cardColors.red }}>
-          <h3 style={styles.h3}>Incidents</h3>
-          <p style={styles.p}>{stats.incidents}</p>
-        </div>
-      </div>
+      <div style={chartContainerStyle}>
+      <ResponsiveContainer width="100%" height="100%">
+  <BarChart
+    layout="vertical"
+    data={graphData}
+    margin={{ top: 20, right: 30, left: 100, bottom: 20 }}
+  >
+    <CartesianGrid strokeDasharray="3 3" />
+    <XAxis type="number" />
+    <YAxis type="category" dataKey="name" />
+    <Tooltip
+      contentStyle={{
+        backgroundColor: '#2980b9',
+        borderRadius: '8px',
+        color: '#fff',
+      }}
+    />
+    <Bar dataKey="value" barSize={25} radius={[5, 5, 0, 0]}>
+      {graphData.map((entry, index) => {
+        const colors = ['#f39c12', '#f1c40f', '#2ecc71', '#1abc9c']; // couleurs fraîches
+        return <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />;
+      })}
+    </Bar>
+  </BarChart>
+</ResponsiveContainer>
 
-      {/* Derniers événements */}
-      <div style={styles.section}>
-        <h3 style={styles.sectionTitle}>Derniers événements</h3>
-        <ul style={{ listStyle: 'none', padding: 0 }}>
-          {derniers.length > 0 ? (
-            derniers.map((item, index) => (
-              <li key={index} style={styles.eventItem}>
-                {item.type === 'note' && (
-                  <span>📝 Note en <strong>{item.matiere}</strong>: {item.valeur}/20 - {item.date}</span>
-                )}
-                {item.type === 'retard' && (
-                  <span>⏰ Retard le {item.date} à {item.heure}</span>
-                )}
-                {item.type === 'incident' && (
-                  <span>🚨 Incident: {item.desc} - {item.date}</span>
-                )}
-              </li>
-            ))
-          ) : (
-            <p>Aucun événement récent.</p>
-          )}
-        </ul>
-      </div>
-
-      {/* Tous les événements */}
-      <div style={styles.section}>
-        <h3 style={styles.sectionTitle}>Événements de l’établissement</h3>
-        <ul style={{ listStyle: 'none', padding: 0 }}>
-          {evenements.length > 0 ? (
-            evenements.map((ev, index) => (
-              <li key={index} style={styles.eventItem}>
-                📅 <strong>{ev.titre}</strong> - {ev.date_debut} → {ev.date_fin}<br />
-                📍 Lieu : {ev.lieu}<br />
-                📝 {ev.description}
-              </li>
-            ))
-          ) : (
-            <p>Aucun événement disponible.</p>
-          )}
-        </ul>
       </div>
     </div>
   );

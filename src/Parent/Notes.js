@@ -22,19 +22,13 @@ const NotesDashboard = () => {
         })
         .catch(err => {
           if (err.response && err.response.status === 404) {
-            // Le bulletin n'existe pas encore
-            setBulletin(null); // pas d'erreur, juste pas encore prêt
+            setBulletin(null); // Bulletin not yet available
           } else {
-            // Autre erreur (ex: serveur down)
             setError("Erreur lors du chargement du bulletin.");
           }
         });
     }
   }, [parentId]);
-  
-
-
-
 
   useEffect(() => {
     if (parentId) {
@@ -46,8 +40,6 @@ const NotesDashboard = () => {
         .catch(() => setError('Erreur lors du chargement des enfants.'));
     }
   }, [parentId]);
-  
-
 
   useEffect(() => {
     const storedParent = localStorage.getItem('utilisateur');
@@ -63,15 +55,11 @@ const NotesDashboard = () => {
 
   useEffect(() => {
     if (parent) {
-      // Charger les enfants
-      
-
-      // Charger les années
+      // Load years and semesters
       axios.get('http://127.0.0.1:8000/api/annees_scolaires')
         .then(res => setAnnees(res.data))
         .catch(() => setError('Erreur lors du chargement des années.'));
-
-      // Charger les semestres
+      
       axios.get('http://127.0.0.1:8000/api/semestres')
         .then(res => setSemestres(res.data.data))
         .catch(() => setError('Erreur lors du chargement des semestres.'));
@@ -84,12 +72,12 @@ const NotesDashboard = () => {
       setError('Veuillez choisir une année et un semestre.');
       return;
     }
-  
+
     if (!parent?.id) {
       setError('Parent ID non trouvé.');
       return;
     }
-  
+
     try {
       const res = await axios.get('http://127.0.0.1:8000/api/notes-parent', {
         params: {
@@ -98,7 +86,7 @@ const NotesDashboard = () => {
           annee_scolaire_id: selectedAnnee
         }
       });
-  
+
       setNotes(res.data);
     } catch (err) {
       console.log('Erreur lors de la récupération des notes:', err);
@@ -106,7 +94,31 @@ const NotesDashboard = () => {
     }
   };
 
-  // Fonction pour calculer la moyenne des notes
+  const handleDownloadBulletin = async (enfantId) => {
+    if (!selectedAnnee || !selectedSemestre) {
+      setError('Veuillez choisir une année et un semestre.');
+      return;
+    }
+
+    try {
+      // Make the API call to generate and download the bulletin
+      const response = await axios.get(`http://127.0.0.1:8000/api/bulletin/parent/${enfantId}/${selectedSemestre}/${selectedAnnee}`, {
+        responseType: 'blob' // Expecting a PDF or file
+      });
+      
+      // Create a link to download the file
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `bulletin_${enfantId}.pdf`); // Download as PDF
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      setError("Erreur lors du téléchargement du bulletin.");
+    }
+  };
+
   const calculerMoyenne = (note1, note2, note3, note4) => {
     let somme = 0;
     let count = 0;
@@ -126,24 +138,24 @@ const NotesDashboard = () => {
       <h2>Notes de mes enfants</h2>
 
       {error && <div className="alert alert-danger">{error}</div>}
-      <div className="row mb-4">
-  <div className="col-md-12">
-    <label>Choisir un enfant :</label>
-    <select
-      className="form-control"
-      value={selectedEnfantId}
-      onChange={e => setSelectedEnfantId(e.target.value)}
-    >
-      <option value="">-- Choisir un enfant --</option>
-      {enfants.map(enf => (
-        <option key={enf.id} value={enf.id}>
-          {enf.nom} {enf.prenom}
-        </option>
-      ))}
-    </select>
-  </div>
-</div>
 
+      <div className="row mb-4">
+        <div className="col-md-12">
+          <label>Choisir un enfant :</label>
+          <select
+            className="form-control"
+            value={selectedEnfantId}
+            onChange={e => setSelectedEnfantId(e.target.value)}
+          >
+            <option value="">-- Choisir un enfant --</option>
+            {enfants.map(enf => (
+              <option key={enf.id} value={enf.id}>
+                {enf.nom} {enf.prenom}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
 
       <div className="row mb-4">
         <div className="col-md-6">
@@ -210,27 +222,14 @@ const NotesDashboard = () => {
                 )}
               </tbody>
             </table>
-            {bulletin && (
-  <div style={{ marginTop: '20px', backgroundColor: '#e8f4ea', padding: '15px', borderRadius: '8px' }}>
-    {bulletin === null && (
-  <div style={{ marginTop: '20px', backgroundColor: '#fff3cd', padding: '15px', borderRadius: '8px' }}>
-    <p><strong>Bulletin :</strong> Le bulletin n'est pas encore disponible.</p>
-  </div>
-)}
-
-{bulletin && (
-  <div style={{ marginTop: '20px', backgroundColor: '#e8f4ea', padding: '15px', borderRadius: '8px' }}>
-    <p><strong>Moyenne générale :</strong> 
-      {!isNaN(parseFloat(bulletin.moyenne_generale)) 
-        ? parseFloat(bulletin.moyenne_generale).toFixed(2) 
-        : 'Non disponible'}
-    </p>
-  </div>
-)}
-
-  </div>
-)}
-
+            <div className="text-center">
+              <button 
+                className="btn btn-success" 
+                onClick={() => handleDownloadBulletin(enfantId)}
+              >
+                Télécharger le bulletin
+              </button>
+            </div>
           </div>
         );
       })}

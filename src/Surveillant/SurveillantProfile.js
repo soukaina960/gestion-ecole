@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { FaUserTie } from 'react-icons/fa';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
 function SurveillantProfile() {
   const [editMode, setEditMode] = useState(false);
-
   const [surveillant, setSurveillant] = useState({
     id: '',
     nom: '',
@@ -17,8 +19,7 @@ function SurveillantProfile() {
   });
 
   const surveillantId = localStorage.getItem('surveillant_id');
-  const token = localStorage.getItem('access_token');
-console.log("Surveillant ID:", surveillantId);
+
   useEffect(() => {
     axios.get(`http://127.0.0.1:8000/api/surveillants/${surveillantId}`)
       .then(response => {
@@ -44,26 +45,25 @@ console.log("Surveillant ID:", surveillantId);
 
   const handleUpdate = async () => {
     try {
-        await axios.put(`http://127.0.0.1:8000/api/surveillant/update/${surveillantId}`, {
-            surveillant: {
-              nom: surveillant.nom,
-              prenom: surveillant.prenom,
-              telephone: surveillant.telephone,
-              email: surveillant.email,
-              password: surveillant.password || null
-            },
-            utilisateur: {
-              nom: surveillant.nom,
-              prenom: surveillant.prenom,
-              telephone: surveillant.telephone,
-              email: surveillant.email,
-              password: surveillant.password || null
-            }
-          });
-          
+      await axios.put(`http://127.0.0.1:8000/api/surveillant/update/${surveillantId}`, {
+        surveillant: {
+          nom: surveillant.nom,
+          prenom: surveillant.prenom,
+          telephone: surveillant.telephone,
+          email: surveillant.email,
+          password: surveillant.password || null
+        },
+        utilisateur: {
+          nom: surveillant.nom,
+          prenom: surveillant.prenom,
+          telephone: surveillant.telephone,
+          email: surveillant.email,
+          password: surveillant.password || null
+        }
+      });
 
       alert("Profil mis à jour avec succès.");
-      setEditMode(false); // quitter le mode édition après mise à jour
+      setEditMode(false);
     } catch (error) {
       console.error('Erreur lors de la mise à jour :', error.response?.data || error.message);
       alert('Erreur lors de la mise à jour');
@@ -76,37 +76,67 @@ console.log("Surveillant ID:", surveillantId);
   };
 
   return (
-    <div style={{ padding: '20px', maxWidth: '600px', margin: 'auto' }}>
-      <h2>Profil du Surveillant</h2>
+    <div className="container mt-5">
+      <div className="card shadow-lg p-4 mx-auto zoom-effect" style={{ maxWidth: '500px' }}>
+        <div className="text-center">
+          <FaUserTie size={50} className="text-primary mb-3" />
+          <h4 className="mb-3">Profil du Surveillant</h4>
+        </div>
 
-      {editMode ? (
-        <>
-          <input type="text" name="nom" value={surveillant.nom} onChange={handleChange} placeholder="Nom" /><br />
-          <input type="text" name="prenom" value={surveillant.prenom} onChange={handleChange} placeholder="Prénom" /><br />
-          <input type="email" name="email" value={surveillant.email} onChange={handleChange} placeholder="Email" /><br />
-          <input type="text" name="telephone" value={surveillant.telephone} onChange={handleChange} placeholder="Téléphone" /><br />
-          <input type="text" name="adresse" value={surveillant.adresse} onChange={handleChange} placeholder="Adresse" /><br />
-          <input type="password" name="password" value={surveillant.password} onChange={handleChange} placeholder="Nouveau mot de passe" /><br />
-          <button onClick={handleUpdate}>💾 Enregistrer</button>
-          <button onClick={() => setEditMode(false)} style={{ marginLeft: '10px' }}>Annuler</button>
-        </>
-      ) : (
-        <>
-          <p><strong>Nom:</strong> {surveillant.nom}</p>
-          <p><strong>Prénom:</strong> {surveillant.prenom}</p>
-          <p><strong>Email:</strong> {surveillant.email}</p>
-          <p><strong>Téléphone:</strong> {surveillant.telephone}</p>
-          <p><strong>Adresse:</strong> {surveillant.adresse}</p>
-          <p><strong>Matricule:</strong> {surveillant.matricule}</p>
-          {surveillant.photo_profil && (
-            <img src={`http://127.0.0.1:8000/storage/${surveillant.photo_profil}`} alt="Profil" width="100" />
+        <div className="card-body">
+          {editMode ? (
+            <>
+              <div className="mb-3">
+                <label className="form-label">Nom</label>
+                <input type="text" className="form-control" name="nom" value={surveillant.nom} onChange={handleChange} />
+              </div>
+              <div className="mb-3">
+                <label className="form-label">Prénom</label>
+                <input type="text" className="form-control" name="prenom" value={surveillant.prenom} onChange={handleChange} />
+              </div>
+              <div className="mb-3">
+                <label className="form-label">Téléphone</label>
+                <input type="text" className="form-control" name="telephone" value={surveillant.telephone} onChange={handleChange} />
+              </div>
+              <div className="mb-3">
+                <label className="form-label">Email</label>
+                <input type="email" className="form-control" name="email" value={surveillant.email} onChange={handleChange} />
+              </div>
+              <div className="mb-3">
+                <label className="form-label">Nouveau mot de passe</label>
+                <input type="password" className="form-control" name="password" value={surveillant.password} onChange={handleChange} />
+              </div>
+              <button className="btn btn-success w-100" onClick={handleUpdate}>
+                💾 Enregistrer
+              </button>
+            </>
+          ) : (
+            <>
+              <p><strong>Nom :</strong> {surveillant.nom}</p>
+              <p><strong>Prénom :</strong> {surveillant.prenom}</p>
+              <p><strong>Téléphone :</strong> {surveillant.telephone}</p>
+              <p><strong>Email :</strong> {surveillant.email}</p>
+              <button className="btn btn-primary w-100 mt-3" onClick={() => setEditMode(true)}>
+                ✏️ Modifier mes infos
+              </button>
+            </>
           )}
-          <br />
-          <button onClick={() => setEditMode(true)}>✏️ Modifier</button>
-        </>
-      )}
+        </div>
+      </div>
     </div>
   );
 }
+
+// Ajouter l'effet de zoom
+const style = document.createElement('style');
+style.innerHTML = `
+.zoom-effect {
+  transition: transform 0.3s ease-in-out;
+}
+.zoom-effect:hover {
+  transform: scale(1.03);
+}
+`;
+document.head.appendChild(style);
 
 export default SurveillantProfile;

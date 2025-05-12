@@ -28,14 +28,7 @@ import Dashboard from "../components/Dashboard";
 import ChargeForm from "../components/charge";
 import CalculSalaireProfesseur from "../components/CalculSalaire";
 
-import GenererEmploiTemps from "../components/EmploiTemps"; // Pour la génération de l'emploi du temps
-import EmploiTempsForm from "../components/EmploiTempsForm"; // Pour la gestion des emplois du temps
-import CreneauList from "../components/crenau"; // Pour la gestion des créneaux
-// import { CalendarDays, PlusCircle, Settings } from 'lucide-react';
-import DemandeAttestationList from "../components/DemandeAttestationList"; // Pour la gestion des demandes d'attestation
-import ConfigAttestationForm from '../components/ConfigAttestationForm'; // Pour la configuration de l'attestation
-import EmploiTempsParProf from '../components/emploiprof'; // Pour l'emploi du temps des professeurs
-import Evenements from '../components/evenementGestion'; // Pour la gestion des événements
+ // Pour la gestion des créneaux
 
 
 import DemandeAttestationList from "../components/DemandeAttestationList";
@@ -185,6 +178,7 @@ const AdminLayout = () => {
   };
 
   return (
+    <>
     <div className={`admin-layout ${darkMode ? 'dark' : ''}`}>
       {/* Top Navbar */}
       <nav className="top-nav">
@@ -449,6 +443,7 @@ const AdminLayout = () => {
         </div>
       )}
     </div>
+    </>
   );
 };
 

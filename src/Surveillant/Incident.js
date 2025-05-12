@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
-const IncidentList = () => {
+const Incident = () => {
   const [etudiantId, setEtudiantId] = useState(null);
   const [incidents, setIncidents] = useState([]);
   const [etudiants, setEtudiants] = useState([]);
@@ -17,7 +17,7 @@ const IncidentList = () => {
   const [matieres, setMatieres] = useState([]);
   const [selectedMatiereId, setSelectedMatiereId] = useState('');
 
-  const surveillantId = localStorage.getItem('surveillant_id'); // Récupérer l'ID du surveillant depuis le localStorage
+  const surveillantId = localStorage.getItem('surveillant_id');
 
   useEffect(() => {
     axios.get('http://127.0.0.1:8000/api/incidents')
@@ -47,20 +47,21 @@ const IncidentList = () => {
         .then(res => setEtudiants(res.data));
     }
   }, [selectedClassId]);
-    useEffect(() => {
-      if (selectedClassId && selectedProfesseurId) {
-        axios.get(`http://localhost:8000/api/matieres-par-prof-classe`, {
-          params: {
-            professeur_id: selectedProfesseurId,
-            classe_id: selectedClassId,
-          }
-        }).then(res => {
-          setMatieres(res.data);
-        }).catch(err => {
-          console.error("Erreur lors du chargement des matières:", err);
-        });
-      }
-    }, [selectedClassId, selectedProfesseurId]);
+
+  useEffect(() => {
+    if (selectedClassId && selectedProfesseurId) {
+      axios.get(`http://localhost:8000/api/matieres-par-prof-classe`, {
+        params: {
+          professeur_id: selectedProfesseurId,
+          classe_id: selectedClassId,
+        }
+      }).then(res => {
+        setMatieres(res.data);
+      }).catch(err => {
+        console.error("Erreur lors du chargement des matières:", err);
+      });
+    }
+  }, [selectedClassId, selectedProfesseurId]);
 
   const handleSearch = (e) => {
     setSearch(e.target.value);
@@ -80,12 +81,11 @@ const IncidentList = () => {
     axios.post('http://127.0.0.1:8000/api/incidents', {
       etudiant_id: selectedEtudiantId,
       description,
-      date: date, 
+      date: date,
       professeur_id: selectedProfesseurId,
       matiere_id: selectedMatiereId,
       class_id: selectedClassId,
       surveillant_id: surveillantId // Ajout de l'ID du surveillant
-
     })
       .then(res => {
         setIncidents([...incidents, res.data]);
@@ -94,7 +94,6 @@ const IncidentList = () => {
         setDescription('');
         setDate('');
       })
-     
   };
 
   const handleDelete = (id) => {
@@ -107,131 +106,162 @@ const IncidentList = () => {
   };
 
   return (
-    <div style={{ fontFamily: 'Arial', maxWidth: '900px', margin: '0 auto', padding: '20px' }}>
-      <h2 style={{ textAlign: 'center' }}>📋 Gestion des Incidents</h2>
-
-      {message && <p style={{ color: '#c0392b' }}>{message}</p>}
-
-      <h3>🎯 Filtrer par Classe</h3>
-      <select
-        value={selectedClassId}
-        onChange={(e) => setSelectedClassId(e.target.value)}
-        style={{ padding: '8px', width: '100%', marginBottom: '10px' }}
-      >
-        <option value="">Sélectionner une classe</option>
-        {classrooms.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-      </select>
-
-      <h3>🔎 Rechercher Étudiant</h3>
-      <input
-        type="text"
-        value={search}
-        onChange={handleSearch}
-        placeholder="Nom ou prénom"
-        style={{ padding: '8px', width: '100%', marginBottom: '10px' }}
-      />
-
-      <h3>📝 Ajouter un Incident</h3>
+    <div style={{
+      fontFamily: 'Segoe UI, sans-serif',
+      maxWidth: '750px',
+      margin: '30px auto',
+      padding: '25px',
+      backgroundColor: '#f9f9f9',
+      borderRadius: '12px',
+      boxShadow: '0 6px 15px rgba(0, 0, 0, 0.08)',
+    }}>
+      <h2 style={{
+        textAlign: 'center',
+        color: '#2c3e50',
+        marginBottom: '20px'
+      }}>
+        Gestion des Incidents
+      </h2>
+    
+      {message && <p style={{ color: '#e74c3c', textAlign: 'center' }}>{message}</p>}
+    
+      <div style={{ marginBottom: '20px' }}>
+        <label style={{ fontWeight: 'bold' }}>Filtrer par Classe</label>
+        <select
+          value={selectedClassId}
+          onChange={(e) => setSelectedClassId(e.target.value)}
+          style={{
+            padding: '10px',
+            width: '100%',
+            borderRadius: '6px',
+            border: '1px solid #ccc',
+            marginTop: '5px',
+          }}
+        >
+          <option value="">Sélectionner une classe</option>
+          {classrooms.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+      </div>
+    
+      <div style={{ marginBottom: '20px' }}>
+        <label style={{ fontWeight: 'bold' }}>Rechercher Étudiant</label>
+        <input
+          type="text"
+          value={search}
+          onChange={handleSearch}
+          placeholder="Nom ou prénom"
+          style={{
+            padding: '10px',
+            width: '100%',
+            borderRadius: '6px',
+            border: '1px solid #ccc',
+            marginTop: '5px',
+          }}
+        />
+      </div>
+    
+      <h3 style={{ color: '#2c3e50', marginBottom: '10px' }}>Ajouter un Incident</h3>
+    
       <select
         value={selectedEtudiantId}
         onChange={(e) => setSelectedEtudiantId(e.target.value)}
-        style={{ padding: '8px', width: '100%', marginBottom: '10px' }}
+        style={{
+          padding: '10px',
+          width: '100%',
+          borderRadius: '6px',
+          border: '1px solid #ccc',
+          marginBottom: '15px',
+        }}
       >
         <option value="">Choisir un étudiant</option>
         {filteredEtudiants.map(et => (
           <option key={et.id} value={et.id}>{et.nom} {et.prenom}</option>
         ))}
       </select>
-      <div>
-          <label htmlFor="professeur_id" >Professeur:</label>
-          <select
-            id="professeur_id"
-            value={selectedProfesseurId}
-            onChange={(e) => setSelectedProfesseurId(e.target.value)}
-            required
-           
-          >
-            <option value="">Choisir un professeur</option>
-            {professeurs.map((professeur) => (
-              <option key={professeur.id} value={professeur.id}>
-                {professeur.nom}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div>
-  <label htmlFor="matiere_id" >Matière:</label>
-  <select
-    id="matiere_id"
-    value={selectedMatiereId}
-    onChange={(e) => setSelectedMatiereId(e.target.value)}
-    required
-  >
-    <option value="">Choisir une matière</option>
-    {matieres.map((matiere) => (
-      <option key={matiere.id} value={matiere.id}>
-        {matiere.nom}
-      </option>
-    ))}
-  </select>
-</div>
-
+    
+      <label style={{ fontWeight: 'bold' }}>Professeur</label>
+      <select
+        value={selectedProfesseurId}
+        onChange={(e) => setSelectedProfesseurId(e.target.value)}
+        style={{
+          padding: '10px',
+          width: '100%',
+          borderRadius: '6px',
+          border: '1px solid #ccc',
+          marginBottom: '15px',
+          marginTop: '5px',
+        }}
+      >
+        <option value="">Choisir un professeur</option>
+        {professeurs.map(p => <option key={p.id} value={p.id}>{p.nom}</option>)}
+      </select>
+    
+      <label style={{ fontWeight: 'bold' }}>Matière</label>
+      <select
+        value={selectedMatiereId}
+        onChange={(e) => setSelectedMatiereId(e.target.value)}
+        style={{
+          padding: '10px',
+          width: '100%',
+          borderRadius: '6px',
+          border: '1px solid #ccc',
+          marginBottom: '15px',
+          marginTop: '5px',
+        }}
+      >
+        <option value="">Choisir une matière</option>
+        {matieres.map(m => <option key={m.id} value={m.id}>{m.nom}</option>)}
+      </select>
+    
       <textarea
         value={description}
         onChange={(e) => setDescription(e.target.value)}
         placeholder="Décrire l'incident"
-        style={{ padding: '8px', width: '100%', height: '100px', marginBottom: '10px' }}
+        style={{
+          padding: '10px',
+          width: '100%',
+          height: '100px',
+          borderRadius: '6px',
+          border: '1px solid #ccc',
+          marginBottom: '15px',
+        }}
       />
-
-      <h3>📅 Date de l'Incident</h3>
+    
+      <label style={{ fontWeight: 'bold' }}>Date de l'Incident</label>
       <input
         type="date"
         value={date}
         onChange={(e) => setDate(e.target.value)}
-        style={{ padding: '8px', width: '100%', marginBottom: '10px' }}
+        style={{
+          padding: '10px',
+          width: '100%',
+          borderRadius: '6px',
+          border: '1px solid #ccc',
+          marginBottom: '20px',
+          marginTop: '5px',
+        }}
       />
-
+    
       <button
         onClick={handleAddIncident}
-        style={{ backgroundColor: '#27ae60', color: '#fff', padding: '10px', width: '100%', border: 'none', borderRadius: '5px' }}
+        style={{
+          backgroundColor: '#2ecc71',
+          color: '#fff',
+          padding: '12px',
+          width: '100%',
+          border: 'none',
+          borderRadius: '6px',
+          fontWeight: 'bold',
+          fontSize: '16px',
+          cursor: 'pointer',
+          marginBottom: '30px',
+        }}
       >
-        ✅ Ajouter Incident
+        Ajouter l'incident
       </button>
-
-      <h3 style={{ marginTop: '30px' }}>📂 Liste des Incidents</h3>
-      <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '10px' }}>
-        <thead>
-          <tr style={{ backgroundColor: '#ecf0f1' }}>
-            <th style={{ padding: '10px', border: '1px solid #ccc' }}>Étudiant</th>
-            <th style={{ padding: '10px', border: '1px solid #ccc' }}>Description</th>
-            <th style={{ padding: '10px', border: '1px solid #ccc' }}>Date</th>
-            <th style={{ padding: '10px', border: '1px solid #ccc' }}>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {incidents.map(incident => {
-            const etudiant = etudiants.find(e => e.id === incident.etudiant_id);
-            return (
-              <tr key={incident.id}>
-<td>{incident.etudiant ? `${incident.etudiant.nom} ${incident.etudiant.prenom}` : 'N/A'}</td>
-
-                <td style={{ padding: '10px', border: '1px solid #ccc' }}>{incident.description}</td>
-                <td style={{ padding: '10px', border: '1px solid #ccc' }}>{incident.date}</td>
-                <td style={{ padding: '10px', border: '1px solid #ccc' }}>
-                  <button
-                    onClick={() => handleDelete(incident.id)}
-                    style={{ backgroundColor: '#e74c3c', color: '#fff', padding: '6px 12px', border: 'none', borderRadius: '4px' }}
-                  >
-                    🗑️ Supprimer
-                  </button>
-                </td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
     </div>
+    
   );
 };
 
-export default IncidentList;
+export default Incident;

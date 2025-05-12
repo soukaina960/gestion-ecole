@@ -1,26 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 
-const ParentReclamationForm = () => {
+const ReclamationForm = ({ onSuccess }) => {
   const [titre, setTitre] = useState('');
   const [message, setMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [reclamations, setReclamations] = useState([]);
 
   const parentId = localStorage.getItem('parent_id');
-
-  const fetchReclamations = async () => {
-    try {
-      const response = await axios.get(`http://127.0.0.1:8000/api/reclamations?parent_id=${parentId}`);
-      setReclamations(response.data);
-    } catch (error) {
-      console.error('Erreur lors du chargement des réclamations:', error);
-    }
-  };
-
-  useEffect(() => {
-    fetchReclamations();
-  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -33,64 +19,132 @@ const ParentReclamationForm = () => {
       setSuccessMessage(response.data.message);
       setTitre('');
       setMessage('');
-      fetchReclamations(); // refresh list
+      onSuccess(); // actualiser la liste
     } catch (error) {
-      console.error('Erreur lors de l\'envoi:', error);
+      console.error("Erreur lors de l'envoi :", error);
     }
   };
 
-  const handleDelete = async (id) => {
-    try {
-      await axios.delete(`http://127.0.0.1:8000/api/reclamations/${id}`);
-      fetchReclamations(); // refresh list
-    } catch (error) {
-      console.error('Erreur lors de la suppression:', error);
-    }
+  // Styles en ligne
+  const containerStyle = {
+    backgroundColor: '#fff',
+    padding: '2rem',
+    maxWidth: '600px',
+    margin: '2rem auto',
+    borderRadius: '10px',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+    transition: 'transform 0.3s ease-in-out', // Pour l'effet de zoom au survol
+  };
+
+  const containerHoverStyle = {
+    transform: 'scale(1.05)', // Effet de zoom lors du survol
+  };
+
+  const headingStyle = {
+    marginBottom: '1rem',
+    color: '#333',
+    fontSize: '1.5rem',
+  };
+
+  const subHeadingStyle = {
+    color: '#666',
+    fontSize: '1rem',
+    marginBottom: '1.5rem',
+  };
+
+  const formStyle = {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '1rem',
+  };
+
+  const inputStyle = {
+    padding: '0.75rem 1rem',
+    borderRadius: '8px',
+    border: '1px solid #ccc',
+    fontSize: '1rem',
+    width: '100%',
+  };
+
+  const textareaStyle = {
+    padding: '0.75rem 1rem',
+    borderRadius: '8px',
+    border: '1px solid #ccc',
+    fontSize: '1rem',
+    width: '100%',
+    resize: 'vertical',
+  };
+
+  const buttonStyle = {
+    padding: '0.75rem',
+    border: 'none',
+    backgroundColor: '#28a745', // Vert
+    color: '#fff',
+    fontWeight: 'bold',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    transition: 'background-color 0.3s',
+  };
+
+  const buttonHoverStyle = {
+    backgroundColor: '#218838', // Vert plus foncé
+  };
+
+  const successMessageStyle = {
+    marginTop: '0.5rem',
+    color: 'green',
+    fontWeight: 'bold',
+  };
+
+  const iconStyle = {
+    marginRight: '8px',
   };
 
   return (
-    <div style={{ maxWidth: '600px', margin: '30px auto', padding: '20px', border: '1px solid #ccc', borderRadius: '10px', backgroundColor: '#f9f9f9' }}>
-      <h2 style={{ textAlign: 'center' }}>Envoyer une Réclamation</h2>
-      {successMessage && <p style={{ color: 'green', textAlign: 'center' }}>{successMessage}</p>}
-      
-      <form onSubmit={handleSubmit}>
-        <label>Titre:</label>
-        <input type="text" value={titre} onChange={(e) => setTitre(e.target.value)} required style={{ width: '100%', padding: '10px', marginBottom: '10px' }} />
-        
-        <label>Message:</label>
-        <textarea value={message} onChange={(e) => setMessage(e.target.value)} required style={{ width: '100%', padding: '10px', height: '100px', marginBottom: '10px' }} />
+    <div 
+      style={containerStyle}
+      onMouseOver={(e) => e.currentTarget.style.transform = 'scale(1.05)'} // Application de l'effet au survol
+      onMouseOut={(e) => e.currentTarget.style.transform = 'scale(1)'} // Retrait de l'effet quand la souris est sortie
+    >
+      <h2 style={headingStyle}>
+        <i className="fas fa-exclamation-circle" style={iconStyle}></i>
+        Envoyer une Réclamation
+      </h2>
+      <p style={subHeadingStyle}>
+        Veuillez remplir le formulaire ci-dessous pour envoyer votre réclamation. Nous traiterons votre demande dans les plus brefs délais.
+      </p>
 
-        <button type="submit" style={{ padding: '10px 20px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '5px' }}>
+      {successMessage && <p style={successMessageStyle}>{successMessage}</p>}
+
+      <form onSubmit={handleSubmit} style={formStyle}>
+        <input
+          type="text"
+          placeholder="Titre"
+          value={titre}
+          onChange={(e) => setTitre(e.target.value)}
+          required
+          style={inputStyle}
+        />
+        <textarea
+          placeholder="Message"
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          rows="5"
+          required
+          style={textareaStyle}
+        />
+        <button 
+          type="submit" 
+          style={buttonStyle} 
+          onMouseOver={e => e.target.style.backgroundColor = buttonHoverStyle.backgroundColor} 
+          onMouseOut={e => e.target.style.backgroundColor = '#28a745'}
+        >
+          <i className="fas fa-paper-plane" style={iconStyle}></i>
           Envoyer
         </button>
       </form>
-
-      <hr style={{ margin: '30px 0' }} />
-
-      <h3>Mes Réclamations</h3>
-      {reclamations.length === 0 ? (
-        <p>Aucune réclamation pour le moment.</p>
-      ) : (
-        <ul>
-          {reclamations.map((rec) => (
-            <li key={rec.id} style={{ marginBottom: '15px', padding: '10px', border: '1px solid #ddd', borderRadius: '5px' }}>
-              <strong>{rec.titre}</strong> <br />
-              <span>{rec.message}</span> <br />
-              <em>Statut : {rec.statut}</em><br />
-              {rec.statut === 'en attente' && (
-                <button
-                  onClick={() => handleDelete(rec.id)}
-                  style={{ marginTop: '8px', padding: '6px 12px', backgroundColor: '#d9534f', color: 'white', border: 'none', borderRadius: '5px' }}
-                >
-                  Annuler
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 };
 
-export default ParentReclamationForm;
+export default ReclamationForm;

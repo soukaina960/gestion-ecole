@@ -25,6 +25,20 @@ const ListeIncidents = () => {
       setFilteredIncidents(allIncidents);
     }
   }, [selectedClassId, allIncidents]);
+  const handleDeleteIncident = (id) => {
+    if (window.confirm("Voulez-vous vraiment supprimer cet incident ?")) {
+      axios.delete(`http://localhost:8000/api/incidents/${id}`)
+        .then(() => {
+          // Retire l'incident de la liste
+          setAllIncidents(prev => prev.filter(i => i.id !== id));
+        })
+        .catch(err => {
+          console.error(err);
+          alert("Une erreur est survenue lors de la suppression.");
+        });
+    }
+  };
+  
 
   const containerStyle = {
     maxWidth: "900px",
@@ -101,28 +115,39 @@ const ListeIncidents = () => {
       </select>
 
       <table style={tableStyle}>
-        <thead>
-          <tr>
-            <th style={thStyle}>Étudiant</th>
-            <th style={thStyle}>Description</th>
-            <th style={thStyle}>Date</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredIncidents.length === 0 ? (
-            <tr>
-              <td style={{ ...tdStyle, ...emptyRowStyle }} colSpan="3">Aucun incident trouvé.</td>
-            </tr>
-          ) : (
-            filteredIncidents.map((incident, i) => (
-              <tr key={i}>
-                <td style={tdStyle}>{incident.etudiant.nom} {incident.etudiant.prenom}</td>
-                <td style={tdStyle}>{incident.description}</td>
-                <td style={tdStyle}>{incident.date}</td>
-              </tr>
-            ))
-          )}
-        </tbody>
+      <thead>
+        <tr>
+          <th style={thStyle}>Étudiant</th>
+          <th style={thStyle}>Description</th>
+          <th style={thStyle}>Date</th>
+          <th style={thStyle}>Action</th>
+        </tr>
+      </thead>
+
+      <tbody>
+  {filteredIncidents.length === 0 ? (
+    <tr>
+      <td style={{ ...tdStyle, ...emptyRowStyle }} colSpan="4">Aucun incident trouvé.</td>
+    </tr>
+  ) : (
+    filteredIncidents.map((incident, i) => (
+      <tr key={i}>
+        <td style={tdStyle}>{incident.etudiant.nom} {incident.etudiant.prenom}</td>
+        <td style={tdStyle}>{incident.description}</td>
+        <td style={tdStyle}>{incident.date}</td>
+        <td style={tdStyle}>
+          <button
+            onClick={() => handleDeleteIncident(incident.id)}
+            style={{ backgroundColor: "#c0392b", color: "#fff", padding: "6px 12px", border: "none", borderRadius: "4px", cursor: "pointer" }}
+          >
+            Supprimer
+          </button>
+        </td>
+      </tr>
+    ))
+  )}
+</tbody>
+
       </table>
     </div>
   );
