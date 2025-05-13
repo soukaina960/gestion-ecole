@@ -40,6 +40,11 @@ const Login = () => {
       if (response.data.role === 'parent' && response.data.utilisateur.parent) {
         localStorage.setItem('parent_id', response.data.utilisateur.parent.id);
         localStorage.setItem('access_token', response.data.access_token);}
+
+      if (response.data.role === 'surveillant' && response.data.utilisateur.surveillant) {
+        localStorage.setItem('surveillant_id', response.data.utilisateur.surveillant.id);
+        localStorage.setItem('access_token', response.data.access_token);}
+        
       switch(response.data.role) {
         case 'admin':
           navigate('/admin');
@@ -51,8 +56,11 @@ const Login = () => {
           navigate('/etudiant/dashboard');
           break;
         case 'parent':
-          navigate('/parent-dashboard');
+          navigate('/parent');
           break;
+        case 'surveillant':
+          navigate('/surveillant');
+          break;  
         default:
           navigate('/');
       }

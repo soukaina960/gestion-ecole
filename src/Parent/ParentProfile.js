@@ -1,170 +1,127 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { FaUserFriends } from 'react-icons/fa';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap-icons/font/bootstrap-icons.css';
 
-const ParentProfile = () => {
+function ParentProfile() {
   const [parent, setParent] = useState({
+    id: '',
     nom: '',
     prenom: '',
     telephone: '',
-    adresse: '',
-    profession: ''
-  });
-
-  const [user, setUser] = useState({
     email: '',
     password: ''
   });
 
-  const [loading, setLoading] = useState(true);
-  const [message, setMessage] = useState('');
-  const [error, setError] = useState('');
+  const [editMode, setEditMode] = useState(false);
 
   const parentId = localStorage.getItem('parent_id');
+  const token = localStorage.getItem('access_token');
 
   useEffect(() => {
     axios.get(`http://127.0.0.1:8000/api/parents/${parentId}`)
       .then(response => {
-        // Vu que l'API te retourne un OBJET simple
-        setParent(response.data);  // directement response.data
-        setLoading(false);
+        const data = response.data;
+        setParent(prev => ({
+          ...prev,
+          id: data.id,
+          nom: data.nom,
+          prenom: data.prenom,
+          telephone: data.telephone,
+          email: data.email || ''
+        }));
       })
       .catch(error => {
-        setError("Erreur lors du chargement des informations.");
-        setLoading(false);
+        console.error('Erreur de chargement', error);
       });
   }, [parentId]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setParent(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    axios.put(`http://127.0.0.1:8000/api/parent/update/${parentId}`, {
-      ...parent,
-      email: parent.email,  // email ajouté ici
-      password: parent.password // password aussi
-    })
-      .then(response => {
-        setMessage("Informations mises à jour avec succès !");
-        setError('');
-      })
-      .catch(error => {
-        setError("Erreur lors de la mise à jour.");
-        setMessage('');
+  const handleUpdate = async () => {
+    try {
+      await axios.put(`http://127.0.0.1:8000/api/parent/update/${parentId}`, {
+        parent: {
+          nom: parent.nom,
+          prenom: parent.prenom,
+          telephone: parent.telephone,
+          email: parent.email,
+          password: parent.password || null
+        },
+        user: {
+          nom: parent.nom,
+          prenom: parent.prenom,
+          telephone: parent.telephone,
+          email: parent.email,
+          password: parent.password || null
+        }
       });
-  };
 
-  if (loading) {
-    return <p>Chargement...</p>;
-  }
+      alert("Profil mis à jour avec succès.");
+      setEditMode(false);
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour :', error.response?.data || error.message);
+      alert('Erreur lors de la mise à jour');
+    }
+  };
 
   return (
-    <div style={{ padding: "20px", maxWidth: "600px", margin: "auto" }}>
-      <h2>Mon Profil</h2>
-
-      {message && <p style={{ color: "green" }}>{message}</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
-
-      <form onSubmit={handleSubmit}>
-        <div style={{ marginBottom: "10px" }}>
-          <label>Nom :</label>
-          <input
-            type="text"
-            name="nom"
-            value={parent.nom || ''}
-            onChange={handleChange}
-            style={{ width: "100%", padding: "8px", marginTop: "5px" }}
-          />
+    <div className="container mt-5">
+      <div className="card shadow-lg p-4 mx-auto zoom-effect" style={{ maxWidth: '500px' }}>
+        <div className="text-center">
+          <FaUserFriends size={50} className="text-primary mb-3" />
+          <h4 className="mb-3">Profil du Parent</h4>
         </div>
 
-        <div style={{ marginBottom: "10px" }}>
-          <label>Prénom :</label>
-          <input
-            type="text"
-            name="prenom"
-            value={parent.prenom || ''}
-            onChange={handleChange}
-            style={{ width: "100%", padding: "8px", marginTop: "5px" }}
-          />
+        <div className="card-body">
+          {editMode ? (
+            <>
+              <div className="mb-3">
+                <label className="form-label">Nom</label>
+                <input type="text" className="form-control" value={parent.nom} onChange={e => setParent({ ...parent, nom: e.target.value })} />
+              </div>
+              <div className="mb-3">
+                <label className="form-label">Prénom</label>
+                <input type="text" className="form-control" value={parent.prenom} onChange={e => setParent({ ...parent, prenom: e.target.value })} />
+              </div>
+              <div className="mb-3">
+                <label className="form-label">Téléphone</label>
+                <input type="text" className="form-control" value={parent.telephone} onChange={e => setParent({ ...parent, telephone: e.target.value })} />
+              </div>
+              <div className="mb-3">
+                <label className="form-label">Email</label>
+                <input type="email" className="form-control" value={parent.email} onChange={e => setParent({ ...parent, email: e.target.value })} />
+              </div>
+              <button className="btn btn-success w-100" onClick={handleUpdate}>
+                💾 Enregistrer
+              </button>
+            </>
+          ) : (
+            <>
+              <p><strong>Nom :</strong> {parent.nom}</p>
+              <p><strong>Prénom :</strong> {parent.prenom}</p>
+              <p><strong>Téléphone :</strong> {parent.telephone}</p>
+              <p><strong>Email :</strong> {parent.email}</p>
+              <button className="btn btn-primary w-100 mt-3" onClick={() => setEditMode(true)}>
+                ✏️ Modifier mes infos
+              </button>
+            </>
+          )}
         </div>
-
-        <div style={{ marginBottom: "10px" }}>
-          <label>Téléphone :</label>
-          <input
-            type="text"
-            name="telephone"
-            value={parent.telephone || ''}
-            onChange={handleChange}
-            style={{ width: "100%", padding: "8px", marginTop: "5px" }}
-          />
-        </div>
-
-        <div style={{ marginBottom: "10px" }}>
-          <label>Adresse :</label>
-          <input
-            type="text"
-            name="adresse"
-            value={parent.adresse || ''}
-            onChange={handleChange}
-            style={{ width: "100%", padding: "8px", marginTop: "5px" }}
-          />
-        </div>
-
-        <div style={{ marginBottom: "10px" }}>
-          <label>Profession :</label>
-          <input
-            type="text"
-            name="profession"
-            value={parent.profession || ''}
-            onChange={handleChange}
-            style={{ width: "100%", padding: "8px", marginTop: "5px" }}
-          />
-        </div>
-
-        <div style={{ marginBottom: "10px" }}>
-          <label>Email :</label>
-          <input
-            type="email"
-            name="email"
-            value={parent.email || ''}
-            onChange={handleChange}
-            style={{ width: "100%", padding: "8px", marginTop: "5px" }}
-          />
-        </div>
-
-        <div style={{ marginBottom: "10px" }}>
-          <label>Mot de passe :</label>
-          <input
-            type="password"
-            name="password"
-            value={parent.mot_de_passe || ''}
-            onChange={handleChange}
-            style={{ width: "100%", padding: "8px", marginTop: "5px" }}
-          />
-        </div>
-
-        <button
-          type="submit"
-          style={{
-            padding: "10px 20px",
-            backgroundColor: "#4CAF50",
-            color: "white",
-            border: "none",
-            borderRadius: "5px",
-            cursor: "pointer",
-          }}
-        >
-          Mettre à jour
-        </button>
-      </form>
+      </div>
     </div>
   );
-};
+}
+
+// Effet de zoom avec CSS
+const style = document.createElement('style');
+style.innerHTML = `
+.zoom-effect {
+  transition: transform 0.3s ease-in-out;
+}
+.zoom-effect:hover {
+  transform: scale(1.03);
+}
+`;
+document.head.appendChild(style);
 
 export default ParentProfile;

@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import html2pdf from 'html2pdf.js';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { FaDownload, FaPrint, FaSearch } from 'react-icons/fa';
 
 const jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
 
@@ -19,6 +21,7 @@ const EmploiDuTemps = () => {
     jour: '',
     creneau_id: ''
   });
+  const [searchTerm, setSearchTerm] = useState('');
   const emploiRef = useRef(null);
 
   // Charger les données initiales
@@ -33,7 +36,7 @@ const EmploiDuTemps = () => {
         ]);
         
         setClasses(await classesRes.json());
-        setMatieres(await matieresRes.data.json());
+        setMatieres(await matieresRes.json());
         setProfesseurs(await professeursRes.json());
         setSalles(await sallesRes.json());
       } catch (error) {
@@ -82,90 +85,14 @@ const EmploiDuTemps = () => {
     const seance = emplois.find(e => e.jour === jour && e.creneau_id === creneauId);
     if (seance) {
       return (
-        <div className="space-y-1">
-          <div><strong>{seance.matiere?.nom}</strong></div>
-          <div>{seance.professeur?.nom}</div>
-          <div>Salle: {seance.salle}</div>
-          
+        <div className="p-2">
+          <div className="fw-bold text-primary">{seance.matiere?.nom}</div>
+          <div className="text-dark ">{seance.professeur?.nom}</div>
+          <div className="badge bg-light text-dark">Salle: {seance.salle}</div>
         </div>
       );
     }
-    return <span>—</span>;
-  };
-
-  // Gérer les changements dans le formulaire
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    try {
-      const method = selectedSeance.id ? 'PUT' : 'POST';
-      const url = selectedSeance.id 
-        ? `http://127.0.0.1:8000/api/emplois-temps/${selectedSeance.id}`
-        : 'http://127.0.0.1:8000/api/emplois-temps';
-      
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...formData,
-          classe_id: selectedClasseId
-        })
-      });
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || `Erreur HTTP: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      
-      if (selectedSeance.id) {
-        // Pour la modification
-        setEmplois(prev => prev.map(e => 
-          e.id === selectedSeance.id ? { ...e, ...data } : e
-        ));
-      } else {
-        // Pour l'ajout
-        setEmplois(prev => [...prev, data]);
-      }
-      
-      setSelectedSeance(null);
-      setFormData({
-        matiere_id: '',
-        professeur_id: '',
-        salle: '',
-        jour: '',
-        creneau_id: ''
-      });
-      
-    } catch (error) {
-      console.error("Erreur lors de l'envoi du formulaire:", error);
-      alert(`Erreur: ${error.message}`);
-    }
-  };
-
-  // Supprimer une séance
-  const supprimerSeance = async (id) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cette séance ?')) {
-      try {
-        await fetch(`http://127.0.0.1:8000/api/emplois-temps/${id}`, {
-          method: 'DELETE',
-        });
-        setEmplois(prev => prev.filter(e => e.id !== id));
-      } catch (error) {
-        console.error("Erreur lors de la suppression:", error);
-      }
-    }
+    return <span className="text-muted">—</span>;
   };
 
   // Télécharger l'emploi du temps en PDF
@@ -181,8 +108,18 @@ const EmploiDuTemps = () => {
     html2pdf().set(opt).from(element).save();
   };
 
+  // Imprimer l'emploi du temps
+  const imprimerEmploi = () => {
+    window.print();
+  };
+
+  // Filtrer les classes
+  const filteredClasses = classes.filter(classe => 
+    classe.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
-    <>
+    <div className="container-fluid py-4">
       <style>
         {`
           @media print {
@@ -192,83 +129,110 @@ const EmploiDuTemps = () => {
             body, html {
               background: white !important;
             }
-            table {
+            .table {
               width: 100% !important;
+              font-size: 12px !important;
+            }
+            .table th, .table td {
+              padding: 4px !important;
             }
           }
         `}
       </style>
 
-      <div className="p-4">
-        <h2 className="text-xl font-bold mb-4">Gestion des emplois du temps</h2>
-
-        <div className="mb-4 no-print">
-          <label className="mr-2 font-medium">Classe :</label>
-          <select
-            className="border p-2 rounded"
-            value={selectedClasseId}
-            onChange={(e) => setSelectedClasseId(e.target.value)}
-          >
-            <option value="">-- Choisir une classe --</option>
-            {classes.map(classe => (
-              <option key={classe.id} value={classe.id}>{classe.name}</option>
-            ))}
-          </select>
-        </div>
-
-        {selectedClasseId && (
-          <>
-            <div className="flex justify-end mb-4 gap-4 no-print">
-              <button
-                onClick={telechargerPDF}
-                className="bg-green-600 text-white px-4 py-2 rounded shadow hover:bg-green-700"
-              >
-                Télécharger PDF
-              </button>
+      <div className="card shadow-sm mb-4">
+       
+        <div className="card-body">
+          <div className="row mb-4 no-print">
+            <div className="col-md-6">
+              <div className="input-group">
+                <span className="input-group-text">
+                  <FaSearch />
+                </span>
+                <input
+                  type="text"
+                  className="form-control"
+                  placeholder="Rechercher une classe..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
             </div>
+            <div className="col-md-6">
+              <select
+                className="form-select"
+                value={selectedClasseId}
+                onChange={(e) => setSelectedClasseId(e.target.value)}
+              >
+                <option value="">-- Choisir une classe --</option>
+                {filteredClasses.map(classe => (
+                  <option key={classe.id} value={classe.id}>{classe.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
 
-            <div className="overflow-x-auto" ref={emploiRef}>
-              <table className="table-auto border-collapse w-full text-sm text-center">
-                <thead>
-                  <tr>
-                    <th className="border px-4 py-2 bg-gray-100">Jour / Créneau</th>
-                    {creneaux.map(cr => (
-                      <th key={cr.id} className="border px-4 py-2 bg-gray-100">
-                        {cr.heure_debut.slice(0, 5)} - {cr.heure_fin.slice(0, 5)}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {jours.map(jour => (
-                    <tr key={jour}>
-                      <td className="border font-bold px-4 py-2 text-left bg-gray-50">{jour}</td>
+          {selectedClasseId && (
+            <>
+              <div className="d-flex justify-content-end mb-3 gap-2 no-print">
+                <button
+                  onClick={telechargerPDF}
+                  className="btn btn-success"
+                >
+                  <FaDownload className="me-2" />
+                  Télécharger PDF
+                </button>
+                <button
+                  onClick={imprimerEmploi}
+                  className="btn btn-outline-primary"
+                >
+                  <FaPrint className="me-2" />
+                  Imprimer
+                </button>
+              </div>
+
+              <div className="table-responsive" ref={emploiRef}>
+                <table className="table table-bordered table-hover">
+                  <thead className="table-light">
+                    <tr>
+                      <th style={{ width: '120px' }}>Jour / Créneau</th>
                       {creneaux.map(cr => (
-                        <td 
-                          key={cr.id} 
-                          className="border px-2 py-2 hover:bg-gray-50 cursor-pointer"
-                          onClick={() => {
-                            setSelectedSeance({
-                              jour,
-                              creneau_id: cr.id,
-                              classe_id: selectedClasseId
-                            });
-                          }}
-                        >
-                          {getSeance(jour, cr.id)}
-                        </td>
+                        <th key={cr.id}>
+                          {cr.heure_debut.slice(0, 5)} - {cr.heure_fin.slice(0, 5)}
+                        </th>
                       ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </>
-        )}
-
-       
+                  </thead>
+                  <tbody>
+                    {jours.map(jour => (
+                      <tr key={jour}>
+                        <td className="fw-bold bg-light">{jour}</td>
+                        {creneaux.map(cr => (
+                          <td 
+                            key={cr.id} 
+                            className="align-top hover-bg"
+                            style={{ minWidth: '150px', cursor: 'pointer' }}
+                            onClick={() => {
+                              setSelectedSeance({
+                                jour,
+                                creneau_id: cr.id,
+                                classe_id: selectedClasseId
+                              });
+                            }}
+                          >
+                            {getSeance(jour, cr.id)}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
+          )}
+        </div>
       </div>
-    </>
+    </div>
   );
 };
 

@@ -1,5 +1,103 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import styled from 'styled-components';
+
+const Container = styled.div`
+  max-width: 1000px;
+  margin: 2rem auto;
+  padding: 2rem;
+  background: #f8fafc;
+  border-radius: 10px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+`;
+
+const Title = styled.h2`
+  color: #2c3e50;
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 1.8rem;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 0.5rem;
+`;
+
+const FormContainer = styled.div`
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  margin-bottom: 2rem;
+`;
+
+const FormTitle = styled.h3`
+  color: #3498db;
+  margin-bottom: 1rem;
+  font-size: 1.2rem;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 0.8rem;
+  margin-bottom: 1rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1rem;
+  transition: border 0.3s;
+
+  &:focus {
+    border-color: #3498db;
+    outline: none;
+  }
+`;
+
+const Button = styled.button`
+  background-color: ${props => props.primary ? '#3498db' : props.danger ? '#e74c3c' : '#2c3e50'};
+  color: white;
+  border: none;
+  padding: 0.6rem 1.2rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-right: 0.5rem;
+  transition: background-color 0.3s;
+
+  &:hover {
+    background-color: ${props => props.primary ? '#2980b9' : props.danger ? '#c0392b' : '#34495e'};
+  }
+`;
+
+const List = styled.ul`
+  list-style: none;
+  padding: 0;
+`;
+
+const ListItem = styled.li`
+  background: white;
+  padding: 1rem;
+  margin-bottom: 0.5rem;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const MatiereInfo = styled.div`
+  flex: 1;
+  color: #2c3e50;
+  font-weight: 500;
+`;
+
+const ButtonGroup = styled.div`
+  display: flex;
+  gap: 0.5rem;
+`;
+
+const Loading = styled.div`
+  text-align: center;
+  padding: 2rem;
+  color: #3498db;
+  font-size: 1.2rem;
+`;
 
 const MatiereManager = () => {
     const [matieres, setMatieres] = useState([]);
@@ -7,7 +105,6 @@ const MatiereManager = () => {
     const [editing, setEditing] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Récupérer les matières au chargement du composant
     useEffect(() => {
         axios.get('http://127.0.0.1:8000/api/matieres')
             .then(response => {
@@ -20,7 +117,6 @@ const MatiereManager = () => {
             });
     }, []);
 
-    // Ajouter une nouvelle matière
     const handleAdd = () => {
         axios.post('http://127.0.0.1:8000/api/matieres', newMatiere)
             .then(response => {
@@ -32,7 +128,6 @@ const MatiereManager = () => {
             });
     };
 
-    // Modifier une matière
     const handleEdit = (id) => {
         const matiereToEdit = matieres.find(matiere => matiere.id === id);
         setEditing(matiereToEdit);
@@ -51,7 +146,6 @@ const MatiereManager = () => {
             });
     };
 
-    // Supprimer une matière
     const handleDelete = (id) => {
         axios.delete(`http://127.0.0.1:8000/api/matieres/${id}`)
             .then(() => {
@@ -63,63 +157,66 @@ const MatiereManager = () => {
     };
 
     if (loading) {
-        return <div>Chargement...</div>;
+        return <Loading>Chargement...</Loading>;
     }
 
     return (
-        <div>
-            <h2>Gestion des Matières</h2>
+        <Container>
+            <Title>Gestion des Matières</Title>
 
-            {/* Formulaire d'ajout ou modification */}
-            <div>
+            <FormContainer>
                 {editing ? (
                     <div>
-                        <h3>Modifier la matière</h3>
-                        <input
+                        <FormTitle>Modifier la matière</FormTitle>
+                        <Input
                             type="text"
                             value={editing.nom}
                             onChange={(e) => setEditing({ ...editing, nom: e.target.value })}
                             placeholder="Nom"
                         />
-                        <input
+                        <Input
                             type="text"
                             value={editing.code}
                             onChange={(e) => setEditing({ ...editing, code: e.target.value })}
                             placeholder="Code"
                         />
-                        <button onClick={handleUpdate}>Mettre à jour</button>
+                        <Button primary onClick={handleUpdate}>Mettre à jour</Button>
+                        <Button onClick={() => setEditing(null)}>Annuler</Button>
                     </div>
                 ) : (
                     <div>
-                        <h3>Ajouter une matière</h3>
-                        <input
+                        <FormTitle>Ajouter une matière</FormTitle>
+                        <Input
                             type="text"
                             value={newMatiere.nom}
                             onChange={(e) => setNewMatiere({ ...newMatiere, nom: e.target.value })}
                             placeholder="Nom"
                         />
-                        <input
+                        <Input
                             type="text"
                             value={newMatiere.code}
                             onChange={(e) => setNewMatiere({ ...newMatiere, code: e.target.value })}
                             placeholder="Code"
                         />
-                        <button onClick={handleAdd}>Ajouter</button>
+                        <Button primary onClick={handleAdd}>Ajouter</Button>
                     </div>
                 )}
-            </div>
+            </FormContainer>
 
-            {/* Liste des matières */}
-            <ul>
+            <List>
                 {matieres.map(matiere => (
-                    <li key={matiere.id}>
-                        {matiere.nom} - {matiere.code}
-                        <button onClick={() => handleEdit(matiere.id)}>Éditer</button>
-                        <button onClick={() => handleDelete(matiere.id)}>Supprimer</button>
-                    </li>
+                    <ListItem key={matiere.id}>
+                        <MatiereInfo>
+                            {matiere.nom} - {matiere.code}
+                        </MatiereInfo>
+                        <ButtonGroup>
+                            <Button onClick={() => handleEdit(matiere.id)}>Éditer</Button>
+                            <Button danger onClick={() => handleDelete(matiere.id)}>Supprimer</Button>
+                        </ButtonGroup>
+                    </ListItem>
                 ))}
-            </ul>
-        </div>
+            </List>
+        </Container>
     );
 };
 
