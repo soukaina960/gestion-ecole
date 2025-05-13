@@ -142,4 +142,5 @@ const Incidents = () => {
   );
 };
 
+
 export default Incidents;
