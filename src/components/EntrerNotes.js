@@ -1,24 +1,72 @@
 import axios from "axios";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 
+// Reusable components
+
+// Validation functions
+const validateNoteInput = (value) => value === "" || (!isNaN(value) && value >= 0 && value <= 20);
+const validateFacteurInput = (value) => value === "" || (!isNaN(value) && value >= 0.1 && value <= 5);
+
+const GradeInput = ({ value, onChange, type = "note", ...props }) => {
+  const validate = type === "note" ? validateNoteInput : validateFacteurInput;
+  return (
+    <input
+      type="number"
+      className={`form-control ${!validate(value) ? "is-invalid" : ""}`}
+      value={value}
+      onChange={onChange}
+      min={type === "note" ? "0" : "0.1"}
+      max={type === "note" ? "20" : "5"}
+      step="0.1"
+      {...props}
+    />
+  );
+};
+
+const LoadingSpinner = ({ text = "Chargement..." }) => (
+  <div className="text-center my-2">
+    <div className="spinner-border text-primary" role="status">
+      <span className="sr-only">Chargement...</span>
+    </div>
+    {text && <p className="mt-2">{text}</p>}
+  </div>
+);
+
+const ErrorDisplay = ({ errors }) => {
+  if (!errors || errors.length === 0) return null;
+  
+  return (
+    <div className="alert alert-danger">
+      {Array.isArray(errors) ? (
+        errors.map((err, i) => <div key={i}>{err}</div>)
+      ) : (
+        <div>{errors}</div>
+      )}
+    </div>
+  );
+};
+
+const SuccessDisplay = ({ message, onDismiss }) => {
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => onDismiss(), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [message, onDismiss]);
+
+  return message ? <div className="alert alert-success">{message}</div> : null;
+};
+
+// Main component
 const EntreNotes = () => {
   const navigate = useNavigate();
+  const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:8000/api";
+
+  // State management
   const [utilisateur, setUtilisateur] = useState(null);
-  const [annees, setAnnees] = useState([]);
-  const [semestres, setSemestres] = useState([]);
-  const [classes, setClasses] = useState([]);
-  const [filieres, setFilieres] = useState([]);
-  const [matieres, setMatieres] = useState([]);
-  const [etudiants, setEtudiants] = useState([]);
-
-  const [selectedAnnee, setSelectedAnnee] = useState("");
-  const [selectedSemestre, setSelectedSemestre] = useState("");
-  const [selectedClasse, setSelectedClasse] = useState("");
-  const [selectedFiliere, setSelectedFiliere] = useState("");
-  const [selectedMatiere, setSelectedMatiere] = useState("");
-
-  const [isLycee, setIsLycee] = useState(false);
+  const [professeurId, setProfesseurId] = useState(null);
+  
   const [loading, setLoading] = useState({
     annees: false,
     semestres: false,
@@ -26,185 +74,322 @@ const EntreNotes = () => {
     filieres: false,
     matieres: false,
     etudiants: false,
-    submission: false,
+    submission: false
   });
+  const [errors, setErrors] = useState([]);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(null);
 
-  // Charger l'utilisateur connecté
-  useEffect(() => {
-    const userData = localStorage.getItem("utilisateur");
-    if (userData) {
-      setUtilisateur(JSON.parse(userData));
+  // Data state
+  const [annees, setAnnees] = useState([]);
+  const [semestres, setSemestres] = useState([]);
+  const [classes, setClasses] = useState([]);
+  const [filieres, setFilieres] = useState([]);
+  const [matieres, setMatieres] = useState([]);
+  const [etudiants, setEtudiants] = useState([]);
+
+  // Selection state
+  const [selectedAnnee, setSelectedAnnee] = useState("");
+  const [selectedSemestre, setSelectedSemestre] = useState("");
+  const [selectedClasse, setSelectedClasse] = useState("");
+  const [selectedFiliere, setSelectedFiliere] = useState("");
+  const [selectedMatiere, setSelectedMatiere] = useState("");
+  const [isLycee, setIsLycee] = useState(false);
+
+  // Helper functions
+  const handleError = useCallback((error, context) => {
+    console.error(`Error in ${context}:`, error);
+    const errorMessage = error.response?.data?.message || `Erreur lors de ${context}`;
+    setErrors(prev => [...prev, errorMessage]);
+    return null;
+  }, []);
+
+  const clearSelections = (level) => {
+    if (level <= 1) {
+      setSelectedSemestre("");
+      setSelectedClasse("");
+      setSelectedFiliere("");
+      setSelectedMatiere("");
+      setEtudiants([]);
     }
-  }, []);
+    if (level <= 2) {
+      setSelectedClasse("");
+      setSelectedFiliere("");
+      setSelectedMatiere("");
+      setEtudiants([]);
+    }
+    if (level <= 3) {
+      setSelectedFiliere("");
+      setSelectedMatiere("");
+      setEtudiants([]);
+    }
+    if (level <= 4) {
+      setSelectedMatiere("");
+      setEtudiants([]);
+    }
+  };
 
-  // Charger les années scolaires
+  // Data fetching functions
+  const fetchProfesseurId = async (userId) => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/professeurs?user=${userId}`);
+      if (response.data && response.data.length > 0) {
+        const professeur = response.data.find(p => p.user_id === userId);
+        if (professeur) {
+          const profId = professeur.id;
+          localStorage.setItem("professeur_id", profId);
+          return profId;
+        }
+      }
+      throw new Error("Professeur non trouvé");
+    } catch (error) {
+      console.error("Erreur fetchProfesseurId:", error);
+      setError("Votre compte professeur n'est pas configuré");
+      return null;
+    }
+  };
+
+  const fetchData = async (endpoint, loadingKey, params = {}) => {
+    try {
+      setLoading(prev => ({ ...prev, [loadingKey]: true }));
+      const response = await axios.get(`${API_BASE_URL}/${endpoint}`, { params });
+      return response.data;
+    } catch (err) {
+      handleError(err, `loading ${loadingKey}`);
+      return null;
+    } finally {
+      setLoading(prev => ({ ...prev, [loadingKey]: false }));
+    }
+  };
+
+  // Effects for data loading
   useEffect(() => {
-    setLoading((prev) => ({ ...prev, annees: true }));
-    axios
-      .get("http://127.0.0.1:8000/api/annees_scolaires")
-      .then((res) => setAnnees(res.data))
-      .catch((err) => console.error("Erreur chargement années:", err))
-      .finally(() => setLoading((prev) => ({ ...prev, annees: false })));
+    const loadUserData = async () => {
+      const userData = localStorage.getItem("utilisateur");
+      if (userData) {
+        const user = JSON.parse(userData);
+        setUtilisateur(user);
+        
+        if (user?.role === "professeur") {
+          const storedProfesseurId = localStorage.getItem("professeur_id");
+          if (storedProfesseurId) {
+            setProfesseurId(parseInt(storedProfesseurId));
+          } else {
+            const profId = await fetchProfesseurId(user.id);
+            if (profId) setProfesseurId(profId);
+          }
+        }
+      }
+    };
+    loadUserData();
   }, []);
 
-  // Charger les semestres quand une année est sélectionnée
+  useEffect(() => {
+    if (professeurId) {
+      fetchData("annees_scolaires", "annees").then(data => data && setAnnees(data));
+    }
+  }, [professeurId]);
+
   useEffect(() => {
     if (selectedAnnee) {
-      setLoading((prev) => ({ ...prev, semestres: true }));
-      axios
-        .get(`http://127.0.0.1:8000/api/annees/${selectedAnnee}/semestres`)
-        .then((res) => setSemestres(res.data))
-        .catch((err) => console.error("Erreur chargement semestres:", err))
-        .finally(() => setLoading((prev) => ({ ...prev, semestres: false })));
+      fetchData(`annees/${selectedAnnee}/semestres`, "semestres").then(data => data && setSemestres(data));
+    } else {
+      setSemestres([]);
     }
   }, [selectedAnnee]);
 
-  // Charger les classes quand un semestre est sélectionné
   useEffect(() => {
     if (selectedAnnee && selectedSemestre) {
-      setLoading((prev) => ({ ...prev, classes: true }));
-      axios
-        .get(`http://127.0.0.1:8000/api/classes?annee=${selectedAnnee}`)
-        .then((res) => setClasses(res.data))
-        .catch((err) => console.error("Erreur chargement classes:", err))
-        .finally(() => setLoading((prev) => ({ ...prev, classes: false })));
+      fetchData("classes", "classes", { annee: selectedAnnee }).then(data => data && setClasses(data));
+    } else {
+      setClasses([]);
     }
-  }, [selectedSemestre]);
+  }, [selectedAnnee, selectedSemestre]);
 
-  // Vérifier si c'est une classe de lycée et charger les filières
   useEffect(() => {
-    if (selectedClasse) {
-      const classe = classes.find((c) => c.id === parseInt(selectedClasse));
-      setIsLycee(classe && classe.niveau === "Secondaire");
+    const checkLyceeAndFetchFilieres = async () => {
+      if (!selectedClasse) {
+        setIsLycee(false);
+        setFilieres([]);
+        return;
+      }
+      
+      const classe = classes.find(c => c.id === parseInt(selectedClasse));
+      const isLyceeClass = classe?.niveau === "Secondaire";
+      setIsLycee(isLyceeClass);
 
-      if (isLycee) {
-        setLoading((prev) => ({ ...prev, filieres: true }));
-        axios
-          .get(`http://127.0.0.1:8000/api/classes/${selectedClasse}/filieres`)
-          .then((res) => {
-            const filieresData = res.data.filiere ? [res.data.filiere] : res.data.filieres || [];
-            setFilieres(filieresData);
-            if (filieresData.length > 0) setSelectedFiliere(filieresData[0].id);
-          })
-          .catch((err) => {
-            console.error("Erreur chargement filières:", err);
-            setFilieres([]);
-          })
-          .finally(() => setLoading((prev) => ({ ...prev, filieres: false })));
+      if (isLyceeClass) {
+        const data = await fetchData(`classes/${selectedClasse}/filieres`, "filieres");
+        if (data) {
+          const filieresData = data.filiere ? [data.filiere] : data.filieres || [];
+          setFilieres(filieresData);
+          if (filieresData.length > 0) setSelectedFiliere(filieresData[0].id);
+        }
       } else {
         setFilieres([]);
         setSelectedFiliere("");
       }
-    }
-  }, [selectedClasse, isLycee]);
+    };
 
-  // Charger les matières quand une filière est sélectionnée (lycée)
+    checkLyceeAndFetchFilieres();
+  }, [selectedClasse, classes]);
+
   useEffect(() => {
-    if (isLycee && selectedClasse && selectedFiliere && utilisateur?.id) {
-      setLoading((prev) => ({ ...prev, matieres: true }));
-      axios
-        .get(
-          `http://127.0.0.1:8000/api/professeurs/${utilisateur.id}/classes/${selectedClasse}/filieres/${selectedFiliere}/matieres`
-        )
-        .then((res) => setMatieres(res.data))
-        .catch((err) => console.error("Erreur chargement matières:", err))
-        .finally(() => setLoading((prev) => ({ ...prev, matieres: false })));
-    }
-  }, [selectedFiliere, utilisateur]);
+    const fetchMatieres = async () => {
+      if (!selectedClasse || !professeurId) {
+        setMatieres([]);
+        setSelectedMatiere("");
+        return;
+      }
+      
+      try {
+        setLoading(prev => ({ ...prev, matieres: true }));
+        
+        const endpoint = isLycee
+          ? `professeurs/${professeurId}/classes/${selectedClasse}/filieres/${selectedFiliere}/matieres`
+          : `professeurs/${professeurId}/classes/${selectedClasse}/matieres`;
+        
+        const data = await fetchData(endpoint, "matieres");
+        
+        if (data && data.length > 0) {
+          setMatieres(data);
+          // Si une seule matière est disponible, la sélectionner automatiquement
+          if (data.length === 1) {
+            setSelectedMatiere(data[0].id.toString());
+          }
+        } else {
+          setMatieres([]);
+          setSelectedMatiere("");
+          setError("Aucune matière disponible pour cette classe");
+        }
+      } catch (error) {
+        setMatieres([]);
+        setSelectedMatiere("");
+        handleError(error, "loading matieres");
+      } finally {
+        setLoading(prev => ({ ...prev, matieres: false }));
+      }
+    };
 
-  // Charger les étudiants quand tous les critères sont remplis
+    fetchMatieres();
+  }, [selectedClasse, selectedFiliere, professeurId, isLycee]);
+
   useEffect(() => {
-    if (selectedClasse && selectedAnnee && selectedSemestre && selectedMatiere && utilisateur?.id) {
-      fetchEtudiants();
-    }
-  }, [selectedClasse, selectedAnnee, selectedSemestre, selectedMatiere]);
-
-  // Fonction pour charger les étudiants
-  const fetchEtudiants = async () => {
-    try {
-      setLoading((prev) => ({ ...prev, etudiants: true }));
-      const res = await axios.get(`http://127.0.0.1:8000/api/evaluations/${selectedClasse}`, {
-        params: {
-          professeur_id: utilisateur.id,
-          annee_scolaire_id: selectedAnnee,
-          semestre_id: selectedSemestre,
-          matiere_id: selectedMatiere,
-        },
+    const fetchEtudiants = async () => {
+      if (!selectedClasse || !selectedAnnee || !selectedSemestre || !selectedMatiere || !professeurId) {
+        setEtudiants([]);
+        return;
+      }
+      
+      const data = await fetchData(`evaluations/${selectedClasse}`, "etudiants", {
+        professeur_id: professeurId,
+        annee_scolaire_id: selectedAnnee,
+        semestre_id: selectedSemestre,
+        matiere_id: selectedMatiere
       });
-      setEtudiants(
-        res.data.map((etudiant) => ({
-          ...etudiant,
-          note1: etudiant.note1 || "",
-          note2: etudiant.note2 || "",
-          note3: etudiant.note3 || "",
-          note4: etudiant.note4 || "",
-          facteur: etudiant.facteur || 1,
-        }))
-      );
-    } catch (err) {
-      setError("Erreur lors du chargement des étudiants");
-    } finally {
-      setLoading((prev) => ({ ...prev, etudiants: false }));
-    }
-  };
+      
+      if (data) {
+        setEtudiants(
+          data.map(etudiant => ({
+            ...etudiant,
+            note1: etudiant.note1 || "",
+            note2: etudiant.note2 || "",
+            note3: etudiant.note3 || "",
+            note4: etudiant.note4 || "",
+            facteur: etudiant.facteur || 1
+          }))
+        );
+      }
+    };
 
-  // Gestion des changements de notes
+    fetchEtudiants();
+  }, [selectedClasse, selectedAnnee, selectedSemestre, selectedMatiere, professeurId]);
+
+  // Handlers
   const handleNoteChange = (e, noteType, etudiantId) => {
-    const value = e.target.value === "" ? "" : parseFloat(e.target.value);
-    if (value !== "" && (value < 0 || value > 20)) return;
-    setEtudiants((prev) =>
-      prev.map((etudiant) =>
+    const value = e.target.value;
+    if (!validateNoteInput(value)) return;
+    
+    setEtudiants(prev =>
+      prev.map(etudiant =>
         etudiant.id === etudiantId ? { ...etudiant, [noteType]: value } : etudiant
       )
     );
   };
 
-  // Gestion du facteur de pondération
   const handleFacteurChange = (e, etudiantId) => {
-    const value = e.target.value === "" ? 1 : parseFloat(e.target.value);
-    if (value < 0.1 || value > 5) return;
-    setEtudiants((prev) =>
-      prev.map((etudiant) =>
-        etudiant.id === etudiantId ? { ...etudiant, facteur: value } : etudiant
+    const value = e.target.value;
+    if (!validateFacteurInput(value)) return;
+    
+    setEtudiants(prev =>
+      prev.map(etudiant =>
+        etudiant.id === etudiantId ? { ...etudiant, facteur: value || 1 } : etudiant
       )
     );
   };
 
-  // Calcul de la note finale
-  const calculerPointFinal = (etudiant) => {
+  // Calculations
+  const calculerPointFinal = useCallback((etudiant) => {
     const notes = [etudiant.note1, etudiant.note2, etudiant.note3, etudiant.note4]
-      .filter((n) => n !== "" && !isNaN(n))
-      .map((n) => parseFloat(n));
+      .filter(n => n !== "" && !isNaN(n))
+      .map(n => parseFloat(n));
+      
     if (notes.length === 0) return "";
-    const somme = notes.reduce((acc, curr) => acc + curr, 0);
-    const moyenne = somme / notes.length;
-    const pointFinal = moyenne * (etudiant.facteur || 1);
+    
+    const moyenne = notes.reduce((acc, curr) => acc + curr, 0) / notes.length;
+    const pointFinal = moyenne * (parseFloat(etudiant.facteur) || 1);
     return Math.min(pointFinal, 20).toFixed(2);
-  };
+  }, []);
 
-  // Validation du formulaire
+  const calculatedStudents = useMemo(() => (
+    etudiants.map(etudiant => ({
+      ...etudiant,
+      noteFinale: calculerPointFinal(etudiant)
+    }))
+  ), [etudiants, calculerPointFinal]);
+
+  // Form validation and submission
   const validateForm = () => {
-    if (!selectedClasse || !selectedAnnee || !selectedSemestre || !selectedMatiere) {
-      setError("Veuillez sélectionner toutes les options nécessaires");
-      return false;
+    const newErrors = [];
+    
+    if (!selectedAnnee) newErrors.push("Veuillez sélectionner une année scolaire");
+    if (!selectedSemestre) newErrors.push("Veuillez sélectionner un semestre");
+    if (!selectedClasse) newErrors.push("Veuillez sélectionner une classe");
+    if (isLycee && !selectedFiliere) newErrors.push("Veuillez sélectionner une filière");
+    
+    // Vérification plus stricte de la matière
+    if (!selectedMatiere || !matieres.some(m => m.id.toString() === selectedMatiere)) {
+      newErrors.push("Veuillez sélectionner une matière valide");
     }
-    if (etudiants.length === 0) {
-      setError("Aucun étudiant trouvé pour cette classe");
-      return false;
-    }
-    setError(null);
-    return true;
+    
+    if (etudiants.length === 0) newErrors.push("Aucun étudiant trouvé pour cette classe");
+    
+    etudiants.forEach(etudiant => {
+      if (!validateNoteInput(etudiant.note1)) newErrors.push(`Note 1 invalide pour ${etudiant.nom}`);
+      if (!validateNoteInput(etudiant.note2)) newErrors.push(`Note 2 invalide pour ${etudiant.nom}`);
+      if (!validateNoteInput(etudiant.note3)) newErrors.push(`Note 3 invalide pour ${etudiant.nom}`);
+      if (!validateNoteInput(etudiant.note4)) newErrors.push(`Note 4 invalide pour ${etudiant.nom}`);
+      if (!validateFacteurInput(etudiant.facteur)) newErrors.push(`Facteur invalide pour ${etudiant.nom}`);
+    });
+    
+    setErrors(newErrors);
+    return newErrors.length === 0;
   };
 
-  // Soumission des notes
   const handleSubmit = async () => {
     if (!validateForm()) return;
 
-    const notes = etudiants.map((e) => {
-      const noteFinale = parseFloat(calculerPointFinal(e)) || 0;
+    // Vérification supplémentaire de matiere_id
+    const matiereId = parseInt(selectedMatiere);
+    if (isNaN(matiereId)) {
+      setError("ID de matière invalide");
+      return;
+    }
+
+    const notes = calculatedStudents.map(e => {
+      const noteFinale = parseFloat(e.noteFinale) || 0;
       let remarque = "";
+      
       if (noteFinale >= 16) remarque = "Très bien";
       else if (noteFinale >= 12) remarque = "Bien";
       else if (noteFinale >= 10) remarque = "Assez bien";
@@ -217,35 +402,44 @@ const EntreNotes = () => {
         note3: e.note3 === "" ? null : parseFloat(e.note3),
         note4: e.note4 === "" ? null : parseFloat(e.note4),
         facteur: parseFloat(e.facteur) || 1,
-        remarque: remarque,
+        remarque,
         note_finale: noteFinale,
         annee_scolaire_id: parseInt(selectedAnnee),
         semestre_id: parseInt(selectedSemestre),
-        matiere_id: parseInt(selectedMatiere),
+        matiere_id: matiereId,
       };
     });
 
     const payload = {
       classe_id: parseInt(selectedClasse),
-      professeur_id: parseInt(utilisateur.id),
+      professeur_id: parseInt(professeurId),
       semestre_id: parseInt(selectedSemestre),
-      matiere_id: parseInt(selectedMatiere),
+      matiere_id: matiereId,
       annee_scolaire_id: parseInt(selectedAnnee),
-      notes: notes,
+      notes,
     };
 
-    console.log("Données envoyées:", payload);
-
     try {
-      setLoading((prev) => ({ ...prev, submission: true }));
-      const response = await axios.post("http://127.0.0.1:8000/api/evaluations", payload);
-      setSuccess("Notes enregistrées avec succès !");
-      setTimeout(() => navigate("/enseignant/dashboard"), 2000);
+      setLoading(prev => ({ ...prev, submission: true }));
+      
+      const response = await axios.post(`${API_BASE_URL}/evaluations`, payload);
+      
+      if (response.data && response.data.success) {
+        setSuccess("Notes enregistrées avec succès !");
+        setTimeout(() => navigate("/enseignant/dashboard"), 2000);
+      } else {
+        setError(response.data?.message || "Erreur lors de l'enregistrement");
+      }
     } catch (err) {
-      console.error("Erreur complète:", err.response?.data || err);
-      setError(err.response?.data?.message || "Erreur lors de l'enregistrement. Vérifiez que toutes les données sont valides.");
+      handleError(err, "saving grades");
+      
+      // Log supplémentaire pour débogage
+      console.error("Détails de l'erreur:", {
+        payload,
+        error: err.response?.data
+      });
     } finally {
-      setLoading((prev) => ({ ...prev, submission: false }));
+      setLoading(prev => ({ ...prev, submission: false }));
     }
   };
 
@@ -253,10 +447,10 @@ const EntreNotes = () => {
     <div className="container mt-4">
       <h2 className="mb-4">Saisie des notes</h2>
 
-      {error && <div className="alert alert-danger">{error}</div>}
-      {success && <div className="alert alert-success">{success}</div>}
+      
+      <SuccessDisplay message={success} onDismiss={() => setSuccess(null)} />
 
-      {/* Sélecteurs (Année, Semestre, Classe, Filière, Matière) */}
+      {/* Selection dropdowns */}
       <div className="row mb-4">
         <div className="col-md-3">
           <div className="form-group">
@@ -266,22 +460,16 @@ const EntreNotes = () => {
               value={selectedAnnee}
               onChange={(e) => {
                 setSelectedAnnee(e.target.value);
-                setSelectedSemestre("");
-                setSelectedClasse("");
-                setSelectedFiliere("");
-                setSelectedMatiere("");
-                setEtudiants([]);
+                clearSelections(1);
               }}
               disabled={loading.annees}
             >
               <option value="">-- Choisir une année --</option>
-              {annees.map((a) => (
-                <option key={a.id} value={a.id}>
-                  {a.annee}
-                </option>
+              {annees.map(a => (
+                <option key={a.id} value={a.id}>{a.annee}</option>
               ))}
             </select>
-            {loading.annees && <small>Chargement...</small>}
+            {loading.annees && <LoadingSpinner text="" />}
           </div>
         </div>
 
@@ -293,21 +481,16 @@ const EntreNotes = () => {
               value={selectedSemestre}
               onChange={(e) => {
                 setSelectedSemestre(e.target.value);
-                setSelectedClasse("");
-                setSelectedFiliere("");
-                setSelectedMatiere("");
-                setEtudiants([]);
+                clearSelections(2);
               }}
               disabled={!selectedAnnee || loading.semestres}
             >
               <option value="">-- Choisir un semestre --</option>
-              {semestres.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.nom}
-                </option>
+              {semestres.map(s => (
+                <option key={s.id} value={s.id}>{s.nom}</option>
               ))}
             </select>
-            {loading.semestres && <small>Chargement...</small>}
+            {loading.semestres && <LoadingSpinner text="" />}
           </div>
         </div>
 
@@ -319,20 +502,16 @@ const EntreNotes = () => {
               value={selectedClasse}
               onChange={(e) => {
                 setSelectedClasse(e.target.value);
-                setSelectedFiliere("");
-                setSelectedMatiere("");
-                setEtudiants([]);
+                clearSelections(3);
               }}
               disabled={!selectedSemestre || loading.classes}
             >
               <option value="">-- Choisir une classe --</option>
-              {classes.map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
+              {classes.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
               ))}
             </select>
-            {loading.classes && <small>Chargement...</small>}
+            {loading.classes && <LoadingSpinner text="" />}
           </div>
         </div>
 
@@ -343,19 +522,21 @@ const EntreNotes = () => {
               <select
                 className="form-control"
                 value={selectedFiliere}
-                onChange={(e) => setSelectedFiliere(e.target.value)}
+                onChange={(e) => {
+                  setSelectedFiliere(e.target.value);
+                  clearSelections(4);
+                }}
                 disabled={loading.filieres || filieres.length === 0}
               >
                 {filieres.length > 0 ? (
-                  filieres.map((f) => (
-                    <option key={f.id} value={f.id}>
-                      {f.nom}
-                    </option>
+                  filieres.map(f => (
+                    <option key={f.id} value={f.id}>{f.nom}</option>
                   ))
                 ) : (
                   <option value="">Aucune filière disponible</option>
                 )}
               </select>
+              {loading.filieres && <LoadingSpinner text="" />}
             </div>
           </div>
         )}
@@ -372,127 +553,104 @@ const EntreNotes = () => {
                 setSelectedMatiere(e.target.value);
                 setEtudiants([]);
               }}
-              disabled={(!isLycee && !selectedClasse) || (isLycee && !selectedFiliere) || loading.matieres}
+              disabled={
+                (!isLycee && !selectedClasse) || 
+                (isLycee && !selectedFiliere) || 
+                loading.matieres
+              }
             >
               <option value="">-- Choisir une matière --</option>
-              {matieres.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.nom}
-                </option>
+              {matieres.map(m => (
+                <option key={m.id} value={m.id}>{m.nom}</option>
               ))}
             </select>
-            {loading.matieres && <small>Chargement...</small>}
+            {loading.matieres && <LoadingSpinner text="" />}
           </div>
         </div>
       </div>
 
-      {/* Tableau des étudiants et notes */}
+      {/* Students and grades table */}
       {loading.etudiants ? (
-        <div className="text-center my-5">
-          <div className="spinner-border text-primary" role="status">
-            <span className="sr-only">Chargement...</span>
+        <LoadingSpinner text="Chargement des étudiants..." />
+      ) : calculatedStudents.length > 0 ? (
+        <div className="mt-4">
+          <div className="d-flex justify-content-between align-items-center mb-3">
+            <h5>Liste des étudiants</h5>
+            <button
+              className="btn btn-primary"
+              onClick={handleSubmit}
+              disabled={loading.submission}
+            >
+              {loading.submission ? (
+                <>
+                  <span className="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span>
+                  Enregistrement...
+                </>
+              ) : (
+                "Enregistrer les notes"
+              )}
+            </button>
           </div>
-          <p>Chargement des étudiants...</p>
+
+          <div className="table-responsive">
+            <table className="table table-bordered table-hover">
+              <thead className="thead-dark">
+                <tr>
+                  <th>Nom</th>
+                  <th>Note 1</th>
+                  <th>Note 2</th>
+                  <th>Note 3</th>
+                  <th>Note 4</th>
+                  <th>Facteur</th>
+                  <th>Note Finale</th>
+                </tr>
+              </thead>
+              <tbody>
+                {calculatedStudents.map(etudiant => (
+                  <tr key={etudiant.id}>
+                    <td>{etudiant.nom}</td>
+                    <td>
+                      <GradeInput
+                        value={etudiant.note1}
+                        onChange={(e) => handleNoteChange(e, "note1", etudiant.id)}
+                      />
+                    </td>
+                    <td>
+                      <GradeInput
+                        value={etudiant.note2}
+                        onChange={(e) => handleNoteChange(e, "note2", etudiant.id)}
+                      />
+                    </td>
+                    <td>
+                      <GradeInput
+                        value={etudiant.note3}
+                        onChange={(e) => handleNoteChange(e, "note3", etudiant.id)}
+                      />
+                    </td>
+                    <td>
+                      <GradeInput
+                        value={etudiant.note4}
+                        onChange={(e) => handleNoteChange(e, "note4", etudiant.id)}
+                      />
+                    </td>
+                    <td>
+                      <GradeInput
+                        type="facteur"
+                        value={etudiant.facteur}
+                        onChange={(e) => handleFacteurChange(e, etudiant.id)}
+                      />
+                    </td>
+                    <td className="font-weight-bold">{etudiant.noteFinale}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       ) : (
-        etudiants.length > 0 && (
-          <div className="mt-4">
-            <div className="d-flex justify-content-between align-items-center mb-3">
-              <h5>Liste des étudiants</h5>
-              <button
-                className="btn btn-primary"
-                onClick={handleSubmit}
-                disabled={loading.submission}
-              >
-                {loading.submission ? (
-                  <>
-                    <span className="spinner-border spinner-border-sm mr-2" role="status" aria-hidden="true"></span>
-                    Enregistrement...
-                  </>
-                ) : (
-                  "Enregistrer les notes"
-                )}
-              </button>
-            </div>
-
-            <div className="table-responsive">
-              <table className="table table-bordered table-hover">
-                <thead className="thead-dark">
-                  <tr>
-                    <th>Nom</th>
-                    <th>Note 1</th>
-                    <th>Note 2</th>
-                    <th>Note 3</th>
-                    <th>Note 4</th>
-                    <th>Facteur</th>
-                    <th>Note Finale</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {etudiants.map((etudiant) => (
-                    <tr key={etudiant.id}>
-                      <td>{etudiant.nom}</td>
-                      <td>
-                        <input
-                          type="number"
-                          className={`form-control ${etudiant.note1 !== "" && (etudiant.note1 < 0 || etudiant.note1 > 20) ? "is-invalid" : ""}`}
-                          value={etudiant.note1}
-                          onChange={(e) => handleNoteChange(e, "note1", etudiant.id)}
-                          min="0"
-                          max="20"
-                          step="0.1"
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="number"
-                          className={`form-control ${etudiant.note2 !== "" && (etudiant.note2 < 0 || etudiant.note2 > 20) ? "is-invalid" : ""}`}
-                          value={etudiant.note2}
-                          onChange={(e) => handleNoteChange(e, "note2", etudiant.id)}
-                          min="0"
-                          max="20"
-                          step="0.1"
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="number"
-                          className={`form-control ${etudiant.note3 !== "" && (etudiant.note3 < 0 || etudiant.note3 > 20) ? "is-invalid" : ""}`}
-                          value={etudiant.note3}
-                          onChange={(e) => handleNoteChange(e, "note3", etudiant.id)}
-                          min="0"
-                          max="20"
-                          step="0.1"
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="number"
-                          className={`form-control ${etudiant.note4 !== "" && (etudiant.note4 < 0 || etudiant.note4 > 20) ? "is-invalid" : ""}`}
-                          value={etudiant.note4}
-                          onChange={(e) => handleNoteChange(e, "note4", etudiant.id)}
-                          min="0"
-                          max="20"
-                          step="0.1"
-                        />
-                      </td>
-                      <td>
-                        <input
-                          type="number"
-                          className={`form-control ${etudiant.facteur !== "" && (etudiant.facteur < 0.1 || etudiant.facteur > 5) ? "is-invalid" : ""}`}
-                          value={etudiant.facteur}
-                          onChange={(e) => handleFacteurChange(e, etudiant.id)}
-                          min="0.1"
-                          max="5"
-                          step="0.1"
-                        />
-                      </td>
-                      <td className="font-weight-bold">{calculerPointFinal(etudiant)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+        !loading.etudiants && (
+          <div className="alert alert-info">
+            {selectedMatiere ? "Aucun étudiant trouvé pour cette sélection" : "Veuillez sélectionner une matière"}
           </div>
         )
       )}

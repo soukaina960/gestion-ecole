@@ -1,113 +1,177 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { Container, Spinner, Alert, Button, Table, Form, Badge } from 'react-bootstrap';
+import { Download } from 'react-bootstrap-icons';
 
 const EtudiantCours = () => {
-  const [fichiers, setFichiers] = useState([]);
-  const [etudiant, setEtudiant] = useState(null);
-  const [semestreId, setSemestreId] = useState(1);
-  const [classeId, setClasseId] = useState(null);
-  const [matieres, setMatieres] = useState([]);
-  const [matiereId, setMatiereId] = useState(null);
+  const [state, setState] = useState({
+    fichiers: [],
+    loading: true,
+    error: null,
+    semestreId: 1,
+    matiereId: null,
+    matieres: [],
+    semestres: []
+  });
 
   useEffect(() => {
-    const userData = localStorage.getItem('utilisateur');
+    const fetchData = async () => {
+      try {
+        // 1. Récupérer l'ID de l'étudiant connecté
+        const userData = JSON.parse(localStorage.getItem('utilisateur'));
+        const etudiantResponse = await axios.get('http://127.0.0.1:8000/api/etudiants', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+        
+        const etudiant = etudiantResponse.data.find(e => e.utilisateur_id === userData.id);
+        if (!etudiant) throw new Error("Étudiant non trouvé");
 
-    if (userData) {
-      const parsedUser = JSON.parse(userData);
-      setEtudiant(parsedUser);
+        // 2. Charger les données nécessaires
+        const [fichiersResponse, matieresResponse, semestresResponse] = await Promise.all([
+          axios.get('http://127.0.0.1:8000/api/fichiers-pedagogiques', {
+            params: { classe_id: etudiant.classe_id },
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          }),
+          axios.get('http://127.0.0.1:8000/api/matieres', {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          }),
+          axios.get('http://127.0.0.1:8000/api/semestres', {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+          })
+        ]);
 
-      if (parsedUser.classe_id) {
-        setClasseId(parsedUser.classe_id);
+        setState(prev => ({
+          ...prev,
+          fichiers: fichiersResponse.data.data,
+          matieres: matieresResponse.data.data,
+          semestres: semestresResponse.data.data,
+          loading: false
+        }));
+
+      } catch (error) {
+        setState(prev => ({ ...prev, error: error.message, loading: false }));
       }
+    };
 
-      axios.get('http://127.0.0.1:8000/api/matieres')
-        .then(res => {
-          if (res.data.success) {
-            setMatieres(res.data.data);
-          }
-        })
-        .catch(err => console.error("Erreur chargement matières :", err));
-    }
+    fetchData();
   }, []);
 
-  useEffect(() => {
-    if (classeId && semestreId) {
-      axios.get('http://127.0.0.1:8000/api/fichiers-etudiant', {
-        params: {
-          classe_id: classeId,
-          semestre_id: semestreId,
-          matiere_id: matiereId
-        }
-      })
-        .then(res => {
-          setFichiers(res.data);
-        })
-        .catch(err => {
-          console.error("Erreur API fichiers :", err);
-        });
-    }
-  }, [classeId, semestreId, matiereId]);
+  const handleDownload = (cheminFichier, nomFichier) => {
+    const fileUrl = `http://127.0.0.1:8000/storage/${cheminFichier}`;
+    const link = document.createElement('a');
+    link.href = fileUrl;
+    link.setAttribute('download', nomFichier);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const filteredFiles = state.fichiers.filter(fichier => {
+    const matchesSemestre = fichier.semestre_id === state.semestreId;
+    const matchesMatiere = !state.matiereId || fichier.matiere_id === state.matiereId;
+    return matchesSemestre && matchesMatiere;
+  });
+
+  if (state.loading) return (
+    <Container className="text-center mt-4">
+      <Spinner animation="border" />
+      <p>Chargement en cours...</p>
+    </Container>
+  );
+
+  if (state.error) return (
+    <Container className="mt-4">
+      <Alert variant="danger">
+        {state.error}
+        <Button variant="link" onClick={() => window.location.reload()}>Réessayer</Button>
+      </Alert>
+    </Container>
+  );
 
   return (
-    <div className="container mt-4">
-      <h2 className="mb-4">📂 Fichiers pédagogiques</h2>
+    <Container className="mt-4">
+      <h2 className="mb-4">📚 Mes Cours</h2>
 
-      <div className="form-group mb-3">
-        <label>Sélectionner un semestre :</label>
-        <select className="form-control" value={semestreId} onChange={e => setSemestreId(Number(e.target.value))}>
-          <option value={1}>Semestre 1</option>
-          <option value={2}>Semestre 2</option>
-        </select>
+      <div className="row mb-4">
+        <div className="col-md-4">
+          <Form.Group>
+            <Form.Label>Semestre :</Form.Label>
+            <Form.Select
+              value={state.semestreId}
+              onChange={e => setState(prev => ({ ...prev, semestreId: Number(e.target.value) }))}
+            >
+              {state.semestres.map(s => (
+                <option key={s.id} value={s.id}>{s.nom}</option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+        </div>
+
+        <div className="col-md-8">
+          <Form.Group>
+            <Form.Label>Matière :</Form.Label>
+            <Form.Select
+              value={state.matiereId || ''}
+              onChange={e => setState(prev => ({
+                ...prev,
+                matiereId: e.target.value ? Number(e.target.value) : null
+              }))}
+            >
+              <option value="">Toutes les matières</option>
+              {state.matieres.map(m => (
+                <option key={m.id} value={m.id}>{m.nom}</option>
+              ))}
+            </Form.Select>
+          </Form.Group>
+        </div>
       </div>
 
-      <div className="form-group mb-3">
-        <label>Sélectionner une matière :</label>
-        <select className="form-control" value={matiereId || ''} onChange={e => setMatiereId(Number(e.target.value) || null)}>
-          <option value="">Toutes les matières</option>
-          {matieres.map(m => (
-            <option key={m.id} value={m.id}>{m.nom}</option>
-          ))}
-        </select>
-      </div>
-
-      <table className="table table-bordered">
+      <Table striped bordered hover>
         <thead>
           <tr>
             <th>Type</th>
             <th>Nom du fichier</th>
-            <th>Spécialité</th>
-            <th>Télécharger</th>
+            <th>Matière</th>
+            <th>Professeur</th>
+            <th>Date</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {fichiers.length > 0 ? (
-            fichiers.map((f, i) => (
-              <tr key={i}>
-                <td>{f.type_fichier}</td>
-                <td>{f.nom_fichier}</td>
-                <td>{f.specialite}</td>
+          {filteredFiles.length > 0 ? (
+            filteredFiles.map(fichier => (
+              <tr key={fichier.id}>
                 <td>
-                <a
-                      href={`http://127.0.0.1:8000/api/fichiers-pedagogiques/download/${f.id}`}
-                      download
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-sm btn-primary"
-                    >
-                      Télécharger
-                    </a>
-
+                  <Badge bg={fichier.type_fichier === 'cours' ? 'primary' : 'warning'}>
+                    {fichier.type_fichier}
+                  </Badge>
+                </td>
+                <td>{fichier.nom_fichier}</td>
+                <td>{fichier.matiere?.nom || '-'}</td>
+                <td>{fichier.professeur?.nom || '-'}</td>
+                <td>{new Date(fichier.created_at).toLocaleDateString()}</td>
+                <td>
+                  <Button
+                    variant="success"
+                    size="sm"
+                    target="_blank"
+                    onClick={() => handleDownload(fichier.chemin_fichier, fichier.nom_fichier)}
+                  >
+                    <Download /> Télécharger
+                  </Button>
                 </td>
               </tr>
             ))
           ) : (
             <tr>
-              <td colSpan="4" className="text-center">Aucun fichier trouvé.</td>
+              <td colSpan="6" className="text-center py-4">
+                Aucun fichier disponible
+              </td>
             </tr>
           )}
         </tbody>
-      </table>
-    </div>
+      </Table>
+    </Container>
   );
 };
 

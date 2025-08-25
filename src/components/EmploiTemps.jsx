@@ -14,6 +14,9 @@ const EmploiDuTemps = () => {
   const [emplois, setEmplois] = useState([]);
   const [creneaux, setCreneaux] = useState([]);
   const [selectedSeance, setSelectedSeance] = useState(null);
+  const [selectedProf, setSelectedProf] = useState('');
+    const emploiTempsRef = useRef();
+  
   const [formData, setFormData] = useState({
     matiere_id: '',
     professeur_id: '',
@@ -126,9 +129,7 @@ const EmploiDuTemps = () => {
             .no-print {
               display: none !important;
             }
-            body, html {
-              background: white !important;
-            }
+           
             .table {
               width: 100% !important;
               font-size: 12px !important;

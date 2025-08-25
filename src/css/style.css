@@ -465,11 +465,6 @@ h6,
     margin-right: 10px;
 }
 
-.footer .btn.btn-link:hover {
-    color: var(--primary) !important;
-    letter-spacing: 1px;
-    box-shadow: none;
-}
 
 .footer .form-control {
     border-color: rgba(255,255,255,0.5);

@@ -87,14 +87,21 @@ const Incidents = () => {
   };
 
   useEffect(() => {
+    if (!parentId) {
+      setError("Aucun identifiant parent trouvé.");
+      setLoading(false);
+      return;
+    }
+
     axios
       .get(`http://127.0.0.1:8000/api/incidents/parent/${parentId}`)
       .then((response) => {
-        setIncidents(response.data);
+        console.log("Incidents reçus :", response.data);
+        setIncidents(Array.isArray(response.data) ? response.data : []);
         setLoading(false);
       })
       .catch((err) => {
-        setError("Une erreur est survenue.");
+        setError("Une erreur est survenue lors du chargement.");
         setLoading(false);
       });
   }, [parentId]);
@@ -110,7 +117,9 @@ const Incidents = () => {
 
   return (
     <div style={styles.container}>
-      <h2 style={styles.title}><i class="fas fa-clipboard" style={{ color: "#e74c3c" }} ></i> Liste des incidents</h2>
+      <h2 style={styles.title}>
+        <i className="fas fa-clipboard" style={{ color: "#e74c3c" }}></i> Liste des incidents
+      </h2>
 
       <div style={styles.selectContainer}>
         <label style={styles.label}>Trier par date :</label>
@@ -160,7 +169,7 @@ const Incidents = () => {
                 }
               >
                 <td style={styles.td}>
-                  {incident.etudiant.nom} {incident.etudiant.prenom}
+                  {incident.etudiant?.nom} {incident.etudiant?.prenom}
                 </td>
                 <td style={styles.td}>
                   {incident.classroom ? incident.classroom.name : "N/A"}
@@ -181,6 +190,5 @@ const Incidents = () => {
     </div>
   );
 };
-
 
 export default Incidents;

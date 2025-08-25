@@ -86,7 +86,7 @@ const Absences = () => {
             {sortedAbsences.map(absence => (
               <tr key={absence.id} style={styles.tr}>
                 <td style={styles.td}>{absence.etudiant?.nom || 'N/A'}</td>
-                <td style={styles.td}>{absence.classroom?.name || 'N/A'}</td>
+            <td style={styles.td}>{absence.etudiant?.classroom?.name || 'N/A'}</td> 
                 <td style={styles.td}>{absence.matiere?.nom || 'N/A'}</td>
                 <td style={styles.td}>{absence.professeur?.nom || 'N/A'}</td>
                 <td style={styles.td}>{absence.motif}</td>

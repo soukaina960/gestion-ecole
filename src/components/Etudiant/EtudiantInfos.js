@@ -1,152 +1,322 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import './EtudiantInfos.css';
+import { Container, Alert, Card, Spinner, Button, Form, Image } from 'react-bootstrap';
 
 function EtudiantInfos() {
-    const [etudiantInfo, setEtudiantInfo] = useState(null);
-    const [etudiantDetails, setEtudiantDetails] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const [isEditing, setIsEditing] = useState(false);
-    const [formData, setFormData] = useState({
-        nom: '',
-        matricule: '',
-        email: '',
-        adresse: '',
-        telephone: '',
-        role: '',
-        origine: '',
-        parent_id: '',
-        date_naissance: '',
-        sexe: '',
-        montant_a_payer: '',
-        classe_id: '',
-    });
+  const [etudiant, setEtudiant] = useState({
+    id: '',
+    nom: '',
+    prenom: '',
+    matricule: '',
+    email: '',
+    date_naissance: '',
+    sexe: '',
+    adresse: '',
+    photo_profil: '',
+    classe: { id: '', name: '', niveau: '' }
+  });
 
-    useEffect(() => {
-        const fetchEtudiantInfo = async () => {
-            try {
-                const userData = localStorage.getItem('utilisateur');
-                if (!userData) {
-                    setError('Utilisateur non connecté');
-                    return;
-                }
+  const [editMode, setEditMode] = useState(false);
+  const [loading, setLoading] = useState({
+    initial: true,
+    etudiant: false,
+    update: false
+  });
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
+  const [errors, setErrors] = useState({});
 
-                const parsedUser = JSON.parse(userData);
-                const userId = parsedUser.id;
+  // Fonctions utilitaires
+  const updateLoading = (key, value) => {
+    setLoading(prev => ({ ...prev, [key]: value }));
+  };
 
-                // Récupérer les informations de l'utilisateur
-                const response = await axios.get(`http://127.0.0.1:8000/api/utilisateurs/${userId}`);
-                
-                if (response.data && response.data.id) {
-                    setEtudiantInfo(response.data);
-                    // Récupérer les détails de l'étudiant à partir d'un autre endpoint
-                    const etudiantResponse = await axios.get(`http://127.0.0.1:8000/api/etudiants/${userId}`);
-                    setEtudiantDetails(etudiantResponse.data); // Mettre à jour avec les détails d'étudiant
-                    setFormData({
-                        nom: response.data.nom || '',
-                        matricule: response.data.matricule || '',
-                        email: response.data.email || '',
-                        adresse: response.data.adresse || '',
-                        telephone: response.data.telephone || '',
-                        role: response.data.role || '',
-                        origine: etudiantResponse.data.origine || '',
-                        parent_id: etudiantResponse.data.parent_id || '',
-                        date_naissance: etudiantResponse.data.date_naissance || '',
-                        sexe: etudiantResponse.data.sexe || '',
-                        montant_a_payer: etudiantResponse.data.montant_a_payer || '',
-                        classe_id: etudiantResponse.data.classe_id || '',
-                    });
-                } else {
-                    setError('Aucune donnée trouvée pour cet étudiant');
-                }
-            } catch (error) {
-                setError('Erreur lors de la récupération des données');
-                console.error('Erreur:', error);
-            } finally {
-                setLoading(false);
-            }
-        };
+  const updateError = (message) => {
+    setError(message);
+  };
 
-        fetchEtudiantInfo();
-    }, []);
+  const updateState = (key, value) => {
+    if (key === 'etudiantId') {
+      setEtudiant(prev => ({ ...prev, id: value }));
+    }
+  };
 
-    const handleChange = (e) => {
-        const { name, value } = e.target;
-        setFormData((prevData) => ({
-            ...prevData,
-            [name]: value,
-        }));
-    };
-
-    const handleSave = async () => {
-        try {
-            const userData = localStorage.getItem('utilisateur');
-            const parsedUser = JSON.parse(userData);
-            const userId = parsedUser.id;
-
-            const response = await axios.put(`http://127.0.0.1:8000/api/utilisateurs/${userId}`, formData);
-
-            if (response.status === 200) {
-                setEtudiantInfo(response.data);
-                setIsEditing(false);
-            } else {
-                setError('Échec de la mise à jour des informations');
-            }
-        } catch (error) {
-            setError('Erreur lors de la mise à jour des données');
-            console.error('Erreur:', error);
-        }
-    };
-
-    const handleCancel = () => {
-        setIsEditing(false);
-        const etudiantData = etudiantDetails || {};
-        setFormData({
-            nom: etudiantInfo.nom || '',
-            matricule: etudiantInfo.matricule || '',
-            email: etudiantInfo.email || '',
-            adresse: etudiantInfo.adresse || '',
-            telephone: etudiantInfo.telephone || '',
-            role: etudiantInfo.role || '',
-            origine: etudiantData.origine || '',
-            parent_id: etudiantData.parent_id || '',
-            date_naissance: etudiantData.date_naissance || '',
-            sexe: etudiantData.sexe || '',
-            montant_a_payer: etudiantData.montant_a_payer || '',
-            classe_id: etudiantData.classe_id || '',
-        });
-    };
-
-    if (loading) return <div>Chargement...</div>;
-    if (error) return <div className="text-red-500">{error}</div>;
-
-    return (
-        <div className="p-4 max-w-4xl mx-auto">
-            <h1 className="text-2xl font-bold mb-4">Information de l'Étudiant</h1>
-            <div className="space-y-4">
-                {isEditing ? (
-                    <div>
-                        {/* Formulaire d'édition */}
-                    </div>
-                ) : (
-                    <div>
-                        <p><strong>Nom:</strong> {etudiantInfo.nom}</p>
-                        <p><strong>Matricule:</strong> {etudiantInfo.matricule}</p>
-                        <p><strong>Email:</strong> {etudiantInfo.email}</p>
-                        <p><strong>Adresse:</strong> {etudiantInfo.adresse}</p>
-                        <p><strong>Téléphone:</strong> {etudiantInfo.telephone}</p>
-                        <p><strong>Rôle:</strong> {etudiantInfo.role}</p>
-                        <p><strong>Origine:</strong> {etudiantDetails ? etudiantDetails.origine : ''}</p>
-                        <p><strong>Date de naissance:</strong> {etudiantDetails ? etudiantDetails.date_naissance : ''}</p>
-                        <p><strong>Sexe:</strong> {etudiantDetails ? etudiantDetails.sexe : ''}</p>
-                        <button onClick={() => setIsEditing(true)} className="bg-blue-500 text-white p-2 rounded">Modifier</button>
-                    </div>
-                )}
-            </div>
-        </div>
+  const apiGet = async (endpoint) => {
+    const token = localStorage.getItem('access_token');
+    const response = await axios.get(
+      `http://localhost:8000/api/${endpoint}`,
+      { headers: { Authorization: `Bearer ${token}` } }
     );
+    return response.data;
+  };
+
+  // Récupérer l'étudiant connecté
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        updateLoading('etudiant', true);
+        
+        // 1. Récupérer l'utilisateur connecté
+        const userData = localStorage.getItem('utilisateur');
+        if (!userData) {
+          throw new Error("Utilisateur non connecté");
+        }
+
+        const parsedUser = JSON.parse(userData);
+        const userId = parsedUser.id;
+
+        // 2. Rechercher l'étudiant lié
+        const etudiants = await apiGet('etudiants');
+        const foundEtudiant = etudiants.find(p => p.utilisateur_id === userId);
+        
+        if (!foundEtudiant) {
+          throw new Error("Aucun étudiant trouvé pour cet utilisateur");
+        }
+
+        updateState('etudiantId', foundEtudiant.id);
+        
+        // 3. Récupérer les détails complets de l'étudiant
+        const studentDetails = await apiGet(`etudiants/${foundEtudiant.id}`);
+        
+        setEtudiant({
+          id: studentDetails.id,
+          nom: studentDetails.nom,
+          prenom: studentDetails.prenom,
+          matricule: studentDetails.matricule,
+          email: studentDetails.email,
+          date_naissance: studentDetails.date_naissance,
+          sexe: studentDetails.sexe,
+          adresse: studentDetails.adresse,
+          photo_profil: studentDetails.photo_profil_url || 'default_image.png',
+          classe: {
+            id: studentDetails.classroom?.id || '',
+            name: studentDetails.classroom?.name || 'Non spécifiée',
+            niveau: studentDetails.classroom?.niveau || 'Non spécifié'
+          }
+        });
+
+        updateLoading('initial', false);
+      } catch (err) {
+        updateError(err.message || "Erreur d'authentification");
+        console.error("Erreur:", err);
+      } finally {
+        updateLoading('etudiant', false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const validateForm = () => {
+    const newErrors = {};
+    if (!etudiant.nom.trim()) newErrors.nom = 'Le nom est requis';
+    if (!etudiant.prenom.trim()) newErrors.prenom = 'Le prénom est requis';
+    if (!etudiant.matricule.trim()) newErrors.matricule = 'Le matricule est requis';
+    if (!etudiant.email.trim()) newErrors.email = 'L\'email est requis';
+    if (!etudiant.date_naissance) newErrors.date_naissance = 'La date de naissance est requise';
+    if (!etudiant.classe.id) newErrors.classe = 'La classe est requise';
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      updateLoading('update', true);
+      const token = localStorage.getItem('access_token');
+      
+      const payload = {
+        nom: etudiant.nom,
+        prenom: etudiant.prenom,
+        matricule: etudiant.matricule,
+        email: etudiant.email,
+        date_naissance: etudiant.date_naissance,
+        sexe: etudiant.sexe,
+        adresse: etudiant.adresse,
+        classe_id: etudiant.classe.id
+      };
+
+      await axios.put(
+        `http://localhost:8000/api/etudiants/${etudiant.id}`,
+        payload,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setSuccess('Profil mis à jour avec succès');
+      setEditMode(false);
+      setErrors({});
+    } catch (err) {
+      console.error('Erreur:', err);
+      if (err.response?.data?.errors) {
+        setErrors(err.response.data.errors);
+      }
+      updateError(err.response?.data?.message || 'Erreur lors de la mise à jour');
+    } finally {
+      updateLoading('update', false);
+    }
+  };
+
+  if (loading.initial) return <Spinner animation="border" className="d-block mx-auto my-5" />;
+  if (error && !editMode) return <Alert variant="danger" className="m-3">{error}</Alert>;
+
+  return (
+    <Container className="my-4">
+      <Card className="shadow-sm">
+        <Card.Body>
+          {success && <Alert variant="success">{success}</Alert>}
+          {error && <Alert variant="danger">{error}</Alert>}
+
+          {editMode ? (
+            <Form onSubmit={handleSubmit}>
+              <div className="text-center mb-4">
+                <Image 
+                  src={etudiant.photo_profil} 
+                  roundedCircle 
+                  style={{ width: '120px', height: '120px', objectFit: 'cover' }}
+                  className="border"
+                  alt="Profil"
+                />
+              </div>
+
+              <Form.Group className="mb-3">
+                <Form.Label>Matricule *</Form.Label>
+                <Form.Control
+                  value={etudiant.matricule}
+                  onChange={(e) => setEtudiant({...etudiant, matricule: e.target.value})}
+                  isInvalid={!!errors.matricule}
+                />
+                <Form.Control.Feedback type="invalid">
+                  {errors.matricule}
+                </Form.Control.Feedback>
+              </Form.Group>
+
+              <Form.Group className="mb-3">
+                <Form.Label>Nom *</Form.Label>
+                <Form.Control
+                  value={etudiant.nom}
+                  onChange={(e) => setEtudiant({...etudiant, nom: e.target.value})}
+                  isInvalid={!!errors.nom}
+                />
+                <Form.Control.Feedback type="invalid">
+                  {errors.nom}
+                </Form.Control.Feedback>
+              </Form.Group>
+
+              <Form.Group className="mb-3">
+                <Form.Label>Prénom *</Form.Label>
+                <Form.Control
+                  value={etudiant.prenom}
+                  onChange={(e) => setEtudiant({...etudiant, prenom: e.target.value})}
+                  isInvalid={!!errors.prenom}
+                />
+                <Form.Control.Feedback type="invalid">
+                  {errors.prenom}
+                </Form.Control.Feedback>
+              </Form.Group>
+
+              <Form.Group className="mb-3">
+                <Form.Label>Email *</Form.Label>
+                <Form.Control
+                  type="email"
+                  value={etudiant.email}
+                  onChange={(e) => setEtudiant({...etudiant, email: e.target.value})}
+                  isInvalid={!!errors.email}
+                />
+                <Form.Control.Feedback type="invalid">
+                  {errors.email}
+                </Form.Control.Feedback>
+              </Form.Group>
+
+              <Form.Group className="mb-3">
+                <Form.Label>Date de naissance *</Form.Label>
+                <Form.Control
+                  type="date"
+                  value={etudiant.date_naissance}
+                  onChange={(e) => setEtudiant({...etudiant, date_naissance: e.target.value})}
+                  isInvalid={!!errors.date_naissance}
+                />
+                <Form.Control.Feedback type="invalid">
+                  {errors.date_naissance}
+                </Form.Control.Feedback>
+              </Form.Group>
+
+              <Form.Group className="mb-3">
+                <Form.Label>Sexe</Form.Label>
+                <Form.Select
+                  value={etudiant.sexe}
+                  onChange={(e) => setEtudiant({...etudiant, sexe: e.target.value})}
+                >
+                  <option value="M">Masculin</option>
+                  <option value="F">Féminin</option>
+                </Form.Select>
+              </Form.Group>
+
+              <Form.Group className="mb-3">
+                <Form.Label>Adresse</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  value={etudiant.adresse}
+                  onChange={(e) => setEtudiant({...etudiant, adresse: e.target.value})}
+                />
+              </Form.Group>
+
+              <div className="d-flex justify-content-end gap-2 mt-4">
+                <Button variant="outline-secondary" onClick={() => setEditMode(false)}>
+                  Annuler
+                </Button>
+                <Button variant="primary" type="submit" disabled={loading.update}>
+                  {loading.update ? 'Enregistrement...' : 'Enregistrer'}
+                </Button>
+              </div>
+            </Form>
+          ) : (
+            <>
+              <div className="text-center mb-4">
+                <Image 
+                  src={etudiant.photo_profil} 
+                  roundedCircle 
+                  style={{ width: '150px', height: '150px', objectFit: 'cover' }}
+                  className="border"
+                  alt="Profil"
+                />
+                <h4 className="mt-3">{etudiant.prenom} {etudiant.nom}</h4>
+                <small className="text-muted">Matricule: {etudiant.matricule}</small>
+              </div>
+
+              <div className="mb-4">
+                <h5>Informations personnelles</h5>
+                <p><strong>Email:</strong> {etudiant.email}</p>
+                <p><strong>Date de naissance:</strong> {new Date(etudiant.date_naissance).toLocaleDateString('fr-FR')}</p>
+                <p><strong>Sexe:</strong> {etudiant.sexe === 'M' ? 'Masculin' : 'Féminin'}</p>
+                <p><strong>Adresse:</strong> {etudiant.adresse || 'Non renseignée'}</p>
+              </div>
+
+              <div className="mb-4">
+                <h5>Informations académiques</h5>
+                <p><strong>Classe:</strong> {etudiant.classe.name}</p>
+                <p><strong>Niveau:</strong> {etudiant.classe.niveau}</p>
+              </div>
+
+              <Button 
+                variant="primary" 
+                onClick={() => setEditMode(true)}
+                className="w-100"
+                disabled={loading.etudiant}
+              >
+                {loading.etudiant ? 'Chargement...' : 'Modifier le profil'}
+              </Button>
+            </>
+          )}
+        </Card.Body>
+      </Card>
+    </Container>
+  );
 }
 
 export default EtudiantInfos;

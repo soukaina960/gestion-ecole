@@ -1,109 +1,87 @@
-import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
-const EventDashboard = () => {
+export default function EvenementsParent() {
+  const [enfants, setEnfants] = useState([]);
+  const [selectedEnfantId, setSelectedEnfantId] = useState(null);
   const [evenements, setEvenements] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [notFound, setNotFound] = useState(false); // Pour gérer 404
+    const parentId = localStorage.getItem('parent_id');
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    const utilisateurId = localStorage.getItem('utilisateurId');
+    const parentId = parseInt(localStorage.getItem("parent_id"));
 
-    if (!token || !utilisateurId) {
-      setErrorMessage('Utilisateur non authentifié.');
-      setLoading(false);
-      return;
-    }
+    axios.get("http://127.0.0.1:8000/api/etudiants")
+      .then((res) => {
+        const enfantsFiltres = res.data.filter((e) => e.parent_id === parentId);
+        setEnfants(enfantsFiltres);
 
-    const fetchEvenements = async () => {
-      try {
-        const response = await axios.get(`http://127.0.0.1:8000/api/evenements`);
-        const events = response.data;
-
-        const now = new Date();
-        const futurs = events
-          .filter(ev => new Date(ev.date_debut) >= now)
-          .sort((a, b) => new Date(a.date_debut) - new Date(b.date_debut));
-
-        setEvenements(futurs);
-        setLoading(false);
-      } catch (error) {
-        console.error("Erreur lors de la récupération des événements", error);
-        setLoading(false);
-      }
-    };
-
-    fetchEvenements();
+        if (enfantsFiltres.length > 0) {
+          setSelectedEnfantId(enfantsFiltres[0].id);
+        }
+      })
+      .catch((err) => console.error("Erreur chargement enfants :", err));
   }, []);
 
-  const styles = {
-    container: {
-      backgroundColor: "#FFFCEC",
-      maxWidth: "95%",
-      margin: "30px auto",
-      padding: "30px",
-      borderRadius: "16px",
-      fontFamily: "'Poppins', sans-serif",
-      boxShadow: "0 8px 30px rgba(0,0,0,0.1)",
-      color: "#3a3a3a",
-    },
-    title: {
-      fontSize: "26px",
-      fontWeight: "600",
-      marginBottom: "20px",
-      color: "#8B5E3C",
-      borderBottom: "2px solid #e0c77c",
-      paddingBottom: "8px",
-    },
-    eventCard: {
-      backgroundColor: "#ffffff",
-      padding: "20px",
-      borderRadius: "12px",
-      marginBottom: "15px",
-      boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-      borderLeft: "6px solid #facc15",
-      transition: "transform 0.2s",
-    },
-    eventCardHover: {
-      transform: "scale(1.02)",
-    },
-    label: {
-      fontWeight: "600",
-      color: "#8b5e3c",
-    },
-    emptyText: {
-      fontStyle: "italic",
-      color: "#999",
-      padding: "10px",
-    }
-  };
+  useEffect(() => {
+    if (selectedEnfantId) {
+      const enfant = enfants.find((e) => e.id === parseInt(selectedEnfantId));
+      if (enfant) {
+        const classId = enfant.classe_id;
+        setNotFound(false); // Reset avant appel
 
-  if (loading) return <p style={{ padding: '20px', textAlign: 'center' }}>Chargement...</p>;
-  if (errorMessage) return <p style={{ color: "red", textAlign: 'center' }}>{errorMessage}</p>;
+        axios.get(`http://127.0.0.1:8000/api/evenements/by-parent-id/${parentId}`)
+  .then((res) => {
+    const eventsFiltres = res.data.filter(ev => ev.class_id === classId); // 🔧 sécurité côté front
+    setEvenements(eventsFiltres);
+  })
+
+          .catch((error) => {
+            if (error.response && error.response.status === 404) {
+              setEvenements([]);
+              setNotFound(true); // Gérer erreur 404
+            } else {
+              console.error("Erreur chargement événements :", error);
+            }
+          });
+      }
+    } else {
+      setEvenements([]);
+      setNotFound(false);
+    }
+  }, [selectedEnfantId, enfants]);
 
   return (
-    <div style={styles.container}>
-      <h2 style={styles.title}>
-        📅 Prochains événements
-      </h2>
+    <div>
+      <h2>📌 Liste des événements pour vos enfants</h2>
 
-      {evenements.length > 0 ? (
-        <ul style={{ listStyle: "none", padding: 0 }}>
-          {evenements.map((ev, index) => (
-            <li key={index} style={styles.eventCard}>
-              <div><span style={styles.label}>Titre :</span> {ev.titre}</div>
-              <div><span style={styles.label}>Date :</span> {ev.date_debut} → {ev.date_fin}</div>
-              <div><span style={styles.label}>Lieu :</span> {ev.lieu}</div>
-              <div><span style={styles.label}>Description :</span> {ev.description}</div>
+      {/* Sélecteur enfant */}
+      <select
+        onChange={(e) => setSelectedEnfantId(e.target.value)}
+        value={selectedEnfantId || ""}
+      >
+        <option value="">-- Sélectionner un enfant --</option>
+        {enfants.map((enfant) => (
+          <option key={enfant.id} value={enfant.id}>
+            {enfant.nom} {enfant.prenom}
+          </option>
+        ))}
+      </select>
+
+      {/* Affichage des événements */}
+      <ul className="mt-3">
+        {evenements.length > 0 ? (
+          evenements.map((event) => (
+            <li key={event.id}>
+              <strong>{event.titre}</strong> – {event.description} <br />
+              📍 {event.lieu} <br />
+              🗓️ {event.date_debut} à {event.date_fin}
             </li>
-          ))}
-        </ul>
-      ) : (
-        <p style={styles.emptyText}>Aucun événement à venir pour le moment.</p>
-      )}
+          ))
+        ) : notFound ? (
+          <p className="text-danger">❌ Aucun événement trouvé pour cet enfant.</p>
+        ) : null}
+      </ul>
     </div>
   );
-};
-
-export default EventDashboard;
+}

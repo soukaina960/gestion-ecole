@@ -9,7 +9,6 @@ function SurveillantProfile() {
   const [surveillant, setSurveillant] = useState({
     id: '',
     nom: '',
-    prenom: '',
     telephone: '',
     email: '',
     password: '',
@@ -29,7 +28,6 @@ function SurveillantProfile() {
         setSurveillant({
           id: data.id,
           nom: data.nom || utilisateur.nom || '',
-          prenom: data.prenom || utilisateur.prenom || '',
           telephone: data.telephone || utilisateur.telephone || '',
           email: data.email || utilisateur.email || '',
           password: '',
@@ -48,14 +46,12 @@ function SurveillantProfile() {
       await axios.put(`http://127.0.0.1:8000/api/surveillant/update/${surveillantId}`, {
         surveillant: {
           nom: surveillant.nom,
-          prenom: surveillant.prenom,
           telephone: surveillant.telephone,
           email: surveillant.email,
           password: surveillant.password || null
         },
         utilisateur: {
           nom: surveillant.nom,
-          prenom: surveillant.prenom,
           telephone: surveillant.telephone,
           email: surveillant.email,
           password: surveillant.password || null
@@ -91,10 +87,6 @@ function SurveillantProfile() {
                 <input type="text" className="form-control" name="nom" value={surveillant.nom} onChange={handleChange} />
               </div>
               <div className="mb-3">
-                <label className="form-label">Prénom</label>
-                <input type="text" className="form-control" name="prenom" value={surveillant.prenom} onChange={handleChange} />
-              </div>
-              <div className="mb-3">
                 <label className="form-label">Téléphone</label>
                 <input type="text" className="form-control" name="telephone" value={surveillant.telephone} onChange={handleChange} />
               </div>
@@ -113,7 +105,6 @@ function SurveillantProfile() {
           ) : (
             <>
               <p><strong>Nom :</strong> {surveillant.nom}</p>
-              <p><strong>Prénom :</strong> {surveillant.prenom}</p>
               <p><strong>Téléphone :</strong> {surveillant.telephone}</p>
               <p><strong>Email :</strong> {surveillant.email}</p>
               <button className="btn btn-primary w-100 mt-3" onClick={() => setEditMode(true)}>

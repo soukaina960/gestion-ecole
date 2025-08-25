@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import axios from 'axios';
+import './Quiz.css';
 
 export default function QuizInterface() {
   const [matieres, setMatieres] = useState([]);
@@ -11,63 +12,71 @@ export default function QuizInterface() {
   const [score, setScore] = useState(0);
   const [classeId, setClasseId] = useState(null);
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState({
-    matieres: false,
-    quizzes: false,
-  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedMatiereId, setSelectedMatiereId] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  // Charger les données utilisateur
   useEffect(() => {
-    const userData = localStorage.getItem('utilisateur');
-    if (userData) {
-      const parsedUser = JSON.parse(userData);
-      if (parsedUser.role === 'étudiant' && parsedUser.classe_id) {
-        setClasseId(parsedUser.classe_id);
-      }
-    }
-  }, []);
-
-  // Charger les matières
-  useEffect(() => {
-    const fetchMatieres = async () => {
+    const fetchInitialData = async () => {
       try {
-        setLoading(prev => ({ ...prev, matieres: true }));
-        const res = await axios.get('http://127.0.0.1:8000/api/matieres');
-        setMatieres(res.data.data || []);
+        const userData = localStorage.getItem('utilisateur');
+        if (!userData) throw new Error("Utilisateur non connecté");
+
+        const parsedUser = JSON.parse(userData);
+        const userId = parsedUser.id;
+
+        const etudiantRes = await axios.get('http://127.0.0.1:8000/api/etudiants', {
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+        });
+
+        const etudiant = etudiantRes.data.find(e => e.utilisateur_id === userId);
+        if (!etudiant) throw new Error("Aucun étudiant trouvé pour cet utilisateur");
+
+        setClasseId(etudiant.classe_id);
+
       } catch (err) {
-        setError('Erreur de chargement des matières');
+        setError(err.message || "Une erreur est survenue");
+        console.error("Erreur:", err);
       } finally {
-        setLoading(prev => ({ ...prev, matieres: false }));
+        setLoading(false);
       }
     };
-    fetchMatieres();
+
+    fetchInitialData();
   }, []);
 
-  // Charger les quiz
   useEffect(() => {
-    const fetchQuizzes = async () => {
+    const fetchData = async () => {
       if (!classeId) return;
       
+      setIsLoading(true);
+      setError('');
+      
       try {
-        setLoading(prev => ({ ...prev, quizzes: true }));
-        const res = await axios.get('http://localhost:8000/api/quizzes', {
-          params: { class_id: classeId },
-        });
+        const [matieresRes, quizzesRes] = await Promise.all([
+          axios.get('http://127.0.0.1:8000/api/matieres'),
+          axios.get('http://localhost:8000/api/quizzes', {
+            params: { class_id: classeId },
+          })
+        ]);
         
-        setQuizzes(res.data);
-        setFilteredQuizzes(res.data); // Initialiser avec tous les quiz
+        setMatieres(matieresRes.data.data || []);
+        setQuizzes(quizzesRes.data);
+        setFilteredQuizzes(quizzesRes.data);
       } catch (err) {
-        setError('Erreur de chargement des quiz');
+        setError(err.response?.data?.message || 'Erreur de chargement des données');
+        console.error('Fetch error:', err);
       } finally {
-        setLoading(prev => ({ ...prev, quizzes: false }));
+        setIsLoading(false);
       }
     };
-    fetchQuizzes();
+    
+    fetchData();
   }, [classeId]);
 
-  // Filtrer les quiz quand une matière est sélectionnée
   const handleMatiereChange = (e) => {
     const matiereId = e.target.value;
+    setSelectedMatiereId(matiereId);
     
     if (matiereId) {
       const filtered = quizzes.filter(q => q.matiere_id == matiereId);
@@ -76,22 +85,29 @@ export default function QuizInterface() {
       setFilteredQuizzes(quizzes);
     }
     
+    resetQuizState();
+  };
+
+  const resetQuizState = () => {
     setCurrentQuestionIndex(0);
     setSelectedAnswer(null);
     setShowResult(false);
     setScore(0);
   };
 
-  // Gestion des réponses
-  const handleAnswer = (answer) => {
-    setSelectedAnswer(answer);
+  const handleAnswer = (userAnswer) => {
+    // Convertit la réponse stockée (1/0) en booléen
+    const correctAnswer = currentQuestion.answer === 1;
+    
+    setSelectedAnswer(userAnswer);
     setShowResult(true);
-    if (answer === filteredQuizzes[currentQuestionIndex].answer) {
-      setScore(score + 1);
+    
+    // Compare la réponse utilisateur avec la bonne réponse
+    if (userAnswer === correctAnswer) {
+      setScore(prev => prev + 1);
     }
   };
 
-  // Question suivante
   const handleNextQuestion = () => {
     setSelectedAnswer(null);
     setShowResult(false);
@@ -100,121 +116,155 @@ export default function QuizInterface() {
     );
   };
 
-  // Question actuelle
-  const currentQuestion = filteredQuizzes[currentQuestionIndex] || {};
-  const selectedMatiere = matieres.find(m => m.id == currentQuestion?.matiere_id);
+  const handleRestartQuiz = () => {
+    resetQuizState();
+  };
+
+  const currentQuestion = useMemo(() => {
+    return filteredQuizzes[currentQuestionIndex] || {};
+  }, [filteredQuizzes, currentQuestionIndex]);
+
+  const selectedMatiere = useMemo(() => {
+    return matieres.find(m => m.id == currentQuestion?.matiere_id) || {};
+  }, [matieres, currentQuestion]);
+
+  const progressPercentage = useMemo(() => {
+    return ((currentQuestionIndex + 1) / filteredQuizzes.length) * 100;
+  }, [currentQuestionIndex, filteredQuizzes.length]);
+
+  if (isLoading) {
+    return (
+      <div className="quiz-loading">
+        <div className="quiz-spinner"></div>
+        <p>Chargement en cours...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="p-4 max-w-2xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6">Quiz</h1>
-
-      {/* Sélection de la matière */}
-      <div className="mb-6">
-        <label className="block text-gray-700 mb-2">Matière :</label>
-        <select
-          onChange={handleMatiereChange}
-          className="w-full p-2 border rounded"
-          disabled={loading.matieres}
-        >
-          <option value="">-- Toutes les matières --</option>
-          {matieres.map(m => (
-            <option key={m.id} value={m.id}>{m.nom}</option>
-          ))}
-        </select>
+    <div className="quiz-container">
+      <div className="quiz-header">
+        <h1>Quiz</h1>
       </div>
 
-      {/* Affichage des erreurs */}
-      {error && <div className="text-red-500 mb-4">{error}</div>}
-
-      {/* Avertissement si aucun quiz */}
-      {!loading.quizzes && filteredQuizzes.length === 0 && (
-        <div className="text-center py-8 bg-yellow-100 rounded-lg">
-          Aucun quiz disponible pour cette sélection
+      <div className="p-4">
+        <div className="mb-6">
+          <label className="block text-gray-700 mb-2">Matière :</label>
+          <select
+            value={selectedMatiereId}
+            onChange={handleMatiereChange}
+            className="quiz-select"
+            disabled={isLoading}
+          >
+            <option value="">-- Toutes les matières --</option>
+            {matieres.map(m => (
+              <option key={m.id} value={m.id}>{m.nom}</option>
+            ))}
+          </select>
         </div>
-      )}
 
-      {/* Interface du quiz */}
-      {filteredQuizzes.length > 0 && (
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          {/* En-tête */}
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="text-xl font-semibold">
-              {selectedMatiere?.nom && `Matière: ${selectedMatiere.nom}`}
-            </h2>
-            <span className="bg-blue-100 text-blue-800 px-3 py-1 rounded-full">
-              Question {currentQuestionIndex + 1}/{filteredQuizzes.length}
-            </span>
+        {error && <div className="quiz-error">{error}</div>}
+
+        {!isLoading && filteredQuizzes.length === 0 && (
+          <div className="quiz-empty">
+            Aucun quiz disponible pour cette sélection
           </div>
+        )}
 
-          {/* Question */}
-          <div className="mb-6">
-            <p className="text-lg mb-4">{currentQuestion.question_text}</p>
-            {currentQuestion.description && (
-              <p className="text-gray-600 italic">{currentQuestion.description}</p>
-            )}
-          </div>
+        {filteredQuizzes.length > 0 && (
+          <>
+            <div className="quiz-progress">
+              <div 
+                className="quiz-progress-bar" 
+                style={{ width: `${progressPercentage}%` }}
+              ></div>
+            </div>
 
-          {/* Boutons de réponse */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            <button
-              onClick={() => handleAnswer(true)}
-              disabled={showResult}
-              className={`p-3 rounded-lg font-medium ${
-                showResult 
-                  ? currentQuestion.answer 
-                    ? 'bg-green-500 text-white' 
-                    : 'bg-gray-300'
-                  : 'bg-blue-100 hover:bg-blue-200'
-              }`}
-            >
-              Vrai
-            </button>
-            <button
-              onClick={() => handleAnswer(false)}
-              disabled={showResult}
-              className={`p-3 rounded-lg font-medium ${
-                showResult 
-                  ? !currentQuestion.answer 
-                    ? 'bg-green-500 text-white' 
-                    : 'bg-gray-300'
-                  : 'bg-blue-100 hover:bg-blue-200'
-              }`}
-            >
-              Faux
-            </button>
-          </div>
+            <div className="quiz-content">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">
+                  {selectedMatiere?.nom && `Matière: ${selectedMatiere.nom}`}
+                </h2>
+                <span className="quiz-counter">
+                  Question {currentQuestionIndex + 1}/{filteredQuizzes.length}
+                </span>
+              </div>
 
-          {/* Résultat */}
-          {showResult && (
-            <div className={`p-4 mb-6 rounded-lg ${
-              selectedAnswer === currentQuestion.answer 
-                ? 'bg-green-100 text-green-800' 
-                : 'bg-red-100 text-red-800'
-            }`}>
-              {selectedAnswer === currentQuestion.answer ? (
-                <p className="font-medium">✓ Bonne réponse!</p>
-              ) : (
-                <p className="font-medium">
-                  ✗ Mauvaise réponse. La réponse correcte était: {' '}
-                  <span className="font-bold">
-                    {currentQuestion.answer ? 'Vrai' : 'Faux'}
-                  </span>
-                </p>
+              <div className="mb-6">
+                <p className="text-lg mb-4">{currentQuestion.question_text}</p>
+                {currentQuestion.description && (
+                  <p className="text-gray-600 italic">{currentQuestion.description}</p>
+                )}
+              </div>
+
+              <div className="quiz-answers">
+                <button
+                  onClick={() => handleAnswer(true)}
+                  disabled={showResult}
+                  className={`quiz-answer-btn ${
+                    showResult && currentQuestion.answer === 1 ? 'correct' : ''
+                  } ${
+                    showResult && selectedAnswer === true && currentQuestion.answer === 0 ? 'incorrect' : ''
+                  }`}
+                  aria-pressed={selectedAnswer === true}
+                >
+                  Vrai
+                </button>
+                <button
+                  onClick={() => handleAnswer(false)}
+                  disabled={showResult}
+                  className={`quiz-answer-btn ${
+                    showResult && currentQuestion.answer === 0 ? 'correct' : ''
+                  } ${
+                    showResult && selectedAnswer === false && currentQuestion.answer === 1 ? 'incorrect' : ''
+                  }`}
+                  aria-pressed={selectedAnswer === false}
+                >
+                  Faux
+                </button>
+              </div>
+
+              {showResult && (
+                <div className={`quiz-feedback ${
+                  selectedAnswer === (currentQuestion.answer === 1) ? 'correct' : 'incorrect'
+                }`}>
+                  {selectedAnswer === (currentQuestion.answer === 1) ? (
+                    <p>✓ Bonne réponse!</p>
+                  ) : (
+                    <p>
+                      ✗ Mauvaise réponse. La réponse correcte était: {' '}
+                      <span className="font-bold">
+                        {currentQuestion.answer === 1 ? 'Vrai' : 'Faux'}
+                      </span>
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {showResult && (
+                <div className="quiz-navigation">
+                  <button
+                    onClick={
+                      currentQuestionIndex < filteredQuizzes.length - 1 
+                        ? handleNextQuestion 
+                        : handleRestartQuiz
+                    }
+                    className="quiz-btn quiz-btn-primary"
+                  >
+                    {currentQuestionIndex < filteredQuizzes.length - 1 
+                      ? 'Question suivante →' 
+                      : 'Recommencer le quiz'}
+                  </button>
+                  
+                  <div className="quiz-score">
+                    Score: {score}/{filteredQuizzes.length}
+                  </div>
+                </div>
               )}
             </div>
-          )}
-
-          {/* Bouton suivant */}
-          {showResult && (
-            <button
-              onClick={handleNextQuestion}
-              className="w-full py-2 px-4 bg-blue-600 text-white rounded hover:bg-blue-700"
-            >
-              {currentQuestionIndex < filteredQuizzes.length - 1 ? 'Question suivante →' : 'Recommencer'}
-            </button>
-          )}
-        </div>
-      )}
+          </>
+        )}
+      </div>
     </div>
   );
 }

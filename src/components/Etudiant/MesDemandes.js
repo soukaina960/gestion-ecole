@@ -30,6 +30,12 @@ export default function ListeDemandesEtudiant() {
   if (loading) {
     return <p>Chargement...</p>;
   }
+  
+    const getFileUrl = (path) => {
+        if (!path) return null;
+        const cleanedPath = path.replace('storage/app/public/', '');
+        return `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/storage/${cleanedPath}`;
+    };     
 
   return (
     <div>
@@ -42,20 +48,23 @@ export default function ListeDemandesEtudiant() {
         <ul>
           {demandes.map((d) => (
             <li key={d.id}>
-              {d.traitee ? (
-                <a href={d.lien_attestation} target="_blank" rel="noopener noreferrer">
-                  📄 Télécharger
-                </a>
-              ) : (
-                "⏳ En attente"
-              )}
+           {d.traitee ? (
+  <a href={getFileUrl(d.lien_attestation)}  target="_blank" download={`attestation_${d.id}.pdf`}>
+    📄 Télécharger
+  </a>
+) : (
+  "⏳ En attente"
+)}
+
+
+
             </li>
           ))}
         </ul>
       )}
 
       {/* Lien pour retourner à la demande d'attestation */}
-      <Link to="/">Retour à la demande d'attestation</Link>
+      <Link to="/etudiant/dashboard">Retour à la demande d'attestation</Link>
     </div>
   );
 }

@@ -1,15 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-
-import './Login.css'; // Assuming you have a CSS file for styles
-
+import ChangePasswordModal from './components/ChangePasswordModal';
+import './Login.css';
 const Login = () => {
   const [matricule, setMatricule] = useState('');
   const [motDePasse, setMotDePasse] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [userData, setUserData] = useState(null);
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -17,7 +18,6 @@ const Login = () => {
     setLoading(true);
     setErrorMessage('');
 
-    // Validation des champs
     if (!matricule || !motDePasse) {
       setErrorMessage('Veuillez remplir tous les champs');
       setLoading(false);
@@ -30,111 +30,148 @@ const Login = () => {
         mot_de_passe: motDePasse,
       });
 
-      // Stocke les données de l'utilisateur et le token
+      // Vérifier si le changement de mot de passe est requis
+      if (response.data.requires_password_change) {
+        setUserData(response.data);
+        setShowPasswordModal(true);
+        return;
+      }
+
+      // Stocker les données utilisateur
       localStorage.setItem('utilisateur', JSON.stringify(response.data.utilisateur));
       localStorage.setItem('role', response.data.role);
       localStorage.setItem('access_token', response.data.access_token);
 
-      
-      // Si l'utilisateur est un parent, on stocke aussi l'ID du parent
+      // Stocker les IDs spécifiques selon le rôle
       if (response.data.role === 'parent' && response.data.utilisateur.parent) {
         localStorage.setItem('parent_id', response.data.utilisateur.parent.id);
-        localStorage.setItem('access_token', response.data.access_token);}
-
+      }
       if (response.data.role === 'surveillant' && response.data.utilisateur.surveillant) {
         localStorage.setItem('surveillant_id', response.data.utilisateur.surveillant.id);
-        localStorage.setItem('access_token', response.data.access_token);}
-        
-      switch(response.data.role) {
-        case 'admin':
-          navigate('/admin');
-          break;
-        case 'professeur':
-          navigate('/enseignant/dashboard');
-          break;
-        case 'étudiant':
-          navigate('/etudiant/dashboard');
-          break;
-        case 'parent':
-          navigate('/parent');
-          break;
-        case 'surveillant':
-          navigate('/surveillant');
-          break;  
-        default:
-          navigate('/');
       }
-      
-      
-      const utilisateurId = response.data.utilisateur.id;
-      localStorage.setItem('utilisateurId', utilisateurId);
+      if (response.data.role === 'étudiant' && response.data.etudiant) {
+        localStorage.setItem('etudiant_id', response.data.etudiant.id);
+      }
+      if (response.data.role === 'professeur' && response.data.professeur) {
+        localStorage.setItem('professeur_id', response.data.professeur.id);
+      }
 
-      // Redirection en fonction du rôle
+      // Redirection selon le rôle
       const roleRedirect = {
-        admin: '/admin-dashboard',
+        admin: '/admin',
         professeur: '/enseignant/dashboard',
         étudiant: '/etudiant/dashboard',
-        parent: '/parent',  // Rediriger vers le tableau de bord du parent
+        parent: '/parent',
         surveillant: '/surveillant',
       };
 
-      const redirectTo = roleRedirect[response.data.role] || '/';
-      navigate(redirectTo);
-console.log("Données reçues du backend :", response.data);
+      navigate(roleRedirect[response.data.role] || '/');
+      
     } catch (error) {
       setErrorMessage(error.response?.data?.message || 'Matricule ou mot de passe incorrect');
     } finally {
       setLoading(false);
-    } 
-    
+    }
   };
- 
 
+  const handlePasswordChangeSuccess = () => {
+    // Après le changement de mot de passe, fermer le modal et réinitialiser
+    setShowPasswordModal(false);
+    setUserData(null);
+    setMatricule('');
+    setMotDePasse('');
+    setErrorMessage('Mot de passe changé avec succès. Veuillez vous reconnecter.');
+  };
 
   return (
-    <div className="login-page">
-      <div className="login-container">
+    <div className="login-page-wrapper">
+      <div className="login-container-unique">
         <div className="login-header">
-          <h1>Connexion</h1>
-          <div className="underline"></div>
+          <h1 className="login-title-special">Connexion</h1>
         </div>
 
-        {errorMessage && <div className="error-message">{errorMessage}</div>}
+        {errorMessage && (
+          <div className={`login-message ${errorMessage.includes('succès') ? 'login-success-message' : 'login-error-message'}`}>
+            {errorMessage}
+          </div>
+        )}
 
         <form onSubmit={handleLogin}>
-          <label>Matricule</label>
-          <input
-            type="text"
-            value={matricule}
-            onChange={(e) => setMatricule(e.target.value)}
-            disabled={loading}
-            required
-          />
-
-          <label>Mot de passe</label>
-          <div className="password-container">
+          <div className="login-input-group">
+            <label className="login-input-label">Matricule</label>
             <input
-              type={showPassword ? 'text' : 'password'}
-              value={motDePasse}
-              onChange={(e) => setMotDePasse(e.target.value)}
+              className="login-input-field"
+              type="text"
+              value={matricule}
+              onChange={(e) => setMatricule(e.target.value)}
               disabled={loading}
               required
             />
-            <button
-              type="button"
-              className="password-toggle"
-              onClick={() => setShowPassword(!showPassword)}
-            >
-              {showPassword ? '👁️‍🗨️' : '👁️'}
-            </button>
           </div>
 
-          <button type="submit" className="login-button" disabled={loading}>
-            {loading ? 'Connexion en cours...' : 'Se Connecter'}
+          <div className="login-input-group">
+            <label className="login-input-label">Mot de passe</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                className="login-input-field"
+                type={showPassword ? 'text' : 'password'}
+                value={motDePasse}
+                onChange={(e) => setMotDePasse(e.target.value)}
+                disabled={loading}
+                required
+              />
+              <button
+                type="button"
+                style={{
+                  position: 'absolute',
+                  right: '15px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  color: '#C0392B',
+                  cursor: 'pointer',
+                  padding: '5px',
+                }}
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? '👁️' : '👁️‍🗨️'}
+              </button>
+            </div>
+          </div>
+
+          <button 
+            type="submit" 
+            className="login-btn-primary" 
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <span 
+                  style={{
+                    display: 'inline-block',
+                    width: '1rem',
+                    height: '1rem',
+                    border: '2px solid rgba(255,255,255,0.3)',
+                    borderTopColor: 'white',
+                    borderRadius: '50%',
+                    animation: 'spin 1s linear infinite',
+                    marginRight: '8px'
+                  }}
+                />
+                Connexion en cours...
+              </>
+            ) : 'Se Connecter'}
           </button>
         </form>
 
-        <a href="#" className="forgot-link">Mot de passe oublié ?</a>
+        {/* Modal de changement de mot de passe */}
+        <ChangePasswordModal
+          isOpen={showPasswordModal}
+          onClose={() => setShowPasswordModal(false)}
+          onSuccess={handlePasswordChangeSuccess}
+          userData={userData}
+        />
       </div>
     </div>
   );

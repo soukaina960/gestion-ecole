@@ -96,6 +96,8 @@ import EtudiantInfos from './components/Etudiant/EtudiantInfos';
 import EtudiantPayer from './components/Etudiant/EtudiantPayer';
 import ListeDemandesEtudiant from './components/Etudiant/MesDemandes';
 import DemanderAttestation from './components/Etudiant/DemandeEtudiant';
+import EtudiantBulletin from './components/Etudiant/EtudiantBulletin';
+import BulletinDetails from './components/Etudiant/BulletinDetails';
 
 
 // Autres
@@ -218,6 +220,8 @@ function App() {
         {/* Protected student routes */}
 
         {/* Etudiant routes */}
+           <Route path="/bulletins" element={<EtudiantBulletin />} />
+        <Route path="/bulletins/:id" element={<BulletinDetails />} />
 
         <Route path="/etudiant" element={<ProtectedRoute allowedRoles={['étudiant']}><EtudiantDashboard /></ProtectedRoute>}>
           <Route index element={<EtudiantDashboard />} />
@@ -228,6 +232,7 @@ function App() {
           <Route path="paiements" element={<EtudiantPayer />} />
           <Route path="mes-demandes/:etudiantId" element={<ListeDemandesEtudiant />} />
           <Route path="demander-attestation" element={<DemanderAttestation />} />
+       
         </Route>
 
 

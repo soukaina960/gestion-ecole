@@ -85,15 +85,7 @@
     --border-dark: #2c3e50;
   }
   
-  body.dark {
-    --text: var(--text-dark);
-    --bg: var(--bg-dark);
-    --sidebar-bg: var(--sidebar-bg-dark);
-    --sidebar-text: var(--sidebar-text-dark);
-    --sidebar-active: var(--sidebar-active-dark);
-    --card-bg: var(--card-bg-dark);
-    --border: var(--border-dark);
-  }
+
   
   body:not(.dark) {
     --text: var(--text-light);
@@ -107,17 +99,7 @@
   
   
   /* Styles de base */
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    transition: background-color 0.3s ease, color 0.3s ease;
-  }
   
-  body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    line-height: 1.6;
-  }
   
   .dashboard-container {
     display: flex;

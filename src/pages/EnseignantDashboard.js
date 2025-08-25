@@ -12,7 +12,7 @@ import {
 
 // Importation des composants
 import EntrerNotes from '../components/EntrerNotes';
-import EtudiantInfos from '../components/Etudiant/EtudiantInfos';
+import EtudiantInfos from '../components/EtudiantInfos';
 import AjouterFichier from '../components/AjouterFichier';
 import MonPanier from '../components/MonPanier';
 import AjouterAbsences from '../components/AjouterAbsences';
@@ -159,14 +159,7 @@ const EnseignantDashboard = () => {
                             <span>Consulter les cours</span>
                         </button>
                         
-                        <button 
-                            onClick={() => handleSectionChange("absences")} 
-                            className={`sidebar-button ${activeSection === "absences" ? 'active' : ''}`}
-                            aria-current={activeSection === "absences" ? "page" : undefined}
-                        >
-                            <FaClipboardCheck className="sidebar-icon" />
-                            <span>Entrer les absences</span>
-                        </button>
+                       
                         
                         <button 
                             onClick={() => handleSectionChange("notes")} 
