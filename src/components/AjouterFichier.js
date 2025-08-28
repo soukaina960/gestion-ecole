@@ -1,399 +1,827 @@
-import React, { useState, useEffect } from 'react';
-import api from '../services/api';
+import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
+import PropTypes from 'prop-types';
 
-const JOURS_SEMAINE = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi', 'Dimanche'];
+// Constants
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8000/api';
+const FILE_TYPES = ['cours', 'devoir', 'examen', 'corrigé', 'ressource'];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const ALLOWED_MIME_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'application/vnd.ms-powerpoint',
+  'application/vnd.openxmlformats-officedocument.presentationml.presentation'
+];
 
-function AjouterExamen() {
+const AjouterFichier = () => {
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState('');
-  const [utilisateur, setUtilisateur] = useState(null);
   
-  // États pour les sélections
-  const [selectedClasse, setSelectedClasse] = useState('');
-  const [selectedFiliere, setSelectedFiliere] = useState('');
-  const [isLycee, setIsLycee] = useState(false);
-  
-  // États pour les données
-  const [classes, setClasses] = useState([]);
-  const [filieres, setFilieres] = useState([]);
-  const [matieres, setMatieres] = useState([]);
-  const [error, setError] = useState(null);
-  const [professeurId, setProfesseurId] = useState(null);
-  
-  // États de chargement
-  const [isLoadingClasses, setIsLoadingClasses] = useState(true);
-  const [isLoadingFilieres, setIsLoadingFilieres] = useState(false);
-  const [isLoadingMatieres, setIsLoadingMatieres] = useState(false);
-
-  // État du formulaire
-  const [form, setForm] = useState({
-    classe_id: '',
-    matiere_id: '',
-    professeur_id: '',
-    filiere_id: '',
-    date: '',
-    jour: '',
-    heure_debut: '',
-    heure_fin: ''
+  // State management
+  const [state, setState] = useState({
+    formData: {
+      annee: "",
+      semestre: "",
+      classe: "",
+      filiere: "",
+      matiere: "",
+      typeFichier: FILE_TYPES[0],
+      fichier: null
+    },
+    data: {
+      annees: [],
+      semestres: [],
+      classes: [],
+      filieres: [],
+      matieres: [],
+      fichiers: []
+    },
+    metadata: {
+      utilisateur: null,
+      professeurId: null,
+      isLycee: false
+    },
+    status: {
+      loading: false,
+      error: null,
+      success: null,
+      currentOperation: null
+    }
   });
 
-  // Récupérer l'ID du professeur à partir de l'ID utilisateur
+  // Destructure state for easier access
+  const { formData, data, metadata, status } = state;
+
+  // Initialize user and professor data
+  useEffect(() => {
+    const initializeUser = async () => {
+      try {
+        const userData = localStorage.getItem("utilisateur");
+        if (!userData) {
+          navigate('/login');
+          return;
+        }
+
+        const user = JSON.parse(userData);
+        setState(prev => ({
+          ...prev,
+          metadata: { ...prev.metadata, utilisateur: user }
+        }));
+
+        if (user?.role === "professeur") {
+          await fetchProfesseurId(user.id);
+        } else {
+          navigate('/unauthorized');
+        }
+      } catch (error) {
+        handleError(error, "Initializing user data");
+      }
+    };
+
+    initializeUser();
+  }, [navigate]);
+
+  // Fetch professor ID
   const fetchProfesseurId = async (userId) => {
     try {
-      const response = await api.get(`/professeurs?user=${userId}`);
+      const response = await axios.get(`${API_BASE_URL}/professeurs?user=${userId}`);
       if (response.data && response.data.length > 0) {
-        const profId = response.data[0].id;
-        localStorage.setItem("professeur_id", profId);
-        return profId;
+        const professeur = response.data.find(p => p.user_id === userId);
+        if (professeur) {
+          setState(prev => ({
+            ...prev,
+            metadata: { 
+              ...prev.metadata, 
+              professeurId: professeur.id 
+            }
+          }));
+          return professeur.id;
+        }
       }
       throw new Error("Professeur non trouvé");
     } catch (error) {
-      console.error("Erreur fetchProfesseurId:", error);
-      setError("Votre compte professeur n'est pas configuré");
+      handleError(error, "fetching professor ID");
       return null;
     }
   };
 
-  // Charger l'utilisateur et l'ID professeur
+  // Load initial data (years and classes)
   useEffect(() => {
-    const loadUserData = async () => {
+    const fetchInitialData = async () => {
       try {
-        const userData = localStorage.getItem("utilisateur");
-        if (userData) {
-          const user = JSON.parse(userData);
-          setUtilisateur(user);
-          
-          if (user?.role === "professeur") {
-            const profId = await fetchProfesseurId(user.id);
-            if (profId) {
-              setProfesseurId(profId);
-              setForm(prev => ({ ...prev, professeur_id: profId }));
-            }
+        setLoadingStatus(true, "Loading initial data");
+        
+        const [anneesRes, classesRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/annees_scolaires`),
+          axios.get(`${API_BASE_URL}/classes`)
+        ]);
+        
+        setState(prev => ({
+          ...prev,
+          data: {
+            ...prev.data,
+            annees: anneesRes.data,
+            classes: classesRes.data
           }
-        }
-      } catch (err) {
-        console.error("Erreur de chargement utilisateur", err);
-        setError("Erreur de chargement des données");
-      }
-    };
-
-    loadUserData();
-  }, []);
-
-  // Charger les classes
-  useEffect(() => {
-    const loadClasses = async () => {
-      try {
-        const response = await api.get('/classes');
-        setClasses(response.data);
+        }));
+        
       } catch (error) {
-        console.error("Erreur chargement classes", error);
-        setError("Erreur lors du chargement des classes");
+        handleError(error, "loading initial data");
       } finally {
-        setIsLoadingClasses(false);
+        setLoadingStatus(false);
       }
     };
 
-    loadClasses();
-  }, []);
-
-  // Charger les filières si classe secondaire
-  useEffect(() => {
-    const loadFilieres = async () => {
-      if (!selectedClasse) return;
-
-      const classe = classes.find(c => c.id === parseInt(selectedClasse));
-      setIsLycee(classe?.niveau === "Secondaire");
-
-      if (classe?.niveau === "Secondaire") {
-        setIsLoadingFilieres(true);
-        try {
-          const response = await axios.get(
-            `http://127.0.0.1:8000/api/classes/${selectedClasse}/filieres`
-          );
-          const filieresData = response.data.filiere ? 
-            [response.data.filiere] : 
-            response.data.filieres || [];
-          
-          setFilieres(filieresData);
-          setForm(prev => ({ 
-            ...prev, 
-            filiere_id: filieresData[0]?.id || '',
-            matiere_id: ''
-          }));
-        } catch (err) {
-          console.error("Erreur chargement filières:", err);
-          setFilieres([]);
-        } finally {
-          setIsLoadingFilieres(false);
-        }
-      } else {
-        setFilieres([]);
-        setForm(prev => ({ ...prev, filiere_id: '' }));
-      }
-    };
-
-    loadFilieres();
-  }, [selectedClasse, classes]);
-
-  // Charger les matières
-  useEffect(() => {
-    const loadMatieres = async () => {
-      if (!selectedClasse || !professeurId) return;
-
-      setIsLoadingMatieres(true);
-      try {
-        let apiUrl;
-        if (isLycee && form.filiere_id) {
-          apiUrl = `http://127.0.0.1:8000/api/professeurs/${professeurId}/classes/${selectedClasse}/filieres/${form.filiere_id}/matieres`;
-        } else {
-          apiUrl = `http://127.0.0.1:8000/api/professeurs/${professeurId}/classes/${selectedClasse}/matieres`;
-        }
-
-        const response = await axios.get(apiUrl);
-        setMatieres(response.data);
-        setForm(prev => ({ ...prev, matiere_id: '' }));
-      } catch (err) {
-        console.error("Erreur chargement matières:", err);
-        setMatieres([]);
-      } finally {
-        setIsLoadingMatieres(false);
-      }
-    };
-
-    loadMatieres();
-  }, [selectedClasse, professeurId, isLycee, form.filiere_id]);
-
-  const handleChange = e => {
-    const { name, value } = e.target;
-    setForm({ ...form, [name]: value });
-    
-    if (name === 'classe_id') {
-      setSelectedClasse(value);
-      setForm(prev => ({ 
-        ...prev, 
-        classe_id: value,
-        matiere_id: '',
-        filiere_id: '' 
-      }));
+    if (metadata.utilisateur?.role === "professeur") {
+      fetchInitialData();
     }
+  }, [metadata.utilisateur]);
+
+  // Load dependent data (semesters and filtered classes)
+  useEffect(() => {
+    const fetchDependentData = async () => {
+      if (!formData.annee) return;
+      
+      try {
+        setLoadingStatus(true, "Loading dependent data");
+        
+        const [semestresRes, classesRes] = await Promise.all([
+          axios.get(`${API_BASE_URL}/annees/${formData.annee}/semestres`),
+          axios.get(`${API_BASE_URL}/classes?annee=${formData.annee}`)
+        ]);
+        
+        setState(prev => ({
+          ...prev,
+          data: {
+            ...prev.data,
+            semestres: semestresRes.data,
+            classes: classesRes.data
+          },
+          formData: {
+            ...prev.formData,
+            semestre: "",
+            classe: "",
+            filiere: "",
+            matiere: ""
+          }
+        }));
+        
+      } catch (error) {
+        handleError(error, "loading dependent data");
+      } finally {
+        setLoadingStatus(false);
+      }
+    };
+
+    fetchDependentData();
+  }, [formData.annee]);
+
+  // Check if class is lycée and load filières
+  useEffect(() => {
+    const checkAndLoadFilieres = async () => {
+      if (!formData.classe) {
+        setState(prev => ({
+          ...prev,
+          metadata: { ...prev.metadata, isLycee: false },
+          data: { ...prev.data, filieres: [] },
+          formData: { ...prev.formData, filiere: "", matiere: "" }
+        }));
+        return;
+      }
+
+      try {
+        const classe = data.classes.find(c => c.id === parseInt(formData.classe));
+        const isLycee = classe?.niveau === "Secondaire";
+        
+        setState(prev => ({
+          ...prev,
+          metadata: { ...prev.metadata, isLycee }
+        }));
+
+        if (isLycee) {
+          setLoadingStatus(true, "Loading filières");
+          
+          const res = await axios.get(
+            `${API_BASE_URL}/classes/${formData.classe}/filieres`
+          );
+          
+          const filieresData = res.data.filiere ? [res.data.filiere] : res.data.filieres || [];
+          
+          setState(prev => ({
+            ...prev,
+            data: { ...prev.data, filieres: filieresData },
+            formData: {
+              ...prev.formData,
+              filiere: filieresData.length === 1 ? filieresData[0].id : "",
+              matiere: ""
+            }
+          }));
+        }
+      } catch (error) {
+        handleError(error, "loading filières");
+      } finally {
+        setLoadingStatus(false);
+      }
+    };
+
+    checkAndLoadFilieres();
+  }, [formData.classe, data.classes]);
+
+  // Load matières
+  const fetchMatieres = useCallback(async () => {
+    if (!formData.classe || !metadata.professeurId) {
+      setState(prev => ({
+        ...prev,
+        data: { ...prev.data, matieres: [] },
+        formData: { ...prev.formData, matiere: "" }
+      }));
+      return;
+    }
+    
+    try {
+      setLoadingStatus(true, "Loading matières");
+      
+      let url;
+      if (metadata.isLycee && formData.filiere) {
+        url = `${API_BASE_URL}/professeurs/${metadata.professeurId}/classes/${formData.classe}/filieres/${formData.filiere}/matieres`;
+      } else {
+        url = `${API_BASE_URL}/professeurs/${metadata.professeurId}/classes/${formData.classe}/matieres`;
+      }
+
+      const res = await axios.get(url);
+      
+      setState(prev => ({
+        ...prev,
+        data: { ...prev.data, matieres: res.data },
+        formData: { ...prev.formData, matiere: "" }
+      }));
+      
+    } catch (error) {
+      handleError(error, "loading matières");
+    } finally {
+      setLoadingStatus(false);
+    }
+  }, [formData.classe, formData.filiere, metadata.professeurId, metadata.isLycee]);
+
+  useEffect(() => {
+    fetchMatieres();
+  }, [fetchMatieres]);
+
+  // Load existing files
+  const fetchFichiers = useCallback(async () => {
+    const { classe, semestre, matiere } = formData;
+    
+    if (!classe || !semestre || !matiere) {
+      setState(prev => ({
+        ...prev,
+        data: { ...prev.data, fichiers: [] }
+      }));
+      return;
+    }
+
+    try {
+      setLoadingStatus(true, "Chargement des fichiers");
+      
+      const response = await axios.get(`${API_BASE_URL}/fichiers-pedagogiques`, {
+        params: {
+          classe_id: classe,
+          semestre_id: semestre,
+          matiere_id: matiere
+        }
+      });
+
+      // Normalisation des données
+      let fichiersData = Array.isArray(response.data) 
+        ? response.data 
+        : response.data?.data || response.data?.fichiers || [];
+
+      const fichiersNormalises = fichiersData.map(file => ({
+        id: file.id,
+        nom_fichier: file.nom_fichier || file.name || 'Fichier sans nom',
+        type: file.type_fichier || file.type || 'inconnu',
+        matiere: file.matiere || { nom: file.matiere_nom || 'Inconnue' },
+        created_at: file.created_at || file.date_upload || new Date().toISOString(),
+        taille_fichier: file.taille_fichier || file.size || 0
+      }));
+
+      setState(prev => ({
+        ...prev,
+        data: { ...prev.data, fichiers: fichiersNormalises }
+      }));
+      
+    } catch (error) {
+      handleError(error, "loading files");
+      setState(prev => ({
+        ...prev,
+        data: { ...prev.data, fichiers: [] }
+      }));
+    } finally {
+      setLoadingStatus(false);
+    }
+  }, [formData.classe, formData.semestre, formData.matiere]);
+
+  useEffect(() => {
+    if (formData.classe && formData.semestre && formData.matiere) {
+      fetchFichiers();
+    }
+  }, [fetchFichiers]);
+
+  // Helper functions
+  const setLoadingStatus = (isLoading, currentOperation = null) => {
+    setState(prev => ({
+      ...prev,
+      status: {
+        ...prev.status,
+        loading: isLoading,
+        currentOperation: isLoading ? currentOperation : null
+      }
+    }));
   };
 
+  const handleError = (error, context) => {
+    console.error(`Error in ${context}:`, error);
+    setState(prev => ({
+      ...prev,
+      status: {
+        ...prev.status,
+        error: error.response?.data?.message || `Erreur lors de ${context}`,
+        loading: false
+      }
+    }));
+  };
+
+  // Form handlers
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setState(prev => ({
+      ...prev,
+      formData: { ...prev.formData, [name]: value }
+    }));
+  };
+
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validation du fichier
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      handleError(new Error("Type de fichier non supporté"), "file validation");
+      return;
+    }
+
+    if (file.size > MAX_FILE_SIZE) {
+      handleError(new Error("Fichier trop volumineux (>10MB)"), "file validation");
+      return;
+    }
+
+    setState(prev => ({
+      ...prev,
+      formData: { ...prev.formData, fichier: file }
+    }));
+  };
+
+  // Form validation
   const validateForm = () => {
-    if (!form.classe_id || !form.matiere_id || !form.date || 
-        !form.jour || !form.heure_debut || !form.heure_fin) {
-      return "Tous les champs sont obligatoires";
+    const { annee, semestre, classe, matiere, fichier } = formData;
+
+    if (!annee || !semestre || !classe || !matiere) {
+      return "Tous les champs obligatoires doivent être remplis";
     }
 
-    const now = new Date();
-    const startDate = new Date(`${form.date}T${form.heure_debut}`);
-    const endDate = new Date(`${form.date}T${form.heure_fin}`);
-
-    if (startDate >= endDate) {
-      return "L'heure de fin doit être après l'heure de début";
+    if (metadata.isLycee && !formData.filiere) {
+      return "La filière est obligatoire pour les classes de lycée";
     }
 
-    if (startDate < now) {
-      return "La date doit être dans le futur";
+    if (!fichier) {
+      return "Veuillez sélectionner un fichier";
     }
 
     return null;
   };
 
-  const handleSubmit = async e => {
+  // Form submission
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setSubmitError('');
     
     const validationError = validateForm();
     if (validationError) {
-      setSubmitError(validationError);
+      setState(prev => ({
+        ...prev,
+        status: { ...prev.status, error: validationError }
+      }));
       return;
     }
-
-    setIsSubmitting(true);
-
+  
     try {
-      await api.post('/examens', form);
-      navigate('/', { 
-        state: { 
-          message: 'Examen ajouté avec succès',
-          type: 'success'
-        } 
+      setLoadingStatus(true, "Uploading file");
+      
+      const formDataToSend = new FormData();
+      formDataToSend.append('fichier', formData.fichier);
+      formDataToSend.append('type_fichier', formData.typeFichier);
+      formDataToSend.append('classe_id', formData.classe);
+      formDataToSend.append('semestre_id', formData.semestre);
+      formDataToSend.append('matiere_id', formData.matiere);
+      formDataToSend.append('professeur_id', metadata.professeurId);
+
+      await axios.post(`${API_BASE_URL}/fichiers-pedagogiques`, formDataToSend, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       });
+  
+      setState(prev => ({
+        ...prev,
+        status: { 
+          ...prev.status, 
+          success: "Fichier ajouté avec succès!",
+          error: null
+        },
+        formData: {
+          ...prev.formData,
+          fichier: null
+        }
+      }));
+      
+      e.target.reset();
+      fetchFichiers();
+      
     } catch (error) {
-      console.error("Erreur création examen", error);
-      setSubmitError(error.response?.data?.message || "Erreur lors de la création");
+      handleError(error, "uploading file");
     } finally {
-      setIsSubmitting(false);
+      setLoadingStatus(false);
     }
   };
 
-  if (isLoadingClasses || !utilisateur) {
-    return <div className="container mx-auto p-4">Chargement...</div>;
-  }
+  // File operations
+  const handleDownload = async (id) => {
+    try {
+      setLoadingStatus(true, "Préparation du téléchargement");
+      
+      const fichier = data.fichiers.find(f => f.id === id);
+      if (!fichier) throw new Error('Fichier non trouvé');
 
-  if (utilisateur?.role !== "professeur") {
+      const response = await axios.get(`${API_BASE_URL}/fichiers-pedagogiques/download/${id}`, {
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fichier.nom_fichier);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      
+    } catch (error) {
+      handleError(error, "téléchargement de fichier");
+    } finally {
+      setLoadingStatus(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Confirmer la suppression ?")) return;
+    
+    try {
+      setLoadingStatus(true, "Deleting file");
+      
+      await axios.delete(`${API_BASE_URL}/fichiers-pedagogiques/${id}`);
+      
+      setState(prev => ({
+        ...prev,
+        status: { 
+          ...prev.status, 
+          success: "Fichier supprimé avec succès!",
+          error: null
+        }
+      }));
+      
+      fetchFichiers();
+      
+    } catch (error) {
+      handleError(error, "deleting file");
+    } finally {
+      setLoadingStatus(false);
+    }
+  };
+
+  // Clear messages after timeout
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setState(prev => ({
+        ...prev,
+        status: { ...prev.status, error: null, success: null }
+      }));
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, [status.error, status.success]);
+
+  // Render
+  if (!metadata.utilisateur) {
     return (
-      <div className="container mx-auto p-4">
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
-          Accès réservé aux professeurs
+      <div className="container mt-4">
+        <div className="text-center">
+          <div className="spinner-border" role="status">
+            <span className="visually-hidden">Chargement...</span>
+          </div>
         </div>
       </div>
     );
   }
 
-  if (error) {
+  if (metadata.utilisateur.role !== "professeur") {
     return (
-      <div className="container mx-auto p-4">
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4">
-          {error}
+      <div className="container mt-4">
+        <div className="alert alert-danger">
+          Accès réservé aux professeurs uniquement
         </div>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-2xl">
-      <h2 className="text-2xl font-bold mb-6 text-center">Ajouter un Examen</h2>
+    <div className="container mt-4">
+      <h2 className="mb-4">Gestion des fichiers pédagogiques</h2>
       
-      {submitError && (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-4 rounded">
-          {submitError}
+      {/* Status messages */}
+      {status.error && (
+        <div className="alert alert-danger alert-dismissible fade show">
+          {status.error}
+          <button 
+            type="button" 
+            className="btn-close" 
+            onClick={() => setState(prev => ({
+              ...prev,
+              status: { ...prev.status, error: null }
+            }))}
+          />
         </div>
       )}
       
-      <form onSubmit={handleSubmit} className="space-y-6 bg-white p-6 rounded-lg shadow-md">
-        {/* Champs du formulaire */}
-        <div className="form-group">
-          <label className="block mb-2 font-medium">Classe :</label>
-          <select 
-            name="classe_id" 
-            onChange={handleChange} 
-            value={form.classe_id} 
-            required
-            className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-            disabled={isLoadingClasses}
-          >
-            <option value="">-- Choisir une classe --</option>
-            {classes.map(c => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-        </div>
-
-        {isLycee && (
-          <div className="form-group">
-            <label className="block mb-2 font-medium">Filière :</label>
-            <select 
-              name="filiere_id" 
-              onChange={handleChange} 
-              value={form.filiere_id} 
-              required
-              className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-              disabled={isLoadingFilieres}
-            >
-              {filieres.length > 0 ? (
-                filieres.map(f => (
-                  <option key={f.id} value={f.id}>{f.nom}</option>
-                ))
-              ) : (
-                <option value="">Aucune filière disponible</option>
-              )}
-            </select>
-          </div>
-        )}
-
-        <div className="form-group">
-          <label className="block mb-2 font-medium">Matière :</label>
-          <select 
-            name="matiere_id" 
-            onChange={handleChange} 
-            value={form.matiere_id} 
-            required
-            className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-            disabled={isLoadingMatieres}
-          >
-            <option value="">-- Choisir une matière --</option>
-            {matieres.map(m => (
-              <option key={m.id} value={m.id}>{m.nom}</option>
-            ))}
-          </select>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="form-group">
-            <label className="block mb-2 font-medium">Date :</label>
-            <input 
-              type="date" 
-              name="date" 
-              onChange={handleChange} 
-              value={form.date}
-              required
-              min={new Date().toISOString().split('T')[0]}
-              className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500" 
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="block mb-2 font-medium">Jour :</label>
-            <select
-              name="jour" 
-              onChange={handleChange} 
-              value={form.jour}
-              required
-              className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">-- Choisir un jour --</option>
-              {JOURS_SEMAINE.map(jour => (
-                <option key={jour} value={jour}>{jour}</option>
-              ))}
-            </select>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="form-group">
-            <label className="block mb-2 font-medium">Heure Début :</label>
-            <input 
-              type="time" 
-              name="heure_debut" 
-              onChange={handleChange} 
-              value={form.heure_debut}
-              required
-              className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-
-          <div className="form-group">
-            <label className="block mb-2 font-medium">Heure Fin :</label>
-            <input 
-              type="time" 
-              name="heure_fin" 
-              onChange={handleChange} 
-              value={form.heure_fin}
-              required
-              className="w-full p-2 border rounded focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-        </div>
-
-        <div className="flex justify-end">
+      {status.success && (
+        <div className="alert alert-success alert-dismissible fade show">
+          {status.success}
           <button 
-            type="submit" 
-            disabled={isSubmitting}
-            className={`px-6 py-2 rounded text-white font-medium ${
-              isSubmitting ? 'bg-gray-400' : 'bg-blue-600 hover:bg-blue-700'
-            }`}
-          >
-            {isSubmitting ? 'Envoi en cours...' : 'Ajouter l\'examen'}
-          </button>
+            type="button" 
+            className="btn-close" 
+            onClick={() => setState(prev => ({
+              ...prev,
+              status: { ...prev.status, success: null }
+            }))}
+          />
         </div>
-      </form>
+      )}
+
+      {/* Add File Form */}
+      <div className="card mb-4">
+        <div className="card-header bg-primary text-white">
+          <h5>Ajouter un fichier</h5>
+        </div>
+        <div className="card-body">
+          <form onSubmit={handleSubmit}>
+            <div className="row mb-3">
+              <div className="col-md-3">
+                <div className="form-group">
+                  <label>Année Scolaire *</label>
+                  <select
+                    className="form-control"
+                    name="annee"
+                    value={formData.annee}
+                    onChange={handleChange}
+                    disabled={status.loading}
+                    required
+                  >
+                    <option value="">-- Choisir --</option>
+                    {data.annees.map(a => (
+                      <option key={a.id} value={a.id}>{a.annee}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              
+              <div className="col-md-3">
+                <div className="form-group">
+                  <label>Semestre *</label>
+                  <select
+                    className="form-control"
+                    name="semestre"
+                    value={formData.semestre}
+                    onChange={handleChange}
+                    disabled={!formData.annee || status.loading}
+                    required
+                  >
+                    <option value="">-- Choisir --</option>
+                    {data.semestres.map(s => (
+                      <option key={s.id} value={s.id}>{s.nom}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              
+              <div className="col-md-3">
+                <div className="form-group">
+                  <label>Classe *</label>
+                  <select
+                    className="form-control"
+                    name="classe"
+                    value={formData.classe}
+                    onChange={handleChange}
+                    disabled={!formData.semestre || status.loading}
+                    required
+                  >
+                    <option value="">-- Choisir --</option>
+                    {data.classes.map(c => (
+                      <option key={c.id} value={c.id}>{c.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              
+              {metadata.isLycee && (
+                <div className="col-md-3">
+                  <div className="form-group">
+                    <label>Filière *</label>
+                    <select
+                      className="form-control"
+                      name="filiere"
+                      value={formData.filiere}
+                      onChange={handleChange}
+                      disabled={!formData.classe || status.loading || data.filieres.length === 0}
+                      required={metadata.isLycee}
+                    >
+                      <option value="">-- Choisir --</option>
+                      {data.filieres.map(f => (
+                        <option key={f.id} value={f.id}>{f.nom}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              )}
+            </div>
+            
+            <div className="row mb-3">
+              <div className="col-md-4">
+                <div className="form-group">
+                  <label>Matière *</label>
+                  <select
+                    className="form-control"
+                    name="matiere"
+                    value={formData.matiere}
+                    onChange={handleChange}
+                    disabled={!formData.classe || status.loading}
+                    required
+                  >
+                    <option value="">-- Choisir --</option>
+                    {data.matieres.map(m => (
+                      <option key={m.id} value={m.id}>{m.nom}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              
+              <div className="col-md-3">
+                <div className="form-group">
+                  <label>Type de fichier *</label>
+                  <select
+                    className="form-control"
+                    name="typeFichier"
+                    value={formData.typeFichier}
+                    onChange={handleChange}
+                    disabled={status.loading}
+                    required
+                  >
+                    {FILE_TYPES.map(type => (
+                      <option key={type} value={type}>
+                        {type.charAt(0).toUpperCase() + type.slice(1)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              
+              <div className="col-md-5">
+                <div className="form-group">
+                  <label>Fichier *</label>
+                  <input
+                    type="file"
+                    className="form-control"
+                    onChange={handleFileChange}
+                    accept=".pdf,.doc,.docx,.ppt,.pptx"
+                    disabled={status.loading}
+                    required
+                  />
+                  <small className="text-muted">Formats acceptés: PDF, DOC, DOCX, PPT, PPTX (max 10MB)</small>
+                </div>
+              </div>
+            </div>
+            
+            <div className="d-flex justify-content-end">
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={status.loading}
+              >
+                {status.loading && status.currentOperation === "Uploading file" ? (
+                  <>
+                    <span className="spinner-border spinner-border-sm me-2" role="status"></span>
+                    Envoi en cours...
+                  </>
+                ) : (
+                  <>
+                    <i className="bi bi-upload me-2"></i>
+                    Envoyer le fichier
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+      
+      {/* Files List */}
+      <div className="card">
+        <div className="card-header bg-primary text-white">
+          <h5>Mes fichiers</h5>
+        </div>
+        <div className="card-body">
+          {status.loading && status.currentOperation === "Chargement des fichiers" ? (
+            <div className="text-center">
+              <div className="spinner-border" role="status">
+                <span className="visually-hidden">Chargement...</span>
+              </div>
+            </div>
+          ) : data.fichiers.length > 0 ? (
+            <div className="table-responsive">
+              <table className="table table-striped table-hover">
+                <thead>
+                  <tr>
+                    <th>Nom</th>
+                    <th>Type</th>
+                    <th>Matière</th>
+                    <th>Date</th>
+                 
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.fichiers.map(f => (
+                    <tr key={f.id}>
+                      <td>{f.nom_fichier}</td>
+                      <td>
+                        <span className={`badge bg-${
+                          f.type === 'cours' ? 'primary' : 
+                          f.type === 'devoir' ? 'warning' : 
+                          f.type === 'examen' ? 'danger' : 
+                          'secondary'
+                        }`}>
+                          {f.type}
+                        </span>
+                      </td>
+                      <td>{f.matiere?.nom || '-'}</td>
+                      <td>{new Date(f.created_at).toLocaleDateString()}</td>
+                    
+                      <td>
+                        <div className="d-flex gap-2">
+                          <button 
+                            className="btn btn-sm btn-success"
+                            onClick={() => handleDownload(f.id)}
+                            disabled={status.loading}
+                          >
+                            <i className="bi bi-download me-1"></i>
+                            Télécharger
+                          </button>
+                          <button
+                            className="btn btn-sm btn-danger"
+                            onClick={() => handleDelete(f.id)}
+                            disabled={status.loading}
+                          >
+                            <i className="bi bi-trash me-1"></i>
+                            Supprimer
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="alert alert-info">
+              {formData.matiere 
+                ? "Aucun fichier disponible pour les critères sélectionnés" 
+                : "Veuillez sélectionner une matière pour voir les fichiers associés"}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
-}
+};
 
-export default AjouterExamen;
+AjouterFichier.propTypes = {
+  // Vous pouvez ajouter des PropTypes si ce composant reçoit des props
+};
+
+export default AjouterFichier;

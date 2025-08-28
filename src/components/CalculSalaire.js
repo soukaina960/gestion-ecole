@@ -59,18 +59,37 @@ function CalculSalaireProfesseur() {
             return;
         }
     
-        try {
-            setLoading(true);
-            const response = await axios.post(
-                `http://127.0.0.1:8000/api/professeurs/${selectedProfesseur}/calculer-salaire-mensuel`,
-                {
-                    prime: parseFloat(prime) || 0,
-                    pourcentage: parseFloat(pourcentage) || 0,
-                    mois: parseInt(mois),
-                    annee: parseInt(annee)
-                }
-            );
+       try {
+    setLoading(true);
+    const response = await axios.post(
+        `http://127.0.0.1:8000/api/professeurs/${selectedProfesseur}/calculer-salaire-mensuel`,
+        {
+            prime: parseFloat(prime) || 0,
+            pourcentage: parseFloat(pourcentage) || 0,
+            mois: parseInt(mois),
+            annee: parseInt(annee)
+        }
+    );
+
+    console.log(response.data); // bach tchouf result
+} catch (error) {
+    console.error("Erreur lors du calcul du salaire:", error);
+} finally {
+    setLoading(false);
+}
+
             
+     try {
+    setLoading(true);
+    const response = await axios.post(
+        `http://127.0.0.1:8000/api/professeurs/${selectedProfesseur}/calculer-salaire-mensuel`,
+        {
+            prime: parseFloat(prime) || 0,
+            pourcentage: parseFloat(pourcentage) || 0,
+            mois: parseInt(mois),
+            annee: parseInt(annee)
+        }
+    );
             if (response.data.salaire !== undefined) {
                 setSalaire(response.data.salaire);
                 setMessageErreur("");

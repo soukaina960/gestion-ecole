@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { FaCheckCircle, FaTimesCircle } from 'react-icons/fa'; // Font Awesome icons
 
 const Absences = () => {
   const [absences, setAbsences] = useState([]);
@@ -50,6 +51,10 @@ const Absences = () => {
 
   return (
     <div style={styles.container}>
+      <h2 style={{ textAlign: 'center', color: '#67AE6E' }}>
+        <i className="fas fa-calendar-times" style={{ marginRight: '10px' }}></i>
+        Liste des absences
+      </h2>
       <div style={styles.filterContainer}>
         <label style={styles.filterLabel}>Trier par date : </label>
         <select
@@ -81,19 +86,21 @@ const Absences = () => {
             {sortedAbsences.map(absence => (
               <tr key={absence.id} style={styles.tr}>
                 <td style={styles.td}>{absence.etudiant?.nom || 'N/A'}</td>
-                <td style={styles.td}>{absence.classroom?.name || 'N/A'}</td>
+            <td style={styles.td}>{absence.etudiant?.classroom?.name || 'N/A'}</td> 
                 <td style={styles.td}>{absence.matiere?.nom || 'N/A'}</td>
                 <td style={styles.td}>{absence.professeur?.nom || 'N/A'}</td>
                 <td style={styles.td}>{absence.motif}</td>
                 <td style={styles.td}>{absence.date}</td>
                 <td style={{ 
                     ...styles.td, 
-                    color: absence.justifiee === 1 ? 'green' : 'red', 
-                    fontWeight: 'bold' 
+                    color: absence.justifiee === 1 ? '#2d6a4f' : '#e74c3c', // Dark green and soft red
+                    fontWeight: 'bold',
+                    textAlign: 'center' 
                     }}>
-                    {absence.justifiee === 1 ? 'Oui' : 'Non'}
+                    {absence.justifiee === 1 
+                      ? <><FaCheckCircle style={styles.icon} /> Oui</> 
+                      : <><FaTimesCircle style={styles.icon} /> Non</>}
                 </td>
-
               </tr>
             ))}
           </tbody>
@@ -140,7 +147,7 @@ const styles = {
     overflow: 'hidden',
   },
   th: {
-    backgroundColor: '#007bff',
+    backgroundColor: '#67AE6E',
     color: '#ffffff',
     padding: '12px 15px',
     textAlign: 'left',
@@ -167,6 +174,11 @@ const styles = {
     fontSize: '16px',
     borderRadius: '6px',
     border: '1px solid #ccc',
+  },
+  icon: {
+    color: '#67AE6E', // Dark green for the icon
+    marginRight: '8px',
+    fontSize: '18px',
   },
 };
 

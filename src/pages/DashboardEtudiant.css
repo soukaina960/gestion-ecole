@@ -9,7 +9,7 @@
     --danger: #e63946;
     
     /* Couleurs de texte */
-    --text-light: #2b2d42;
+    --text-light:                                  #2b2d42;
     --text-dark: #edf2f4;
     
     /* Arrière-plans */
@@ -59,10 +59,7 @@
     transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    line-height: 1.6;
-}
+
 
 .loading-screen {
     display: flex;

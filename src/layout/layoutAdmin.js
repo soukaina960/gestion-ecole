@@ -9,11 +9,16 @@ import {
   FaSearch, FaSignOutAlt, FaBook 
 } from "react-icons/fa";
 import { Link } from 'react-router-dom';
+
+// import { ChevronDown } from 'lucide-react'; 
+// import { Wallet, ArrowDownCircle, Coins } from 'lucide-react';
+
 import { ChevronDown, CalendarDays, Wallet, PlusCircle, Settings } from 'lucide-react';
 import { MdSchool } from "react-icons/md";
 
 // Import des composants
 import FiliereManager from "../components/FiliereManager";
+
 import UtilisateurForm from "../components/UtilisateurList";
 import ClassroomList from "../components/ClassroomList";
 import StudentList from "../components/Student";
@@ -22,6 +27,10 @@ import EmploiTemps from "../components/EmploiTemps";
 import Dashboard from "../components/Dashboard";
 import ChargeForm from "../components/charge";
 import CalculSalaireProfesseur from "../components/CalculSalaire";
+
+ // Pour la gestion des créneaux
+
+
 import DemandeAttestationList from "../components/DemandeAttestationList";
 import ConfigAttestationForm from '../components/ConfigAttestationForm';
 import EmploiTempsParProf from '../components/emploiparprof';
@@ -31,6 +40,7 @@ import GenererEmploiTemps from "../components/EmploiTemps";
 import EmploiTempsForm from "../components/EmploiTempsForm";
 import CreneauList from "../components/crenau";
 import DiagrammeLigneRestes from '../components/ComparaisonRestesParMois';
+
 
 const AdminLayout = () => {
   const [activePage, setActivePage] = useState("reports");
@@ -168,6 +178,7 @@ const AdminLayout = () => {
   };
 
   return (
+    <>
     <div className={`admin-layout ${darkMode ? 'dark' : ''}`}>
       {/* Top Navbar */}
       <nav className="top-nav">
@@ -432,6 +443,7 @@ const AdminLayout = () => {
         </div>
       )}
     </div>
+    </>
   );
 };
 

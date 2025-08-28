@@ -1,8 +1,4 @@
 /* Corps principal */
-body {
- 
-  animation: fadeIn 2s ease-out; /* Apply fade-in effect */
-}
 
 /* Animation for the body */
 @keyframes fadeIn {

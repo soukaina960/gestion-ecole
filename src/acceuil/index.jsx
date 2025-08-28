@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef ,useState} from 'react';
 import { Link } from 'react-router-dom';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination } from 'swiper/modules';
@@ -6,41 +6,105 @@ import 'swiper/css';
 import 'swiper/css/pagination';
 import '../css/style.css';
 import '../css/bootstrap.min.css';
+import { Nav } from "react-bootstrap";
 
+
+import Chatbot from '../components/ChatBot';
+import { Bot, ArrowUp } from 'lucide-react';
 
 const Acceuil = () => {
-    return (
-        <div className="container-xxl bg-white p-0">
+  // Références pour le scroll vers les sections
+  const aboutSectionRef = useRef(null);
+  const facilitiesSectionRef = useRef(null);
 
-            <nav className="navbar navbar-expand-lg bg-white navbar-light sticky-top px-4 px-lg-5 py-lg-0">
-                <a href="index.html" className="navbar-brand">
-                <h1 className="m-0 text-primary"><i className="fa fa-book-reader me-3"></i>Skolyx</h1>
-                </a>
-                
-                <div className="collapse navbar-collapse" id="navbarCollapse">
-                    <div className="navbar-nav mx-auto">
-                        <a href="index.html" className="nav-item nav-link active">Home</a>
-                        <a href="about.html" className="nav-item nav-link">About Us</a>
-                        <a href="classes.html" className="nav-item nav-link">Classes</a>
-                        <div className="nav-item dropdown">
-                            <a href="#" className="nav-link dropdown-toggle" data-bs-toggle="dropdown">Pages</a>
-                            <div className="dropdown-menu rounded-0 rounded-bottom border-0 shadow-sm m-0">
-                                <a href="facility.html" className="dropdown-item">School Facilities</a>
-                                <a href="team.html" className="dropdown-item">Popular Teachers</a>
-                                <a href="call-to-action.html" className="dropdown-item">Become A Teachers</a>
-                                <a href="appointment.html" className="dropdown-item">Make Appointment</a>
-                                <a href="testimonial.html" className="dropdown-item">Testimonial</a>
-                                <a href="404.html" className="dropdown-item">404 Error</a>
-                            </div>
-                        </div>
-                        <a href="contact.html" className="nav-item nav-link">Contact Us</a>
-                    </div>
-                    <Link to="/login" className="btn btn-primary rounded-pill px-3 d-none d-lg-block">
-                        Join Us <i className="fa fa-arrow-right ms-3"></i>
-                    </Link>
+  const [showChatbot, setShowChatbot] = useState(false);
+  // Fonction pour scroller vers une section
+  const scrollToSection = (ref) => {
+    ref.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+  const contactSectionRef = useRef(null);
 
-                </div>
-            </nav>
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    message: "",
+  });
+
+  const [status, setStatus] = useState("");
+
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setStatus("Envoi en cours...");
+
+    try {
+      const response = await fetch("https://formspree.io/f/xqaejgga", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (response.ok) {
+        setStatus("Email envoyé avec succès !");
+        setFormData({ name: "", email: "", message: "" });
+      } else {
+        setStatus("Erreur lors de l'envoi.");
+      }
+    } catch (error) {
+      setStatus("Erreur lors de l'envoi.");
+      console.error(error);
+    }
+  };
+
+  return (
+    <div className="container-xxl bg-white p-0">
+      {/* Navbar avec liens de navigation */}
+      <nav className="navbar navbar-expand-lg bg-white navbar-light sticky-top px-4 px-lg-5 py-lg-0">
+        <Link to="/" className="navbar-brand">
+          <h1 className="m-0 text-primary"><i className="fa fa-book-reader me-3"></i>Skolyx</h1>
+        </Link>
+        
+        <div className="collapse navbar-collapse" id="navbarCollapse">
+          <div className="navbar-nav mx-auto">
+            <button 
+              className="nav-link border-0 bg-transparent" 
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            >
+              Home
+            </button>
+            
+            <button 
+              className="nav-link border-0 bg-transparent" 
+              onClick={() => scrollToSection(aboutSectionRef)}
+            >
+              About Us
+            </button>
+            
+            <button 
+              className="nav-link border-0 bg-transparent" 
+              onClick={() => scrollToSection(facilitiesSectionRef)}
+            >
+              Classes
+            </button>
+            
+            <button 
+              className="nav-link border-0 bg-transparent" 
+              onClick={() => scrollToSection(contactSectionRef)}
+            >
+              Contact Us
+            </button>
+          </div>
+          
+          <Link to="/login" className="btn btn-primary rounded-pill px-3 d-none d-lg-block">
+            Join Us <i className="fa fa-arrow-right ms-3"></i>
+          </Link>
+        </div>
+      </nav>
             {/* Navbar End */}
 
             {/* Carousel Start */}
@@ -58,7 +122,7 @@ const Acceuil = () => {
             <div className="position-relative">
               <img 
                 className="img-fluid w-100" 
-                src="img/carousel-1.jpg" 
+                src="img/young-childrens-coloring.jpg" 
                 alt="" 
                 style={{ height: "600px", objectFit: "cover" }} 
               />
@@ -85,7 +149,7 @@ const Acceuil = () => {
             <div className="position-relative">
               <img 
                 className="img-fluid w-100" 
-                src="img/carousel-2.jpg" 
+                src="img/kids-being-happy-first-day-school.jpg" 
                 alt="" 
                 style={{ height: "600px", objectFit: "cover" }} 
               />
@@ -109,105 +173,117 @@ const Acceuil = () => {
         </Swiper>
       </div>
             {/* Carousel End */}
-
+              
             {/* Facilities Start */}
-            <div className="container-xxl py-5" style={{marginTop: "150px"}}>
-                <div className="container">
-                    <div className="text-center mx-auto mb-5 wow fadeInUp" data-wow-delay="0.1s" style={{maxWidth: "600px"}}>
-                        <h1 className="mb-3">School Facilities</h1>
-                        <p>Eirmod sed ipsum dolor sit rebum labore magna erat. Tempor ut dolore lorem kasd vero ipsum sit eirmod sit. Ipsum diam justo sed rebum vero dolor duo.</p>
-                    </div>
-                    <div className="row g-4">
-                        <div className="col-lg-3 col-sm-6 wow fadeInUp" data-wow-delay="0.1s">
-                            <div className="facility-item">
-                                <div className="facility-icon bg-primary">
-                                    <span className="bg-primary"></span>
-                                    <i className="fa fa-bus-alt fa-3x text-primary"></i>
-                                    <span className="bg-primary"></span>
-                                </div>
-                                <div className="facility-text bg-primary">
-                                    <h3 className="text-primary mb-3">School Bus</h3>
-                                    <p className="mb-0">Eirmod sed ipsum dolor sit rebum magna erat lorem kasd vero ipsum sit</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="col-lg-3 col-sm-6 wow fadeInUp" data-wow-delay="0.3s">
-                            <div className="facility-item">
-                                <div className="facility-icon bg-success">
-                                    <span className="bg-success"></span>
-                                    <i className="fa fa-futbol fa-3x text-success"></i>
-                                    <span className="bg-success"></span>
-                                </div>
-                                <div className="facility-text bg-success">
-                                    <h3 className="text-success mb-3">Playground</h3>
-                                    <p className="mb-0">Eirmod sed ipsum dolor sit rebum magna erat lorem kasd vero ipsum sit</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="col-lg-3 col-sm-6 wow fadeInUp" data-wow-delay="0.5s">
-                            <div className="facility-item">
-                                <div className="facility-icon bg-warning">
-                                    <span className="bg-warning"></span>
-                                    <i className="fa fa-home fa-3x text-warning"></i>
-                                    <span className="bg-warning"></span>
-                                </div>
-                                <div className="facility-text bg-warning">
-                                    <h3 className="text-warning mb-3">Healthy Canteen</h3>
-                                    <p className="mb-0">Eirmod sed ipsum dolor sit rebum magna erat lorem kasd vero ipsum sit</p>
-                                </div>
-                            </div>
-                        </div>
-                        <div className="col-lg-3 col-sm-6 wow fadeInUp" data-wow-delay="0.7s">
-                            <div className="facility-item">
-                                <div className="facility-icon bg-info">
-                                    <span className="bg-info"></span>
-                                    <i className="fa fa-chalkboard-teacher fa-3x text-info"></i>
-                                    <span className="bg-info"></span>
-                                </div>
-                                <div className="facility-text bg-info">
-                                    <h3 className="text-info mb-3">Positive Learning</h3>
-                                    <p className="mb-0">Eirmod sed ipsum dolor sit rebum magna erat lorem kasd vero ipsum sit</p>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+        
+            <div ref={aboutSectionRef} className="container-xxl py-5" style={{marginTop: "200px"}}>
+  <div className="container">
+    <div className="row g-5 align-items-center">
+      {/* User Roles Start */}
+      <div className="text-center mx-auto mb-5 wow fadeInUp" data-wow-delay="0.1s" style={{maxWidth: "600px"}}>
+        <h1 className="mb-3">User Roles</h1>
+        <p>Découvrez les différents profils utilisateurs de notre plateforme et leurs fonctionnalités principales pour une meilleure expérience éducative.</p>
+      </div>
+      <div className="row g-4">
+        {/* Professeur */}
+        <div className="col-lg-3 col-sm-6 wow fadeInUp" data-wow-delay="0.1s">
+          <div className="facility-item">
+            <div className="facility-icon bg-primary">
+              <span className="bg-primary"></span>
+              <i className="fa fa-chalkboard-teacher fa-3x text-primary"></i>
+              <span className="bg-primary"></span>
             </div>
+            <div className="facility-text bg-primary">
+              <h3 className="text-primary mb-3">Professeur</h3>
+              <p className="mb-0">Le professeur peut noter les élèves, gérer les fichiers pédagogiques, créer des quiz et définir la durée des examens.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Administrateur & Surveillant */}
+        <div className="col-lg-3 col-sm-6 wow fadeInUp" data-wow-delay="0.3s">
+          <div className="facility-item">
+            <div className="facility-icon bg-success">
+              <span className="bg-success"></span>
+              <i className="fa fa-user-shield fa-3x text-success"></i>
+              <span className="bg-success"></span>
+            </div>
+            <div className="facility-text bg-success">
+              <h3 className="text-success mb-3">Administration</h3>
+              <p className="mb-0">Gèrent les comptes utilisateurs, supervisent les examens et veillent au bon déroulement des sessions d’évaluation.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Parent */}
+        <div className="col-lg-3 col-sm-6 wow fadeInUp" data-wow-delay="0.5s">
+          <div className="facility-item">
+            <div className="facility-icon bg-warning">
+              <span className="bg-warning"></span>
+              <i className="fa fa-user-friends fa-3x text-warning"></i>
+              <span className="bg-warning"></span>
+            </div>
+            <div className="facility-text bg-warning">
+              <h3 className="text-warning mb-3">Parent</h3>
+              <p className="mb-0">Suit la progression de son enfant, échange avec les enseignants et consulte les bulletins.</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Étudiant */}
+        <div className="col-lg-3 col-sm-6 wow fadeInUp" data-wow-delay="0.7s">
+          <div className="facility-item">
+            <div className="facility-icon bg-info">
+              <span className="bg-info"></span>
+              <i className="fa fa-user-graduate fa-3x text-info"></i>
+              <span className="bg-info"></span>
+            </div>
+            <div className="facility-text bg-info">
+              <h3 className="text-info mb-3">Étudiant</h3>
+              <p className="mb-0">Accède aux cours, réalise les devoirs et suit ses résultats scolaires en temps réel.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
             {/* Facilities End */}
 
             {/* About Start */}
-            <div className="container-xxl py-5" style={{marginTop: "150px"}}>
+            <div   ref={facilitiesSectionRef} className="container-xxl py-5" style={{marginTop: "150px"}}>
                 <div className="container">
                     <div className="row g-5 align-items-center">
-                        <div className="col-lg-6 wow fadeInUp" data-wow-delay="0.1s">
-                            <h1 className="mb-4">Learn More About Our Work And Our Cultural Activities</h1>
-                            <p>Tempor erat elitr rebum at clita. Diam dolor diam ipsum sit. Aliqu diam amet diam et eos. Clita erat ipsum et lorem et sit, sed stet lorem sit clita duo justo magna dolore erat amet</p>
-                            <p className="mb-4">Stet no et lorem dolor et diam, amet duo ut dolore vero eos. No stet est diam rebum amet diam ipsum. Clita clita labore, dolor duo nonumy clita sit at, sed sit sanctus dolor eos, ipsum labore duo duo sit no sea diam. Et dolor et kasd ea. Eirmod diam at dolor est vero nonumy magna.</p>
-                            <div className="row g-4 align-items-center">
-                                <div className="col-sm-6">
-                                    <a className="btn btn-primary rounded-pill py-3 px-5" href="">Read More</a>
-                                </div>
-                                <div className="col-sm-6">
-                                    <div className="d-flex align-items-center">
-                                        <img className="rounded-circle flex-shrink-0" src="img/user.jpg" alt="" style={{width: "45px", height: "45px"}} />
-                                        <div className="ms-3">
-                                            <h6 className="text-primary mb-1">Jhon Doe</h6>
-                                            <small>CEO & Founder</small>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                         <div className="col-lg-6 wow fadeInUp" data-wow-delay="0.1s">
+        <h1 className="mb-4">Découvrez Notre Mission et Nos Activités Culturelles</h1>
+        <p>
+          Notre plateforme vise à enrichir l’expérience éducative en combinant apprentissage académique et activités culturelles. 
+          Nous croyons que l’éducation va au-delà des salles de classe, et que la culture joue un rôle essentiel dans le développement personnel.
+        </p>
+        <p className="mb-4">
+          Grâce à des événements, des ateliers interactifs et des projets collaboratifs, nous encourageons la curiosité, la créativité et 
+          l’ouverture d’esprit chez les apprenants. Rejoignez-nous pour construire ensemble un environnement d’apprentissage stimulant, 
+          moderne et humain.
+        </p>
+      </div>
                         <div className="col-lg-6 about-img wow fadeInUp" data-wow-delay="0.5s">
                             <div className="row">
                                 <div className="col-12 text-center">
-                                    <img className="img-fluid w-75 rounded-circle bg-light p-3" src="img/about-1.jpg" alt="" />
+                                    <img className="img-fluid w-70 h-20 rounded-circle bg-light p-3" src="img/friends-sitting-class_1098-2687.jpg" alt="" />
                                 </div>
                                 <div className="col-6 text-start" style={{marginTop: "-150px"}}>
-                                    <img className="img-fluid w-100 rounded-circle bg-light p-3" src="img/about-2.jpg" alt="" />
+                                                                                    <img
+                                                    className="img-fluid rounded-circle bg-light p-3"
+                                                    style={{ width: "300px", height: "300px", objectFit: "cover" }}
+                                                    src="img/intelligent-primary-students-class.jpg"
+                                                    alt="Enfants avec des sacs à dos dans une bibliothèque"
+                                                    />
+
                                 </div>
                                 <div className="col-6 text-end" style={{marginTop: "-150px"}}>
-                                    <img className="img-fluid w-100 rounded-circle bg-light p-3" src="img/about-3.jpg" alt="" />
+                                    <img className="img-fluid w-100 rounded-circle bg-light p-3"   style={{ width: "300px", height: "300px", objectFit: "cover" }} src="img/schoolchildren-standing-classroom-hugging_23-2147663526.jpg" alt="" />
                                 </div>
                             </div>
                         </div>
@@ -217,86 +293,138 @@ const Acceuil = () => {
             {/* About End */}
 
             {/* Call To Action Start */}
-            <div className="container-xxl py-5" style={{marginTop: "150px"}}>
-                <div className="container">
-                    <div className="bg-light rounded">
-                        <div className="row g-0">
-                            <div className="col-lg-6 wow fadeIn" data-wow-delay="0.1s" style={{minHeight: "400px"}}>
-                                <div className="position-relative h-100">
-                                    <img className="position-absolute w-100 h-100 rounded" src="img/call-to-action.jpg" style={{objectFit: "cover"}} alt="" />
-                                </div>
-                            </div>
-                            <div className="col-lg-6 wow fadeIn" data-wow-delay="0.5s">
-                                <div className="h-100 d-flex flex-column justify-content-center p-5">
-                                    <h1 className="mb-4">Become A Teacher</h1>
-                                    <p className="mb-4">Tempor erat elitr rebum at clita. Diam dolor diam ipsum sit. Aliqu diam amet diam et eos.
-                                        Clita erat ipsum et lorem et sit, sed stet lorem sit clita duo justo magna dolore erat amet
-                                    </p>
-                                    <a className="btn btn-primary py-3 px-5" href="">Get Started Now<i className="fa fa-arrow-right ms-2"></i></a>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+         <div className="container-xxl py-5" style={{marginTop: "150px"}}>
+    <div className="container px-0">
+        <div className="bg-light rounded-3 overflow-hidden wow fadeIn" data-wow-delay="0.1s" 
+             style={{minHeight: "500px", aspectRatio: "16/9"}}>
+            
+            <div className="position-relative h-100 w-100">
+                {/* Vidéo */}
+                <video 
+                    id="customVideoPlayer"
+                    className="position-absolute w-100 h-100" 
+                    style={{objectFit: "cover"}}
+                    loop
+                    playsInline  
+                    poster="img/image.png"
+                >
+                    <source src="img/WhatsApp Video 2025-05-18 um 20.20.04_136f2801.mp4" type="video/mp4" />
+                    Votre navigateur ne supporte pas la vidéo.
+                </video>
+
+                {/* Bouton de contrôle personnalisé */}
+                <div className="position-absolute bottom-0 start-0 end-0 d-flex justify-content-center p-4">
+                    <button 
+                        id="videoControlBtn"
+                        className="btn btn-primary btn-lg rounded-pill px-4 py-3"
+                        style={{zIndex: 10}}
+                        onClick={() => {
+                            const video = document.getElementById('customVideoPlayer');
+                            const btn = document.getElementById('videoControlBtn');
+                            if (video.paused) {
+                                video.play();
+                                btn.innerHTML = '<i className="fas fa-pause me-2"></i>Pause';
+                            } else {
+                                video.pause();
+                                btn.innerHTML = '<i className="fas fa-play me-2"></i>Lire';
+                            }
+                        }}
+                    >
+                        <i className="fas fa-play me-2"></i>Lire
+                    </button>
                 </div>
             </div>
+        </div>
+    </div>
+</div>
+
             {/* Call To Action End */}
 
             {/* Appointment Start */}
-            <div className="container-xxl py-5" style={{marginTop: "150px"}}>
-                <div className="container">
-                    <div className="bg-light rounded">
-                        <div className="row g-0">
-                            <div className="col-lg-6 wow fadeIn" data-wow-delay="0.1s">
-                                <div className="h-100 d-flex flex-column justify-content-center p-5">
-                                    <h1 className="mb-4">Make Appointment</h1>
-                                    <form>
-                                        <div className="row g-3">
-                                            <div className="col-sm-6">
-                                                <div className="form-floating">
-                                                    <input type="text" className="form-control border-0" id="gname" placeholder="Gurdian Name" />
-                                                    <label htmlFor="gname">Gurdian Name</label>
-                                                </div>
-                                            </div>
-                                            <div className="col-sm-6">
-                                                <div className="form-floating">
-                                                    <input type="email" className="form-control border-0" id="gmail" placeholder="Gurdian Email" />
-                                                    <label htmlFor="gmail">Gurdian Email</label>
-                                                </div>
-                                            </div>
-                                            <div className="col-sm-6">
-                                                <div className="form-floating">
-                                                    <input type="text" className="form-control border-0" id="cname" placeholder="Child Name" />
-                                                    <label htmlFor="cname">Child Name</label>
-                                                </div>
-                                            </div>
-                                            <div className="col-sm-6">
-                                                <div className="form-floating">
-                                                    <input type="text" className="form-control border-0" id="cage" placeholder="Child Age" />
-                                                    <label htmlFor="cage">Child Age</label>
-                                                </div>
-                                            </div>
-                                            <div className="col-12">
-                                                <div className="form-floating">
-                                                    <textarea className="form-control border-0" placeholder="Leave a message here" id="message" style={{height: "100px"}}></textarea>
-                                                    <label htmlFor="message">Message</label>
-                                                </div>
-                                            </div>
-                                            <div className="col-12">
-                                                <button className="btn btn-primary w-100 py-3" type="submit">Submit</button>
-                                            </div>
-                                        </div>
-                                    </form>
-                                </div>
-                            </div>
-                            <div className="col-lg-6 wow fadeIn" data-wow-delay="0.5s" style={{minHeight: "400px"}}>
-                                <div className="position-relative h-100">
-                                    <img className="position-absolute w-100 h-100 rounded" src="img/appointment.jpg" style={{objectFit: "cover"}} alt="" />
-                                </div>
-                            </div>
-                        </div>
+          <div ref={contactSectionRef} className="container-xxl py-5" style={{ marginTop: "150px" }}>
+      <div className="container">
+        <div className="bg-light rounded">
+          <div className="row g-0">
+            <div className="col-lg-6 wow fadeIn" data-wow-delay="0.1s">
+              <div className="h-100 d-flex flex-column justify-content-center p-5">
+                <h1 className="mb-4">Contactez-nous</h1>
+                <form onSubmit={handleSubmit}>
+                  <div className="row g-3">
+                    <div className="col-12">
+                      <div className="form-floating">
+                        <input
+                          type="text"
+                          className="form-control border-0"
+                          id="name"
+                          name="name"
+                          placeholder="Votre nom"
+                          value={formData.name}
+                          onChange={handleChange}
+                          required
+                        />
+                        <label htmlFor="name">Nom complet</label>
+                      </div>
                     </div>
-                </div>
+
+                    <div className="col-12">
+                      <div className="form-floating">
+                        <input
+                          type="email"
+                          className="form-control border-0"
+                          id="email"
+                          name="email"
+                          placeholder="Votre email"
+                          value={formData.email}
+                          onChange={handleChange}
+                          required
+                        />
+                        <label htmlFor="email">Email</label>
+                      </div>
+                    </div>
+
+                    <div className="col-12">
+                      <div className="form-floating">
+                        <textarea
+                          className="form-control border-0"
+                          placeholder="Votre message"
+                          id="message"
+                          name="message"
+                          style={{ height: "100px" }}
+                          value={formData.message}
+                          onChange={handleChange}
+                          required
+                        ></textarea>
+                        <label htmlFor="message">Message</label>
+                      </div>
+                    </div>
+
+                    <div className="col-12">
+                      <button className="btn btn-primary w-100 py-3" type="submit">
+                        Envoyer
+                      </button>
+                    </div>
+                    <div className="col-12">
+                      <p className="text-center">{status}</p>
+                    </div>
+                  </div>
+                </form>
+              </div>
             </div>
+
+            <div className="col-lg-6 wow fadeIn" data-wow-delay="0.5s" style={{ minHeight: "400px" }}>
+              <div className="position-relative h-100">
+                <img
+                  className="position-absolute w-100 h-100 rounded"
+                  src="img/appointment.jpg"
+                  style={{ objectFit: "cover" }}
+                  alt="contact"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
             {/* Appointment End */}
 
             {/* Team Start */}
@@ -310,9 +438,9 @@ const Acceuil = () => {
                     <div className="row g-4">
                         <div className="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
                             <div className="team-item position-relative">
-                                <img className="img-fluid rounded-circle w-75" src="img/team-1.jpg" alt="" />
-                                <div className="team-text">
-                                    <h3>Full Name</h3>
+                                <img className="img-fluid rounded-circle w-75" src="img/WhatsApp Image 2025-05-22 à 23.48.59_e7ad31b7.jpg" alt="" />
+                                <div className="team-text text-center">
+                                    <h3 >Soukaina ESSABIRI</h3>
                                     <p>Designation</p>
                                     <div className="d-flex align-items-center">
                                         <a className="btn btn-square btn-primary mx-1" href=""><i className="fab fa-facebook-f"></i></a>
@@ -324,9 +452,9 @@ const Acceuil = () => {
                         </div>
                         <div className="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.3s">
                             <div className="team-item position-relative">
-                                <img className="img-fluid rounded-circle w-75" src="img/team-2.jpg" alt="" />
-                                <div className="team-text">
-                                    <h3>Full Name</h3>
+                                <img className="img-fluid rounded-circle w-75" src="img/WhatsApp Image 2025-05-22 à 23.44.13_083b0bd5.jpg" alt="" />
+                                <div className="team-text text-center">
+                                    <h3>  Hajar MOUTAKID</h3>
                                     <p>Designation</p>
                                     <div className="d-flex align-items-center">
                                         <a className="btn btn-square btn-primary mx-1" href=""><i className="fab fa-facebook-f"></i></a>
@@ -338,9 +466,9 @@ const Acceuil = () => {
                         </div>
                         <div className="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.5s">
                             <div className="team-item position-relative">
-                                <img className="img-fluid rounded-circle w-75" src="img/team-3.jpg" alt="" />
-                                <div className="team-text">
-                                    <h3>Full Name</h3>
+                                <img className="img-fluid rounded-circle w-75" src="img/WhatsApp Image 2025-05-23 à 06.47.54_60e13627.jpg" alt="" />
+                                <div className="team-text text-center">
+                                    <h3> Farah Ait ouhlal</h3>
                                     <p>Designation</p>
                                     <div className="d-flex align-items-center">
                                         <a className="btn btn-square btn-primary mx-1" href=""><i className="fab fa-facebook-f"></i></a>
@@ -359,7 +487,7 @@ const Acceuil = () => {
 
             {/* Footer Start */}
             <div className="container-fluid bg-dark text-white-50 footer pt-5 mt-5 wow fadeIn" data-wow-delay="0.1s" style={{marginTop: "150px"}}>
-                <div className="container py-5">
+                <div className="containerr py-5">
                     <div className="row g-5">
                         <div className="col-lg-3 col-md-6">
                             <h3 className="text-white mb-4">Get In Touch</h3>
@@ -405,20 +533,15 @@ const Acceuil = () => {
                             </div>
                         </div>
                         <div className="col-lg-3 col-md-6">
-                            <h3 className="text-white mb-4">Newsletter</h3>
-                            <p>Dolor amet sit justo amet elitr clita ipsum elitr est.</p>
-                            <div className="position-relative mx-auto" style={{maxWidth: "400px"}}>
-                                <input className="form-control bg-transparent w-100 py-3 ps-4 pe-5" type="text" placeholder="Your email" />
-                                <button type="button" className="btn btn-primary py-2 position-absolute top-0 end-0 mt-2 me-2">SignUp</button>
-                            </div>
+                           
                         </div>
                     </div>
                 </div>
-                <div className="container">
+                <div className="container4">
                     <div className="copyright">
                         <div className="row">
                             <div className="col-md-6 text-center text-md-start mb-3 mb-md-0">
-                                &copy; <a className="border-bottom" href="#">Your Site Name</a>, All Right Reserved.
+                                &copy; <a className="border-bottom" href="#">Scolycx</a>, All Right Reserved.
                             </div>
                             <div className="col-md-6 text-center text-md-end">
                                 <div className="footer-menu">
@@ -435,7 +558,7 @@ const Acceuil = () => {
             {/* Footer End */}
 
             {/* Back to Top */}
-            <a href="#" className="btn btn-lg btn-primary btn-lg-square back-to-top"><i className="bi bi-arrow-up"></i></a>
+         <a href="#" className="btn btn-lg btn-primary btn-lg-square back-to-top"><i className="bi bi-arrow-up"></i></a>
         </div>
     );
 }

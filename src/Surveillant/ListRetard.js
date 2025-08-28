@@ -6,6 +6,7 @@ const ListeRetards = () => {
   const [selectedClassId, setSelectedClassId] = useState('');
   const [allRetards, setAllRetards] = useState([]);
   const [filteredRetards, setFilteredRetards] = useState([]);
+  const [searchQuery, setSearchQuery] = useState(''); // New state for search query
 
   useEffect(() => {
     axios.get("http://localhost:8000/api/classrooms")
@@ -18,13 +19,34 @@ const ListeRetards = () => {
   }, []);
 
   useEffect(() => {
+    let filtered = allRetards;
+
     if (selectedClassId) {
-      const filtered = allRetards.filter(r => r.etudiant.classe_id == selectedClassId);
-      setFilteredRetards(filtered);
-    } else {
-      setFilteredRetards(allRetards);
+      filtered = filtered.filter(r => r.etudiant.classe_id == selectedClassId);
     }
-  }, [selectedClassId, allRetards]);
+
+    if (searchQuery) {
+      filtered = filtered.filter(r =>
+        r.etudiant.nom.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.etudiant.prenom.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+    }
+
+    setFilteredRetards(filtered);
+  }, [selectedClassId, allRetards, searchQuery]);
+  const handleDelete = (id) => {
+    if (window.confirm("Voulez-vous vraiment supprimer ce retard ?")) {
+      axios.delete(`http://localhost:8000/api/retards/${id}`)
+        .then(() => {
+          setAllRetards(prev => prev.filter(r => r.id !== id));
+        })
+        .catch(err => {
+          console.error(err);
+          alert("Une erreur est survenue lors de la suppression.");
+        });
+    }
+  };
+  
 
   const containerStyle = {
     maxWidth: "900px",
@@ -50,6 +72,15 @@ const ListeRetards = () => {
   };
 
   const selectStyle = {
+    width: "100%",
+    padding: "10px",
+    marginBottom: "25px",
+    border: "1px solid #ccc",
+    borderRadius: "6px",
+    fontSize: "16px"
+  };
+
+  const searchStyle = {
     width: "100%",
     padding: "10px",
     marginBottom: "25px",
@@ -100,29 +131,48 @@ const ListeRetards = () => {
         ))}
       </select>
 
+      <label style={labelStyle}>Rechercher par nom ou prénom :</label>
+      <input
+        type="text"
+        placeholder="Nom ou Prénom"
+        style={searchStyle}
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+      />
+
       <table style={tableStyle}>
         <thead>
           <tr>
             <th style={thStyle}>Étudiant</th>
             <th style={thStyle}>Date</th>
             <th style={thStyle}>Heure</th>
+            <th style={thStyle}>Action</th>
           </tr>
         </thead>
         <tbody>
-          {filteredRetards.length === 0 ? (
-            <tr>
-              <td style={{ ...tdStyle, ...emptyRowStyle }} colSpan="3">Aucun retard trouvé.</td>
-            </tr>
-          ) : (
-            filteredRetards.map((r, i) => (
-              <tr key={i}>
-                <td style={tdStyle}>{r.etudiant.nom} {r.etudiant.prenom}</td>
-                <td style={tdStyle}>{r.date}</td>
-                <td style={tdStyle}>{r.heure}</td>
-              </tr>
-            ))
-          )}
-        </tbody>
+  {filteredRetards.length === 0 ? (
+    <tr>
+      <td style={{ ...tdStyle, ...emptyRowStyle }} colSpan="4">Aucun retard trouvé.</td>
+    </tr>
+  ) : (
+    filteredRetards.map((r, i) => (
+      <tr key={i}>
+        <td style={tdStyle}>{r.etudiant.nom} {r.etudiant.prenom}</td>
+        <td style={tdStyle}>{r.date}</td>
+        <td style={tdStyle}>{r.heure}</td>
+        <td style={tdStyle}>
+          <button
+            onClick={() => handleDelete(r.id)}
+            style={{ backgroundColor: "#e74c3c", color: "#fff", padding: "6px 12px", border: "none", borderRadius: "4px", cursor: "pointer" }}
+          >
+            Supprimer
+          </button>
+        </td>
+      </tr>
+    ))
+  )}
+</tbody>
+
       </table>
     </div>
   );

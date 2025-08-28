@@ -99,6 +99,9 @@ const styles = {
 };
 
 
+import "./footer.css";
+
+
 
 const Footer = () => {
   const controls = useAnimation();

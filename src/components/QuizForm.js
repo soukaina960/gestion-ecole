@@ -1,13 +1,21 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
+import './QuizForm.css';
+
+// Configuration axios pour une réutilisation facile
+const api = axios.create({
+  baseURL: 'http://localhost:8000/api',
+});
 
 export default function QuizForm() {
   const [formData, setFormData] = useState({
+    id: '', // Pour la modification
     class_id: '',
     matiere_id: '',
     question_text: '',
     answer: false,
     description: '',
+    professeur_id: ''
   });
 
   const [quizzes, setQuizzes] = useState([]);
@@ -16,93 +24,177 @@ export default function QuizForm() {
   const [selectedClasse, setSelectedClasse] = useState('');
   const [selectedFiliere, setSelectedFiliere] = useState('');
   const [isLycee, setIsLycee] = useState(false);
-  const [loading, setLoading] = useState({ classes: true, filieres: false, matieres: false });
-  const [matieres, setMatieres] = useState([]); // Ajout de l'état pour les matières
-  const [utilisateur, setUtilisateur] = useState(null); // Ajout de l'état pour l'utilisateur
+  const [loading, setLoading] = useState({ 
+    classes: true, 
+    filieres: false, 
+    matieres: false,
+    professeur: false,
+    submitting: false,
+    quizzes: false,
+    deleting: false,
+    editing: false
+  });
+  const [matieres, setMatieres] = useState([]);
+  const [utilisateur, setUtilisateur] = useState(null);
+  const [professeurId, setProfesseurId] = useState(null);
+  const [message, setMessage] = useState({ text: '', type: '', visible: false });
+  const [isEditing, setIsEditing] = useState(false);
 
-  // Charger l'utilisateur depuis le localStorage
+  // Afficher un message temporaire
+  const showMessage = (text, type = 'success') => {
+    setMessage({ text, type, visible: true });
+    setTimeout(() => {
+      setMessage(prev => ({ ...prev, visible: false }));
+    }, 5000);
+  };
+
+  // Fermer manuellement le message
+  const closeMessage = () => {
+    setMessage(prev => ({ ...prev, visible: false }));
+  };
+
+  // Charger l'utilisateur et l'ID du professeur
   useEffect(() => {
+    const loadUserData = async () => {
+      try {
+        const userData = localStorage.getItem("utilisateur");
+        if (userData) {
+          const user = JSON.parse(userData);
+          setUtilisateur(user);
+          
+          if (user?.role === "professeur") {
+            const storedProfesseurId = localStorage.getItem("professeur_id");
+            if (storedProfesseurId) {
+              setProfesseurId(storedProfesseurId);
+              setFormData(prev => ({ ...prev, professeur_id: storedProfesseurId }));
+            } else {
+              const profId = await fetchProfesseurId(user.id);
+              if (profId) {
+                setProfesseurId(profId);
+                setFormData(prev => ({ ...prev, professeur_id: profId }));
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Erreur de chargement des données utilisateur", err);
+        showMessage("Erreur de chargement des données utilisateur", "error");
+      }
+    };
+
+    loadUserData();
+  }, []);
+
+  // Fonction pour récupérer l'ID du professeur
+  const fetchProfesseurId = async (userId) => {
     try {
-      const userData = localStorage.getItem("utilisateur");
-      if (userData) {
-        const user = JSON.parse(userData);
-        setUtilisateur(user);
-        if (user?.role === "professeur") {
-          setFormData(prev => ({ ...prev, professeur_id: user.id }));
+      const response = await api.get(`/professeurs?user=${userId}`);
+      if (response.data && response.data.length > 0) {
+        const professeur = response.data.find(p => p.user_id === userId);
+        if (professeur) {
+          const profId = professeur.id;
+          localStorage.setItem("professeur_id", profId);
+          return profId;
         }
       }
-    } catch (err) {
-      console.error("Erreur de chargement des données utilisateur", err);
+      throw new Error("Professeur non trouvé");
+    } catch (error) {
+      console.error("Erreur fetchProfesseurId:", error);
+      showMessage("Votre compte professeur n'est pas configuré", "error");
+      return null;
     }
-  }, []);
+  };
 
   // Charger les classes
   useEffect(() => {
-    axios.get('http://localhost:8000/api/classes')
-      .then(res => {
+    const loadClasses = async () => {
+      try {
+        const res = await api.get('/classes');
         setClasses(res.data);
-        setLoading(prev => ({ ...prev, classes: false }));
-      })
-      .catch(error => {
+      } catch (error) {
         console.error("Erreur lors de la récupération des classes", error);
+        showMessage("Erreur lors du chargement des classes", "error");
+      } finally {
         setLoading(prev => ({ ...prev, classes: false }));
-      });
+      }
+    };
+
+    loadClasses();
   }, []);
 
   // Vérifier si c'est une classe de lycée et charger les filières
   useEffect(() => {
-    if (selectedClasse) {
-      const classe = classes.find(c => c.id === parseInt(selectedClasse));
-      const isSecondaire = classe && classe.niveau === "Secondaire";
-      setIsLycee(isSecondaire);
+    const loadFilieres = async () => {
+      if (selectedClasse) {
+        const classe = classes.find(c => c.id === parseInt(selectedClasse));
+        const isSecondaire = classe && classe.niveau === "Secondaire";
+        setIsLycee(isSecondaire);
 
-      if (isSecondaire) {
-        setLoading(prev => ({ ...prev, filieres: true }));
-        axios.get(`http://127.0.0.1:8000/api/classes/${selectedClasse}/filieres`)
-          .then(res => {
+        if (isSecondaire) {
+          setLoading(prev => ({ ...prev, filieres: true }));
+          try {
+            const res = await api.get(`/classes/${selectedClasse}/filieres`);
             const filieresData = res.data.filiere ? [res.data.filiere] : res.data.filieres || [];
             setFilieres(filieresData);
             if (filieresData.length > 0) {
               setSelectedFiliere(filieresData[0].id);
               setFormData(prev => ({ ...prev, filiere_id: filieresData[0].id }));
             }
-          })
-          .catch(err => {
+          } catch (err) {
             console.error("Erreur chargement filières:", err);
             setFilieres([]);
-          })
-          .finally(() => setLoading(prev => ({ ...prev, filieres: false })));
-      } else {
-        setFilieres([]);
-        setSelectedFiliere("");
-        setFormData(prev => ({ ...prev, filiere_id: '' }));
+            showMessage("Erreur lors du chargement des filières", "error");
+          } finally {
+            setLoading(prev => ({ ...prev, filieres: false }));
+          }
+        } else {
+          setFilieres([]);
+          setSelectedFiliere("");
+          setFormData(prev => ({ ...prev, filiere_id: '' }));
+        }
       }
-    }
-  }, [selectedClasse]);
+    };
 
-  // Charger les matières quand une filière est sélectionnée (lycée)
+    loadFilieres();
+  }, [selectedClasse, classes]);
+
+  // Charger les matières quand une filière est sélectionnée
   useEffect(() => {
-    if (selectedClasse && utilisateur?.id) {
-      setLoading(prev => ({ ...prev, matieres: true }));
-      const url = isLycee
-        ? `http://127.0.0.1:8000/api/professeurs/${utilisateur.id}/classes/${selectedClasse}/filieres/${selectedFiliere}/matieres`
-        : `http://localhost:8000/api/professeurs/${utilisateur.id}/classes/${selectedClasse}/matieres`;
+    const loadMatieres = async () => {
+      if (!selectedClasse || !professeurId) return;
 
-      axios.get(url)
-        .then(res => {
-          console.log("Matières récupérées:", res.data); // Vérifie les données des matières
-          setMatieres(res.data);
-          setFormData(prev => ({ ...prev, matiere_id: '' }));
-        })
-        .catch(err => {
-          console.error("Erreur chargement matières:", err);
-          setMatieres([]);
-        })
-        .finally(() => setLoading(prev => ({ ...prev, matieres: false })));
+      let url = '';
+
+      if (isLycee) {
+        if (!selectedFiliere) return;
+        url = `/professeurs/${professeurId}/classes/${selectedClasse}/filieres/${selectedFiliere}/matieres`;
+      } else {
+        url = `/professeurs/${professeurId}/classes/${selectedClasse}/matieres`;
+      }
+
+      setLoading((prev) => ({ ...prev, matieres: true }));
+      try {
+        const res = await api.get(url);
+        setMatieres(res.data);
+        setFormData((prev) => ({ ...prev, matiere_id: '' }));
+      } catch (err) {
+        console.error('Erreur chargement matières:', err);
+        setMatieres([]);
+      } finally {
+        setLoading((prev) => ({ ...prev, matieres: false }));
+      }
+    };
+
+    loadMatieres();
+  }, [selectedClasse, selectedFiliere, professeurId, isLycee]);
+
+  // Charger les quiz au montage et quand le professeur est défini
+  useEffect(() => {
+    if (professeurId) {
+      fetchQuizzes();
     }
-  }, [selectedClasse, selectedFiliere, utilisateur, isLycee]);
+  }, [professeurId]);
 
-  // Gestion du changement dans le formulaire
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     setFormData({
@@ -118,47 +210,124 @@ export default function QuizForm() {
     }
   };
 
-  // Ajouter un quiz
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setLoading(prev => ({ ...prev, submitting: true }));
+    
     try {
-      await axios.post('http://localhost:8000/api/quizzes', formData);
-      alert('Quiz ajouté avec succès !');
-      setFormData({
-        class_id: '',
-        matiere_id: '',
-        question_text: '',
-        answer: false,
-        description: '',
-      });
+      if (isEditing) {
+        await api.put(`/quizzes/${formData.id}`, formData);
+        showMessage('Quiz modifié avec succès !');
+      } else {
+        await api.post('/quizzes', formData);
+        showMessage('Quiz ajouté avec succès !');
+      }
+      
+      resetForm();
       fetchQuizzes();
     } catch (error) {
       console.error(error);
-      alert('Erreur lors de l\'ajout du quiz.');
+      showMessage(`Erreur lors de ${isEditing ? 'la modification' : "l'ajout"} du quiz`, "error");
+    } finally {
+      setLoading(prev => ({ ...prev, submitting: false }));
     }
   };
 
   const fetchQuizzes = async () => {
+    if (!professeurId) return;
+    
+    setLoading(prev => ({ ...prev, quizzes: true }));
     try {
-      const res = await axios.get('http://localhost:8000/api/quizzes');
+      const res = await api.get('/quizzes', {
+        params: { professeur_id: professeurId }
+      });
       setQuizzes(res.data);
     } catch (error) {
       console.error("Erreur lors du chargement des quiz", error);
+      showMessage("Erreur lors du chargement des quiz", "error");
+    } finally {
+      setLoading(prev => ({ ...prev, quizzes: false }));
     }
   };
 
+  const handleEdit = (quiz) => {
+    setIsEditing(true);
+    setFormData({
+      id: quiz.id,
+      class_id: quiz.class_id,
+      matiere_id: quiz.matiere_id,
+      question_text: quiz.question_text,
+      answer: quiz.answer,
+      description: quiz.description,
+      professeur_id: professeurId,
+      filiere_id: quiz.filiere_id || ''
+    });
+    
+    setSelectedClasse(quiz.class_id);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer ce quiz ?")) return;
+    
+    setLoading(prev => ({ ...prev, deleting: true }));
+    try {
+      await api.delete(`/quizzes/${id}`);
+      showMessage('Quiz supprimé avec succès !');
+      fetchQuizzes();
+    } catch (error) {
+      console.error("Erreur lors de la suppression du quiz", error);
+      showMessage("Erreur lors de la suppression du quiz", "error");
+    } finally {
+      setLoading(prev => ({ ...prev, deleting: false }));
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      id: '',
+      class_id: '',
+      matiere_id: '',
+      question_text: '',
+      answer: false,
+      description: '',
+      professeur_id: professeurId,
+      filiere_id: ''
+    });
+    setSelectedClasse('');
+    setSelectedFiliere('');
+    setIsEditing(false);
+  };
+
+  const cancelEdit = () => {
+    resetForm();
+  };
+
   return (
-    <div className="p-4">
-      <h2>Ajouter un Quiz</h2>
-      <form onSubmit={handleSubmit} className="mb-4">
-        <div>
-          <label className="block mb-1">Classe :</label>
+    <div className="quiz-container">
+      <h2 className="quiz-title">{isEditing ? 'Modifier un Quiz' : 'Ajouter un Quiz'}</h2>
+      
+      {/* Message de succès/erreur */}
+      {message.visible && (
+        <div className={`message ${message.type}`}>
+          <div className="message-content">
+            {message.text}
+          </div>
+          <button className="message-close" onClick={closeMessage}>
+            &times;
+          </button>
+        </div>
+      )}
+      
+      <form onSubmit={handleSubmit} className="quiz-form">
+        <div className="form-group">
+          <label>Classe :</label>
           <select 
             name="class_id" 
             onChange={handleChange} 
             value={formData.class_id} 
             required
-            className="w-full p-2 border rounded"
+            disabled={loading.classes}
           >
             <option value="">-- Choisir une classe --</option>
             {classes.map(c => (
@@ -169,13 +338,13 @@ export default function QuizForm() {
 
         {isLycee && filieres.length > 0 && (
           <div className="form-group">
-            <label className="block mb-1">Filière :</label>
+            <label>Filière :</label>
             <select 
               name="filiere_id" 
               onChange={handleChange} 
               value={formData.filiere_id} 
               required
-              className="w-full p-2 border rounded"
+              disabled={loading.filieres}
             >
               {filieres.map(f => (
                 <option key={f.id} value={f.id}>{f.nom}</option>
@@ -185,14 +354,13 @@ export default function QuizForm() {
         )}
 
         <div className="form-group">
-          <label className="block mb-1">Matière :</label>
+          <label>Matière :</label>
           <select 
             name="matiere_id" 
             onChange={handleChange} 
             value={formData.matiere_id} 
             required
-            className="w-full p-2 border rounded"
-            disabled={loading.matieres}
+            disabled={loading.matieres || !professeurId}
           >
             <option value="">-- Choisir une matière --</option>
             {matieres.map(m => (
@@ -201,40 +369,109 @@ export default function QuizForm() {
             {loading.matieres && <option>Chargement des matières...</option>}
           </select>
         </div>
-        <input
-          type="text"
-          name="question_text"
-          placeholder="Question"
-          value={formData.question_text}
-          onChange={handleChange}
-          required
-        /><br/>
-        <label>
-          Réponse correcte ?<input
+
+        <div className="form-group">
+          <label>Question :</label>
+          <input
+            type="text"
+            name="question_text"
+            placeholder="Entrez votre question"
+            value={formData.question_text}
+            onChange={handleChange}
+            required
+          />
+        </div>
+
+        <div className="form-group checkbox-group">
+          <input
             type="checkbox"
             name="answer"
+            id="answer"
             checked={formData.answer}
             onChange={handleChange}
           />
-        </label><br/>
-        <textarea
-          name="description"
-          placeholder="Description (facultatif)"
-          value={formData.description}
-          onChange={handleChange}
-        ></textarea><br/>
-        <button type="submit">Ajouter</button>
+          <label htmlFor="answer">Réponse correcte ?</label>
+        </div>
+
+        <div className="form-group">
+          <label>Description (facultatif) :</label>
+          <textarea
+            name="description"
+            placeholder="Description supplémentaire"
+            value={formData.description}
+            onChange={handleChange}
+          ></textarea>
+        </div>
+
+        <div className="form-actions">
+          <button 
+            type="submit" 
+            className="submit-btn"
+            disabled={loading.professeur || !professeurId || loading.submitting}
+          >
+            {loading.submitting ? (
+              <>
+                <span className="spinner"></span>
+                {isEditing ? 'Enregistrement...' : 'Envoi en cours...'}
+              </>
+            ) : isEditing ? 'Enregistrer les modifications' : 'Ajouter le Quiz'}
+          </button>
+          
+          {isEditing && (
+            <button 
+              type="button" 
+              className="cancel-btn"
+              onClick={cancelEdit}
+              disabled={loading.submitting}
+            >
+              Annuler
+            </button>
+          )}
+        </div>
       </form>
 
-      <h2>Liste des Quiz</h2>
-      <ul>
-        {quizzes.map((quiz) => (
-          <li key={quiz.id}>
-            {quiz.question_text} (Classe ID: {quiz.class_id}, Matière ID: {quiz.matiere_id}) - 
-            Réponse: {quiz.answer ? 'Vrai' : 'Faux'}
-          </li>
-        ))}
-      </ul>
+      <div className="quizzes-list">
+        <h2>Liste des Quiz</h2>
+        {loading.quizzes ? (
+          <div className="loading">Chargement des quiz...</div>
+        ) : quizzes.length > 0 ? (
+          <ul>
+            {quizzes.map((quiz) => (
+              <li key={quiz.id}>
+                <div className="quiz-header">
+                  <p className="question">{quiz.question_text}</p>
+                  <div className="quiz-actions">
+                    <button 
+                      className="edit-btn"
+                      onClick={() => handleEdit(quiz)}
+                      disabled={loading.deleting}
+                    >
+                      Modifier
+                    </button>
+                    <button 
+                      className="delete-btn"
+                      onClick={() => handleDelete(quiz.id)}
+                      disabled={loading.deleting}
+                    >
+                      {loading.deleting ? 'Suppression...' : 'Supprimer'}
+                    </button>
+                  </div>
+                </div>
+                <p className="details">
+                  Classe: {classes.find(c => c.id === quiz.class_id)?.name || quiz.class_id} | 
+                  Matière: {matieres.find(m => m.id === quiz.matiere_id)?.nom || quiz.matiere_id} | 
+                  Réponse: {quiz.answer ? 'Vrai' : 'Faux'}
+                </p>
+                {quiz.description && (
+                  <p className="description">{quiz.description}</p>
+                )}
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <p>Aucun quiz disponible pour le moment.</p>
+        )}
+      </div>
     </div>
   );
 }

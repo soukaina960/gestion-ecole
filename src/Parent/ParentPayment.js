@@ -1,107 +1,127 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import axios from "axios";
+import './ParentPayment.css';
 
-const ParentProfile = () => {
+const ParentPayment = () => {
   const [paiements, setPaiements] = useState([]);
-  const [mois, setMois] = useState("");  // Variable to store selected month
+  const [mois, setMois] = useState("");
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+  
   const parentId = localStorage.getItem('parent_id');
-  const token = localStorage.getItem('access_token'); 
+  const token = localStorage.getItem('access_token');
 
-  // Fonction pour récupérer les paiements en fonction du mois sélectionné
   const handleMoisChange = (e) => {
     setMois(e.target.value);
+    setError('');
+    setMessage('');
   };
 
-  const fetchPaiements = () => {
+  const fetchPaiements = async () => {
     if (!mois) {
       setError("Veuillez sélectionner un mois.");
       return;
     }
-    console.log(localStorage.getItem('token'));
-    console.log(token);
 
-    
-    axios.get(`http://127.0.0.1:8000/api/paiements/parent/${parentId}/${mois}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      }
-    })
-    
-      .then((response) => {
-        setPaiements(response.data);
-        setMessage("Paiements récupérés avec succès.");
-        setError('');
-      })
-      .catch((error) => {
-        console.error(error);
-        setError("Erreur lors de la récupération des paiements.");
-        setMessage('');
-      });
+    setLoading(true);
+    setError('');
+    setMessage('');
+
+    try {
+      const response = await axios.get(
+        `http://127.0.0.1:8000/api/paiements/parent/${parentId}/${mois}`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
       
-      
-      
+      setPaiements(response.data.data || []);
+      setMessage(response.data.message || `Paiements trouvés pour ${mois}`);
+    } catch (error) {
+      console.error("Erreur lors de la récupération des paiements:", error);
+      setError(error.response?.data?.message || "Erreur lors de la récupération des paiements");
+      setPaiements([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Fonction pour générer le reçu PDF
-  const generateReceipt = (paiement_id) => {
-    window.open(`http://127.0.0.1:8000/api/paiement/receipt/${parentId}/${mois}`, '_blank');
+  const generateReceipt = (paiementId) => {
+    window.open(
+      `http://127.0.0.1:8000/api/paiement/receipt/${parentId}/${paiementId}`,
+      '_blank',
+      'noopener,noreferrer'
+    );
+  };
+
+  const formatDate = (dateString) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR');
   };
 
   return (
-    <div style={{ padding: "20px", maxWidth: "600px", margin: "auto" }}>
-      <h2>Mon Profil</h2>
-      
-      {message && <p style={{ color: "green" }}>{message}</p>}
-      {error && <p style={{ color: "red" }}>{error}</p>}
+    <div className="container">
+      <h2 className="title">Suivi des Paiements</h2>
 
-      {/* Sélection du mois */}
-      <div>
-        <label>Sélectionner le mois :</label>
-        <select value={mois} onChange={handleMoisChange}>
-          <option value="">--Choisir le mois--</option>
-          <option value="mai">Mai</option>
-          <option value="juin">Juin</option>
-          <option value="juillet">Juillet</option>
-          <option value="août">Août</option>
-          <option value="septembre">Septembre</option>
-          <option value="octobre">Octobre</option>
-          <option value="novembre">Novembre</option>
-          <option value="décembre">Décembre</option>
-          <option value="janvier">Janvier</option>
-          <option value="février">Février</option>
-          <option value="mars">Mars</option>
-          <option value="avril">Avril</option>
+      {message && <p className="message success">{message}</p>}
+      {error && <p className="message error">{error}</p>}
 
-          {/* Ajoutez d'autres mois ici */}
+      <div className="formGroup">
+        <label className="label">Sélectionnez le mois :</label>
+        <select 
+          value={mois} 
+          onChange={handleMoisChange} 
+          className="select"
+          disabled={loading}
+        >
+          <option value="">--Choisissez un mois--</option>
+          {["janvier", "février", "mars", "avril", "mai", "juin", 
+            "juillet", "août", "septembre", "octobre", "novembre", "décembre"]
+            .map((m) => (
+              <option key={m} value={m}>
+                {m.charAt(0).toUpperCase() + m.slice(1)}
+              </option>
+            ))}
         </select>
-        <button onClick={fetchPaiements}>Afficher les paiements</button>
+        <button 
+          onClick={fetchPaiements} 
+          className="primaryButton"
+          disabled={loading || !mois}
+        >
+          {loading ? 'Chargement...' : 'Afficher les paiements'}
+        </button>
       </div>
 
-      {/* Liste des paiements */}
-      {paiements.length > 0 && (
-        <div>
-          <h3>Paiements pour le mois de {mois} :</h3>
-          <ul>
-            {paiements.map((paiement) => (
-              <li key={paiement.id}>
-                <p>Étudiant ID: {paiement.etudiant_id}</p>
-                <p>Date de paiement: {paiement.date_paiement}</p>
-                <p>Est payé: {paiement.est_paye ? "Oui" : "Non"}</p>
-                <button
-                  style={{ padding: "5px 10px", backgroundColor: "#4CAF50", color: "white", border: "none", borderRadius: "5px" }}
-                  onClick={() => generateReceipt(paiement.id)}
-                >
-                  Générer Recette (Skolyx)
-                </button>
-              </li>
-            ))}
-          </ul>
+      {loading && <p className="loading">Chargement en cours...</p>}
+
+      {paiements.length > 0 ? (
+        <div className="paymentList">
+          <h3 className="sectionTitle">Paiements pour {mois.charAt(0).toUpperCase() + mois.slice(1)} :</h3>
+          {paiements.map((paiement) => (
+            <div key={paiement.id} className="paymentItem">
+              <p><strong>Étudiant:</strong> {paiement.etudiant?.nom || paiement.etudiant_id}</p>
+              <p><strong>Date de paiement:</strong> {formatDate(paiement.date_paiement)}</p>
+              <p><strong>Statut:</strong> 
+                <span className={paiement.est_paye ? "status paid" : "status unpaid"}>
+                  {paiement.est_paye ? "Payé" : "Non payé"}
+                </span>
+              </p>
+              <button 
+                className="receiptButton" 
+                onClick={() => generateReceipt(paiement.id)}
+                disabled={!paiement.est_paye}
+                title={!paiement.est_paye ? "Reçu disponible seulement pour les paiements validés" : ""}
+              >
+                Télécharger le reçu
+              </button>
+            </div>
+          ))}
         </div>
+      ) : (
+        !loading && mois && <p className="no-results">Aucun paiement trouvé pour ce mois.</p>
       )}
     </div>
   );
 };
 
-export default ParentProfile;
+export default ParentPayment;

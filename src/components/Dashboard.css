@@ -20,7 +20,7 @@
   }
   
   .card {
-    background: white;
+    background: rgb(248, 244, 244);
     border-radius: 1rem;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);
     transition: all 0.3s ease;

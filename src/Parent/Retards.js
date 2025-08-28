@@ -1,154 +1,180 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState } from "react";
+import axios from "axios";
 
 const Retards = () => {
   const [retards, setRetards] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [sortOrder, setSortOrder] = useState('desc'); // par défaut récent
+  const [sortOrder, setSortOrder] = useState("latest");
 
-  const parentId = localStorage.getItem('parent_id');
+  const parentId = localStorage.getItem("parent_id");
+
+  const styles = {
+    container: {
+      padding: "20px",
+      backgroundColor: "#f5f5f5",
+      borderRadius: "10px",
+      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+      margin: "30px auto",
+      maxWidth: "95%",
+    },
+    title: {
+      fontSize: "26px",
+      color: "#3498db",
+      marginBottom: "25px",
+      textAlign: "center",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center",
+      gap: "10px",
+    },
+    selectContainer: {
+      marginBottom: "20px",
+      textAlign: "right",
+    },
+    label: {
+      fontWeight: "bold",
+      marginRight: "10px",
+    },
+    select: {
+      padding: "8px 12px",
+      borderRadius: "5px",
+      border: "1px solid #3498db",
+      fontSize: "14px",
+      backgroundColor: "#e6f7ff",
+      color: "#3498db",
+      transition: "0.3s",
+      cursor: "pointer",
+      outline: "none",
+    },
+    table: {
+      width: "100%",
+      borderCollapse: "collapse",
+      backgroundColor: "#fff",
+      borderRadius: "8px",
+      overflow: "hidden",
+      boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+    },
+    th: {
+      backgroundColor: "#3498db",
+      color: "#fff",
+      padding: "12px",
+      textAlign: "left",
+      fontSize: "15px",
+    },
+    td: {
+      padding: "12px",
+      borderBottom: "1px solid #ddd",
+      fontSize: "14px",
+      color: "#333",
+    },
+    tr: {
+      cursor: "pointer",
+    },
+    error: {
+      color: "red",
+      fontWeight: "bold",
+    },
+    empty: {
+      textAlign: "center",
+      color: "#777",
+      marginTop: "20px",
+      fontSize: "16px",
+    },
+  };
 
   useEffect(() => {
-    if (parentId) {
-      fetch(`http://127.0.0.1:8000/api/retards/parent/${parentId}`)
-        .then(response => response.json())
-        .then(data => {
-          if (data.message) {
-            setError(data.message);
-          } else {
-            setRetards(data);
-          }
-          setLoading(false);
-        })
-        .catch(error => {
-          console.error('Erreur:', error);
-          setError('Erreur de récupération des retards.');
-          setLoading(false);
-        });
-    } else {
-      setError('Identifiant du parent introuvable.');
-      setLoading(false);
-    }
+    axios
+      .get(`http://127.0.0.1:8000/api/retards/parent/${parentId}`)
+      .then((response) => {
+        if (Array.isArray(response.data)) {
+          setRetards(response.data);
+        } else {
+          setRetards([]);
+        }
+        setLoading(false);
+      })
+      .catch(() => {
+        setError("Une erreur est survenue.");
+        setLoading(false);
+      });
   }, [parentId]);
 
   const sortedRetards = [...retards].sort((a, b) => {
-    if (sortOrder === 'asc') {
-      return new Date(a.date) - new Date(b.date);
-    } else {
-      return new Date(b.date) - new Date(a.date);
-    }
+    return sortOrder === "latest"
+      ? new Date(b.date) - new Date(a.date)
+      : new Date(a.date) - new Date(b.date);
   });
 
-  const handleSortChange = (e) => {
-    setSortOrder(e.target.value);
-  };
-
-  if (loading) {
-    return <p style={styles.loading}>Chargement des retards...</p>;
-  }
-
-  if (error) {
-    return <p style={styles.error}>{error}</p>;
-  }
+  if (loading) return <p>Chargement...</p>;
+  if (error) return <p style={styles.error}>{error}</p>;
 
   return (
     <div style={styles.container}>
-      <h2 style={styles.title}>Liste des Retards</h2>
+      <h2 style={styles.title}>
+        <i className="fas fa-clock" style={{ color: "#3498db" }}></i>
+        Liste des retards
+      </h2>
 
-      {/* Filter */}
-      <div style={styles.filterContainer}>
-        <label htmlFor="sort" style={styles.label}>Trier par date :</label>
-        <select id="sort" value={sortOrder} onChange={handleSortChange} style={styles.select}>
-          <option value="desc">Récents d'abord</option>
-          <option value="asc">Anciens d'abord</option>
+      <div style={styles.selectContainer}>
+        <label style={styles.label}>Trier par date :</label>
+        <select
+          value={sortOrder}
+          onChange={(e) => setSortOrder(e.target.value)}
+          style={styles.select}
+        >
+          <option value="latest">Plus récent</option>
+          <option value="oldest">Plus ancien</option>
         </select>
       </div>
 
-      {/* Table */}
-      <table style={styles.table}>
-        <thead>
-          <tr>
-            <th style={styles.th}>Nom étudiant</th>
-            <th style={styles.th}>Classe</th>
-            <th style={styles.th}>Professeur</th>
-            <th style={styles.th}>Matiere</th>
-            <th style={styles.th}>Date</th>
-            <th style={styles.th}>Heure</th>
-          </tr>
-        </thead>
-        <tbody>
-          {sortedRetards.map(retard => (
-            <tr key={retard.id}>
-              <td style={styles.td}>{retard.etudiant?.nom || 'Non disponible'}</td>
-              <td style={styles.td}>{retard.classroom?.name || 'Non disponible'}</td>
-              <td style={styles.td}>{retard.professeur?.nom || 'Non disponible'}</td>
-              <td style={styles.td}>{retard.matiere?.nom || 'Non disponible'}</td>
-              <td style={styles.td}>{retard.date}</td>
-              <td style={styles.td}>{retard.heure}</td>
+      {retards.length === 0 ? (
+        <p style={styles.empty}>Aucun retard trouvé.</p>
+      ) : (
+        <table style={styles.table}>
+          <thead>
+            <tr>
+              <th style={styles.th}>Nom étudiant</th>
+              <th style={styles.th}>Classe</th>
+              <th style={styles.th}>Professeur</th>
+              <th style={styles.th}>Matière</th>
+              <th style={styles.th}>Date</th>
+              <th style={styles.th}>Heure</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {sortedRetards.map((retard) => (
+              <tr
+                key={retard.id}
+                style={styles.tr}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.background = "#e6f7ff")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.background = "transparent")
+                }
+              >
+                <td style={styles.td}>
+                  {retard.etudiant?.nom || "Non disponible"}
+                </td>
+                <td style={styles.td}>
+                  {retard.classroom?.name || "Non disponible"}
+                </td>
+                <td style={styles.td}>
+                  {retard.professeur?.nom || "Non disponible"}
+                </td>
+                <td style={styles.td}>
+                  {retard.matiere?.nom || "Non disponible"}
+                </td>
+                <td style={styles.td}>{retard.date}</td>
+                <td style={styles.td}>{retard.heure}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
     </div>
   );
-};
-
-// Styles
-const styles = {
-  container: {
-    padding: '20px',
-    fontFamily: 'Arial, sans-serif',
-    maxWidth: '1000px',
-    margin: '0 auto',
-  },
-  title: {
-    textAlign: 'center',
-    marginBottom: '20px',
-    fontSize: '28px',
-    color: '#333',
-  },
-  filterContainer: {
-    marginBottom: '20px',
-    textAlign: 'right',
-  },
-  label: {
-    marginRight: '10px',
-    fontWeight: 'bold',
-  },
-  select: {
-    padding: '8px 12px',
-    fontSize: '16px',
-    borderRadius: '6px',
-    border: '1px solid #ccc',
-  },
-  table: {
-    width: '100%',
-    borderCollapse: 'collapse',
-    backgroundColor: '#fdfdfd',
-  },
-  th: {
-    backgroundColor: '#007BFF',
-    color: 'white',
-    padding: '12px',
-    border: '1px solid #ddd',
-    fontSize: '16px',
-  },
-  td: {
-    padding: '10px',
-    border: '1px solid #ddd',
-    textAlign: 'center',
-    fontSize: '16px',
-  },
-  loading: {
-    textAlign: 'center',
-    fontSize: '18px',
-    color: '#555',
-  },
-  error: {
-    color: 'red',
-    textAlign: 'center',
-    fontSize: '18px',
-  },
 };
 
 export default Retards;

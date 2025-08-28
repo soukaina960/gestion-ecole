@@ -1,0 +1,87 @@
+.bulletin-container {
+    max-width: 600px;
+    margin: auto;
+    padding: 20px;
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+  }
+  
+  .bulletin-title {
+    font-size: 24px;
+    font-weight: bold;
+    color: #3498db;
+    margin-bottom: 20px;
+    text-align: center;
+  }
+  
+  .bulletin-label {
+    display: block;
+    margin-bottom: 6px;
+    font-weight: 500;
+  }
+  
+  .bulletin-select,
+  .bulletin-input {
+    width: 100%;
+    padding: 10px;
+    margin-bottom: 15px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  
+  .bulletin-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 14px;
+  }
+  
+  .bulletin-table th,
+  .bulletin-table td {
+    border: 1px solid #ddd;
+    padding: 8px;
+    text-align: center;
+  }
+  
+  .bulletin-table th {
+    background-color: #ecf6fc;
+    color: #3498db;
+  }
+  
+  .bulletin-button {
+    margin-top: 20px; /* espace au-dessus */
+    background-color: #3498db;
+    color: white;
+    padding: 8px 14px; /* un peu plus petit */
+    font-size: 14px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .bulletin-button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    background-color: #2980b9; /* plus foncé au survol */
+  }
+  
+  .bulletin-button:disabled {
+    background-color: #a3cce6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+  
+  
+  .bulletin-message {
+    margin-top: 20px;
+    text-align: center;
+    font-weight: 500;
+  }
+  

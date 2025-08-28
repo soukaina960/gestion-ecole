@@ -1,0 +1,97 @@
+/* ParentPayment.css */
+.container {
+   
+    padding: 30px;
+    max-width: 700px;
+    margin: 40px auto;
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+  }
+  
+  .title {
+    color: #0C4F4A;
+    margin-bottom: 20px;
+    font-size: 26px;
+    font-weight: bold;
+  }
+  
+  .success {
+    color: #2E8B57;
+    margin-bottom: 10px;
+    font-size: 16px;
+  }
+  
+  .error {
+    color: #D9534F;
+    margin-bottom: 10px;
+    font-size: 16px;
+  }
+  
+  .formGroup {
+    margin-bottom: 25px;
+  }
+  
+  .label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: bold;
+  }
+  
+  .select {
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    margin-right: 10px;
+    width: 200px;
+    font-size: 16px;
+  }
+  
+  .primaryButton {
+    background-color: #6BBBAE;
+    color: white;
+    padding: 10px 18px;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  .paymentList {
+    margin-top: 20px;
+  }
+  
+  .sectionTitle {
+    font-size: 20px;
+    margin-bottom: 15px;
+    color: #3A5A40;
+    font-weight: bold;
+  }
+  
+  .paymentItem {
+    background-color: #E8F6F3;
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    border: 1px solid #B2DFDB;
+  }
+  
+  .receiptButton {
+    margin-top: 10px;
+    background-color: #388E3C;
+    color: white;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+  
+  .receiptButton:hover {
+    background-color: #2C6F39;
+  }
+  
+  .primaryButton:hover {
+    background-color: #57B89C;
+  }
+  
