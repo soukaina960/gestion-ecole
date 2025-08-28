@@ -5,7 +5,7 @@ import {
   TextField, Button, Container, Box, Typography,
   FormControl, InputLabel, Select, MenuItem, CircularProgress, Paper,
   Table, TableHead, TableBody, TableRow, TableCell, Dialog,
-  DialogTitle, DialogContent, DialogActions, Alert
+  DialogTitle, DialogContent, DialogActions, Alert, Snackbar
 } from '@mui/material';
 
 const jours = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
@@ -15,19 +15,21 @@ const EmploiDuTemps = () => {
   const [matieres, setMatieres] = useState([]);
   const [professeurs, setProfesseurs] = useState([]);
   const [creneaux, setCreneaux] = useState([]);
+  const [salles, setSalles] = useState([]);
   const [selectedClasseId, setSelectedClasseId] = useState('');
   const [emplois, setEmplois] = useState([]);
   const [selectedSeance, setSelectedSeance] = useState(null);
   const [formData, setFormData] = useState({
     matiere_id: '',
     professeur_id: '',
-    salle: '',
+    salle_id: '',
     jour: '',
     creneau_id: ''
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [openDialog, setOpenDialog] = useState(false);
+  const [snackbar, setSnackbar] = useState({ open: false, message: '', severity: 'info' });
   const emploiRef = useRef(null);
 
   // Charger les données initiales
@@ -37,11 +39,12 @@ const EmploiDuTemps = () => {
         setLoading(true);
         setError(null);
 
-        const [classesRes, creneauxRes, matieresRes, professeursRes] = await Promise.all([
+        const [classesRes, creneauxRes, matieresRes, professeursRes, sallesRes] = await Promise.all([
           axios.get('http://localhost:8000/api/classrooms'),
           axios.get('http://localhost:8000/api/creneaux'),
           axios.get('http://127.0.0.1:8000/api/matieres'),
-          axios.get('http://localhost:8000/api/professeurs')
+          axios.get('http://localhost:8000/api/professeurs'),
+          axios.get('http://localhost:8000/api/salles')
         ]);
 
         setClasses(classesRes.data || []);
@@ -49,9 +52,11 @@ const EmploiDuTemps = () => {
         const matieresData = matieresRes.data.data || matieresRes.data;
         setMatieres(matieresData || []);
         setProfesseurs(professeursRes.data || []);
+        setSalles(sallesRes.data || []);
       } catch (err) {
         console.error('Error fetching data:', err);
         setError('Erreur lors du chargement des données');
+        showSnackbar('Erreur lors du chargement des données', 'error');
       } finally {
         setLoading(false);
       }
@@ -71,6 +76,7 @@ const EmploiDuTemps = () => {
         } catch (err) {
           console.error("Erreur lors du chargement de l'emploi du temps:", err);
           setError("Erreur lors du chargement de l'emploi du temps");
+          showSnackbar("Erreur lors du chargement de l'emploi du temps", 'error');
         } finally {
           setLoading(false);
         }
@@ -86,26 +92,44 @@ const EmploiDuTemps = () => {
       setFormData({
         matiere_id: selectedSeance.matiere_id || '',
         professeur_id: selectedSeance.professeur_id || '',
-        salle: selectedSeance.salle || '',
-        jour: selectedSeance.jour || selectedSeance.jour,
-        creneau_id: selectedSeance.creneau_id || selectedSeance.creneau_id
+        salle_id: selectedSeance.salle_id || '',
+        jour: selectedSeance.jour || '',
+        creneau_id: selectedSeance.creneau_id || ''
       });
       setOpenDialog(true);
     }
   }, [selectedSeance]);
 
+  // Fonction utilitaire pour afficher les messages
+  const showSnackbar = (message, severity = 'info') => {
+    setSnackbar({ open: true, message, severity });
+  };
+
+  // Vérifier si une salle est occupée (version corrigée)
+  const isSalleOccupee = (salleId, jour, creneauId, seanceId = null) => {
+    if (!salleId || !jour || !creneauId) return false;
+    
+    return emplois.some(seance => 
+      parseInt(seance.salle_id) === parseInt(salleId) && 
+      seance.jour === jour && 
+      parseInt(seance.creneau_id) === parseInt(creneauId) &&
+      (!seanceId || parseInt(seance.id) !== parseInt(seanceId))
+    );
+  };
+
   // Afficher le contenu d'une séance dans le tableau
   const getSeance = (jour, creneauId) => {
-    const seance = emplois.find(e => e.jour === jour && e.creneau_id == creneauId);
+    const seance = emplois.find(e => e.jour === jour && parseInt(e.creneau_id) === parseInt(creneauId));
     if (seance) {
-      const matiere = matieres.find(m => m.id == seance.matiere_id);
-      const professeur = professeurs.find(p => p.id == seance.professeur_id);
+      const matiere = matieres.find(m => parseInt(m.id) === parseInt(seance.matiere_id));
+      const professeur = professeurs.find(p => parseInt(p.id) === parseInt(seance.professeur_id));
+      const salle = salles.find(s => parseInt(s.id) === parseInt(seance.salle_id));
       
       return (
         <Box sx={{ p: 1 }}>
           <Typography variant="subtitle2">{matiere?.nom || 'Inconnue'}</Typography>
           <Typography variant="body2">{professeur?.nom || 'Inconnu'}</Typography>
-          <Typography variant="caption">Salle: {seance.salle}</Typography>
+          <Typography variant="caption">Salle: {salle?.nom || 'Inconnue'}</Typography>
         </Box>
       );
     }
@@ -125,7 +149,23 @@ const EmploiDuTemps = () => {
     e.preventDefault();
     setError(null);
     
+    // Validation des champs requis
+    if (!formData.jour || !formData.creneau_id || !formData.matiere_id || !formData.professeur_id || !formData.salle_id) {
+      setError('Veuillez remplir tous les champs');
+      showSnackbar('Veuillez remplir tous les champs', 'error');
+      return;
+    }
+
     try {
+      // Vérifier si la salle est déjà occupée
+      if (isSalleOccupee(formData.salle_id, formData.jour, formData.creneau_id, selectedSeance?.id)) {
+        const salle = salles.find(s => parseInt(s.id) === parseInt(formData.salle_id));
+        const errorMsg = `La salle "${salle?.nom || formData.salle_id}" est déjà occupée à ce créneau horaire!`;
+        setError(errorMsg);
+        showSnackbar(errorMsg, 'error');
+        return;
+      }
+
       const dataToSend = {
         ...formData,
         classe_id: selectedClasseId
@@ -138,24 +178,31 @@ const EmploiDuTemps = () => {
         setEmplois(prev => prev.map(e => 
           e.id === selectedSeance.id ? { ...e, ...response.data } : e
         ));
+        showSnackbar('Séance modifiée avec succès!', 'success');
       } else {
         // Ajout
         response = await axios.post('http://localhost:8000/api/emplois-temps', dataToSend);
         setEmplois(prev => [...prev, response.data]);
+        showSnackbar('Séance ajoutée avec succès!', 'success');
       }
 
       handleCloseDialog();
     } catch (error) {
       console.error("Erreur lors de l'envoi du formulaire:", error);
+      let errorMessage = 'Erreur lors de la sauvegarde';
+      
       if (error.response?.status === 422) {
         const errorMessages = [];
         for (const field in error.response.data.errors) {
           errorMessages.push(...error.response.data.errors[field]);
         }
-        setError(errorMessages.join(', '));
-      } else {
-        setError(error.response?.data?.message || 'Erreur lors de la sauvegarde');
+        errorMessage = errorMessages.join(', ');
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
       }
+      
+      setError(errorMessage);
+      showSnackbar(errorMessage, 'error');
     }
   };
 
@@ -165,24 +212,32 @@ const EmploiDuTemps = () => {
       try {
         await axios.delete(`http://localhost:8000/api/emplois-temps/${id}`);
         setEmplois(prev => prev.filter(e => e.id !== id));
+        showSnackbar('Séance supprimée avec succès!', 'success');
       } catch (error) {
         console.error("Erreur lors de la suppression:", error);
-        setError("Erreur lors de la suppression");
+        showSnackbar("Erreur lors de la suppression", 'error');
       }
     }
   };
 
   // Télécharger l'emploi du temps en PDF
   const telechargerPDF = () => {
+    if (!selectedClasseId) {
+      showSnackbar("Veuillez d'abord sélectionner une classe", 'warning');
+      return;
+    }
+    
     const element = emploiRef.current;
+    const classe = classes.find(c => parseInt(c.id) === parseInt(selectedClasseId));
     const opt = {
       margin: 0.5,
-      filename: `emploi-du-temps-${selectedClasseId}.pdf`,
+      filename: `emploi-du-temps-${classe?.name || selectedClasseId}.pdf`,
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2 },
       jsPDF: { unit: 'in', format: 'a4', orientation: 'landscape' }
     };
     html2pdf().set(opt).from(element).save();
+    showSnackbar('Téléchargement du PDF en cours...', 'info');
   };
 
   const handleCloseDialog = () => {
@@ -191,11 +246,15 @@ const EmploiDuTemps = () => {
     setFormData({
       matiere_id: '',
       professeur_id: '',
-      salle: '',
+      salle_id: '',
       jour: '',
       creneau_id: ''
     });
     setError(null);
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbar(prev => ({ ...prev, open: false }));
   };
 
   if (loading && !selectedClasseId) {
@@ -235,7 +294,11 @@ const EmploiDuTemps = () => {
 
       {selectedClasseId && (
         <>
-         
+          <Box sx={{ mb: 2 }}>
+            <Button variant="contained" onClick={telechargerPDF}>
+              Télécharger en PDF
+            </Button>
+          </Box>
 
           <Paper ref={emploiRef} sx={{ overflowX: 'auto', mb: 4 }}>
             <Table>
@@ -254,7 +317,7 @@ const EmploiDuTemps = () => {
                   <TableRow key={jour}>
                     <TableCell sx={{ fontWeight: 'bold', bgcolor: 'background.default' }}>{jour}</TableCell>
                     {creneaux.map(cr => {
-                      const seance = emplois.find(e => e.jour === jour && e.creneau_id == cr.id);
+                      const seance = emplois.find(e => e.jour === jour && parseInt(e.creneau_id) === parseInt(cr.id));
                       return (
                         <TableCell 
                           key={cr.id} 
@@ -376,15 +439,40 @@ const EmploiDuTemps = () => {
               </Select>
             </FormControl>
 
-            <TextField
-              fullWidth
-              margin="normal"
-              label="Salle"
-              name="salle"
-              value={formData.salle}
-              onChange={handleInputChange}
-              required
-            />
+            <FormControl fullWidth margin="normal">
+              <InputLabel>Salle</InputLabel>
+              <Select
+                name="salle_id"
+                value={formData.salle_id}
+                onChange={handleInputChange}
+                required
+                label="Salle"
+              >
+                {salles.map(salle => {
+                  const estOccupee = isSalleOccupee(
+                    salle.id, 
+                    formData.jour, 
+                    formData.creneau_id, 
+                    selectedSeance?.id
+                  );
+                  
+                  return (
+                    <MenuItem 
+                      key={salle.id} 
+                      value={salle.id}
+                      disabled={estOccupee}
+                      sx={{ 
+                        color: estOccupee ? 'text.disabled' : 'text.primary',
+                        fontStyle: estOccupee ? 'italic' : 'normal'
+                      }}
+                    >
+                      {salle.nom}
+                      {estOccupee && ' (Occupée)'}
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+            </FormControl>
           </Box>
         </DialogContent>
         <DialogActions>
@@ -394,6 +482,22 @@ const EmploiDuTemps = () => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert 
+          onClose={handleCloseSnackbar} 
+          severity={snackbar.severity} 
+          sx={{ width: '100%' }}
+          variant="filled"
+        >
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Container>
   );
 };

@@ -40,6 +40,7 @@ import GenererEmploiTemps from "../components/EmploiTemps";
 import EmploiTempsForm from "../components/EmploiTempsForm";
 import CreneauList from "../components/crenau";
 import DiagrammeLigneRestes from '../components/ComparaisonRestesParMois';
+import SalleCRUD from "../components/SalleCRUD";
 
 
 const AdminLayout = () => {
@@ -166,6 +167,7 @@ const AdminLayout = () => {
       case "charge": return <ChargeForm />;
       case "GenererEmploiTemps": return <GenererEmploiTemps />;
       case "cree-creau": return <CreneauList />;
+      case "cree-salle": return <SalleCRUD />;
       case "EmploiTempsForm": return <EmploiTempsForm />;
       case "voir-emploi-prof": return <EmploiTempsParProf />;
       case "demandes": return <DemandeAttestationList />;
@@ -333,6 +335,12 @@ const AdminLayout = () => {
                       onClick={() => handleMenuItemClick("cree-creau")}
                     >
                       Créer créneau
+                    </button>
+                     <button 
+                      className={`dropdown-item ${activePage === "cree-salle" ? "active" : ""}`}
+                      onClick={() => handleMenuItemClick("cree-salle")}
+                    >
+                      Créer salle
                     </button>
                     <button 
                       className={`dropdown-item ${activePage === "EmploiTempsForm" ? "active" : ""}`}

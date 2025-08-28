@@ -72,6 +72,7 @@ import RetardList from './Surveillant/Retard';
 import ListeRetards from './Surveillant/ListRetard';
 import ListeIncidents from './Surveillant/ListIncident';
 import SurveillantReclamationList from './Surveillant/ListReclamations';
+import SalleCRUD from './components/SalleCRUD'
 
 // Parent components
 
@@ -134,6 +135,7 @@ function App() {
         <Route path="/admin-dashboard" element={<ProtectedRoute allowedRoles={['admin']}><AdminLayout /></ProtectedRoute>}>
         <Route path="comparaison-restes" element={<DiagrammeLigneRestes />} />
           <Route index element={<AdminDashboard />} />
+        <Route path="salle-crud" element={<SalleCRUD />} />
           <Route path="matieres" element={<MatiereManager />} />
           <Route path="filieres" element={<FiliereManager />} />
           <Route path="creneaux" element={<CreneauList />} />
