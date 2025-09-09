@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import "bootstrap/dist/css/bootstrap.min.css";
 import './layoutAdmin.css';
+import { useNavigate } from "react-router-dom";
+import { FaBars, FaTimes } from "react-icons/fa";
 import axios from 'axios';
 import { 
   FaChevronDown, FaChevronUp, FaUsers, FaChalkboardTeacher, 
@@ -53,7 +55,13 @@ const AdminLayout = () => {
   const [nbRetardsPaiement, setNbRetardsPaiement] = useState(0);
   const [showRetardsModal, setShowRetardsModal] = useState(false);
   const [etudiantsEnRetard, setEtudiantsEnRetard] = useState([]);
+  const navigate = useNavigate();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const dropdownRef = useRef(null);
+  const sidebarRef = useRef(null);
+  const hamburgerRef = useRef(null);
   const handleLogout = () => {
     // Supprimer le token ou les infos de session
     localStorage.removeItem('authToken');
@@ -63,9 +71,31 @@ const AdminLayout = () => {
   const handleMenuItemClick = (page) => {
     setActivePage(page);
     setOpen(false);
-  };
+    if (window.innerWidth < 992) setSidebarOpen(false);
+};
  
+  // Handle click outside dropdowns and sidebar
+    useEffect(() => {
+      const handleClickOutside = (event) => {
+        // Close dropdown if clicked outside
+        if (dropdownOpen && dropdownRef.current && 
+            !dropdownRef.current.contains(event.target)) {
+          setDropdownOpen(false);
+        }
+        
+        // Close sidebar if clicked outside (on mobile)
+        if (sidebarOpen && window.innerWidth < 992 && 
+            sidebarRef.current && !sidebarRef.current.contains(event.target) &&
+            hamburgerRef.current && !hamburgerRef.current.contains(event.target)) {
+          setSidebarOpen(false);
+        }
+      };
   
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }, [dropdownOpen, sidebarOpen]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -152,6 +182,9 @@ const AdminLayout = () => {
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
   };
+    const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
 
   const renderContent = () => {
     switch (activePage) {
@@ -185,6 +218,14 @@ const AdminLayout = () => {
       {/* Top Navbar */}
       <nav className="top-nav">
         <div className="nav-left">
+           <button 
+                ref={hamburgerRef}
+                className="hamburger-btn" 
+                onClick={toggleSidebar}
+                aria-label="Toggle menu"
+              >
+                {sidebarOpen ? <FaTimes /> : <FaBars />}
+              </button>
           <div className="logo">
             <span className="logo-text">Bonjour Monsieur l'Admin</span>
           </div>
@@ -225,9 +266,12 @@ const AdminLayout = () => {
 
       {/* Main Content */}
       <div className="main-content">
-        {/* Sidebar */}
-        <div className="sidebar">
-          <div className="sidebar-menu">
+                       {/* Sidebar */}
+                <div 
+                ref={sidebarRef}
+                className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}
+                >
+                <div className="sidebar-menu">
           <div className="dropdown-container">
   <button
     className={`sidebar-button ${activePage === "dropdown" ? "active" : ""}`}

@@ -3,14 +3,13 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import './ParentLayout.css';
 import axios from 'axios';
 import { 
-  FaChevronDown, FaChevronUp, FaUsers, FaChalkboardTeacher, 
-  FaMoneyBill, FaChartBar, FaCog, FaMoon, FaSun, 
+  FaUsers, FaChalkboardTeacher, FaBars, FaTimes,
+  FaMoneyBill, FaChartBar, FaMoon, FaSun, 
   FaUserGraduate, FaUserTie, FaMoneyCheckAlt, FaGlobe,
   FaSearch, FaSignOutAlt, FaBook 
 } from "react-icons/fa";
-import { Link } from 'react-router-dom';
-
 import { ChevronDown } from 'lucide-react';
+
 import ParentDashboard from "./ParentDashboard";
 import ParentProfile from "./ParentProfile";
 import ParentReclamationForm from "./ParentReclamation";
@@ -28,7 +27,12 @@ const ParentLayout = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  
   const dropdownRef = useRef(null);
+  const sidebarRef = useRef(null);
+  const hamburgerRef = useRef(null);
+  
   const parentId = localStorage.getItem('parent_id');
 
   useEffect(() => {
@@ -43,44 +47,57 @@ const ParentLayout = () => {
     fetchParentData();
   }, [parentId]);
 
+  // Handle click outside dropdowns and sidebar
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Close dropdown if clicked outside
+      if (dropdownOpen && dropdownRef.current && 
+          !dropdownRef.current.contains(event.target)) {
+        setDropdownOpen(false);
+      }
+      
+      // Close sidebar if clicked outside (on mobile)
+      if (sidebarOpen && window.innerWidth < 992 && 
+          sidebarRef.current && !sidebarRef.current.contains(event.target) &&
+          hamburgerRef.current && !hamburgerRef.current.contains(event.target)) {
+        setSidebarOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [dropdownOpen, sidebarOpen]);
+
+  // Toggle dark mode
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", darkMode);
+    document.body.classList.toggle("dark", darkMode);
+  }, [darkMode]);
+
   const handleLogout = () => {
     localStorage.removeItem('authToken');
+    localStorage.removeItem('parent_id');
     window.location.href = '/login';
+  };
+
+  const handleMenuItemClick = (page) => {
+    setActivePage(page);
+    setDropdownOpen(false);
+    // Close sidebar on mobile after selecting a menu item
+    if (window.innerWidth < 992) {
+      setSidebarOpen(false);
+    }
   };
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
   };
-  useEffect(() => {
-    if (darkMode) {
-      document.body.classList.add('dark');
-    } else {
-      document.body.classList.remove('dark');
-    }
-  }, [darkMode]);
-  useEffect(() => {
-    const storedMode = localStorage.getItem('darkMode');
-    if (storedMode) {
-      setDarkMode(storedMode === 'true');
-    }
-  }, []);
-  
-  useEffect(() => {
-    localStorage.setItem('darkMode', darkMode);
-  }, [darkMode]);
-  
-  const handleClickOutside = (event) => {
-    if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-      setDropdownOpen(false);
-    }
-  };
 
-  useEffect(() => {
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
+  const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
 
   const renderContent = () => {
     switch (activePage) {
@@ -101,56 +118,55 @@ const ParentLayout = () => {
   return (
     <div className={`parent-layout ${darkMode ? 'dark' : ''}`}>
       {/* Top Navbar */}
-      <nav className="top-nav">
-        <div className="nav-left">
-        <div className="d-flex flex-column align-items-start">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-              <span style={{ fontWeight: 'bold', fontSize: '1.5rem', color: 'white' }}>Skolyx</span>
-              <span style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                color: '#1e1e1e',
-                padding: '5px 12px',
-                borderRadius: '5px',
-                fontWeight: '700',
-                fontSize: '1rem'
-              }}>
-                Parent
-              </span>
-            </div>
-          </div>
-          </div>
-        
+     <nav className="top-nav">
+  <div className="nav-left">
+    <button 
+      ref={hamburgerRef}
+      className="hamburger-btn" 
+      onClick={toggleSidebar}
+      aria-label="Toggle menu"
+    >
+      {sidebarOpen ? <FaTimes /> : <FaBars />}
+    </button>
+    <div className="brand-container">
+      <span className="brand-name">Skolyx</span>
+      <span className="role-badge">Parent</span>
+    </div>
+  </div>
 
-        <div className="nav-center">
-          <div className="search-bar">
-            <FaSearch className="search-icon" />
-            <input 
-              type="text" 
-              placeholder="Rechercher..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </div>
+  <div className="nav-center">
+    <div className="search-bar">
+      <FaSearch className="search-icon" />
+      <input 
+        type="text" 
+        placeholder="Rechercher..." 
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+      />
+    </div>
+  </div>
 
-        <div className="nav-right">
-          <button onClick={toggleDarkMode} className="theme-toggle mb-3">
-            {darkMode ? <FaSun /> : <FaMoon />}
-          </button>
+  <div className="nav-right">
+    <button onClick={toggleDarkMode} className="theme-toggle">
+      {darkMode ? <FaSun /> : <FaMoon />}
+    </button>
 
-          <button className="logout-btn mb-3" onClick={handleLogout}>
-            <FaSignOutAlt />
-          </button>
-        </div>
-      </nav>
+    <button className="logout-btn" onClick={handleLogout}>
+      <FaSignOutAlt />
+    </button>
+  </div>
+</nav>
 
       {/* Main Layout */}
       <div className="main-content">
         {/* Sidebar */}
-        <div className="sidebar">
+        <div 
+          ref={sidebarRef}
+          className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}
+        >
           <button 
             className={`sidebar-button ${activePage === "dashboard" ? "active" : ""}`}
-            onClick={() => setActivePage("dashboard")}
+            onClick={() => handleMenuItemClick("dashboard")}
           >
             <FaChartBar className="sidebar-icon" />
             <span>Dashboard</span>
@@ -158,7 +174,7 @@ const ParentLayout = () => {
 
           <button  
             className={`sidebar-button ${activePage === "parent-profile" ? "active" : ""}`}
-            onClick={() => setActivePage("parent-profile")}
+            onClick={() => handleMenuItemClick("parent-profile")}
           >
             <FaUsers className="sidebar-icon" />
             <span>Mon Profil</span>
@@ -167,7 +183,7 @@ const ParentLayout = () => {
           {/* Dropdown Gestion des Réclamations */}
           <div className="dropdown-container" ref={dropdownRef}>
             <button
-              className="sidebar-button"
+              className={`sidebar-button ${dropdownOpen ? "active" : ""}`}
               onClick={() => setDropdownOpen(!dropdownOpen)}
             >
               <FaChalkboardTeacher className="sidebar-icon" />
@@ -178,17 +194,17 @@ const ParentLayout = () => {
             {dropdownOpen && (
               <div className="dropdown-menu">
                 <button 
-                  className={`sidebar-button ${activePage === "reclamation" ? "active" : ""}`}
-                  onClick={() => setActivePage("reclamation")}
+                  className={`dropdown-item ${activePage === "reclamation" ? "active" : ""}`}
+                  onClick={() => handleMenuItemClick("reclamation")}
                 >
-                  <FaBook style={{ marginRight: "8px" }} />
+                  <FaBook className="dropdown-icon" />
                   Ajouter une réclamation
                 </button>
                 <button 
-                  className={`sidebar-button ${activePage === "parent-reclamation-list" ? "active" : ""}`}
-                  onClick={() => setActivePage("parent-reclamation-list")}
+                  className={`dropdown-item ${activePage === "parent-reclamation-list" ? "active" : ""}`}
+                  onClick={() => handleMenuItemClick("parent-reclamation-list")}
                 >
-                  <FaBook style={{ marginRight: "8px" }} />
+                  <FaBook className="dropdown-icon" />
                   Liste des réclamations
                 </button>
               </div>
@@ -197,7 +213,7 @@ const ParentLayout = () => {
 
           <button
             className={`sidebar-button ${activePage === "incidents" ? "active" : ""}`}
-            onClick={() => setActivePage("incidents")}
+            onClick={() => handleMenuItemClick("incidents")}
           >
             <FaMoneyBill className="sidebar-icon" />
             <span>Incidents</span>
@@ -205,7 +221,7 @@ const ParentLayout = () => {
 
           <button
             className={`sidebar-button ${activePage === "retards" ? "active" : ""}`}
-            onClick={() => setActivePage("retards")}
+            onClick={() => handleMenuItemClick("retards")}
           >
             <FaUserGraduate className="sidebar-icon" />
             <span>Retards</span>
@@ -213,7 +229,7 @@ const ParentLayout = () => {
 
           <button
             className={`sidebar-button ${activePage === "absences" ? "active" : ""}`}
-            onClick={() => setActivePage("absences")}
+            onClick={() => handleMenuItemClick("absences")}
           >
             <FaUserTie className="sidebar-icon" />
             <span>Absences</span>
@@ -221,7 +237,7 @@ const ParentLayout = () => {
 
           <button
             className={`sidebar-button ${activePage === "notes" ? "active" : ""}`}
-            onClick={() => setActivePage("notes")}
+            onClick={() => handleMenuItemClick("notes")}
           >
             <FaBook className="sidebar-icon" />
             <span>Notes</span>
@@ -229,7 +245,7 @@ const ParentLayout = () => {
 
           <button
             className={`sidebar-button ${activePage === "payments" ? "active" : ""}`}
-            onClick={() => setActivePage("payments")}
+            onClick={() => handleMenuItemClick("payments")}
           >
             <FaMoneyCheckAlt className="sidebar-icon" />
             <span>Paiement</span>
@@ -237,12 +253,18 @@ const ParentLayout = () => {
 
           <button
             className={`sidebar-button ${activePage === "events" ? "active" : ""}`}
-            onClick={() => setActivePage("events")}
+            onClick={() => handleMenuItemClick("events")}
           >
             <FaGlobe className="sidebar-icon" />
             <span>Événements</span>
           </button>
         </div>
+
+        {/* Overlay for mobile sidebar */}
+{sidebarOpen && window.innerWidth < 992 && (
+  <div className="sidebar-overlay" onClick={() => setSidebarOpen(false)} />
+)}
+
 
         {/* Content Area */}
         <div className="content">

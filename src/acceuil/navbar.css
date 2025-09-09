@@ -1,36 +1,24 @@
 /* Corps principal */
-
-/* Animation for the body */
 @keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* Section principale de la landing page */
 .landing-page {
   display: flex;
   flex-direction: column;
-  padding-left: 5%;
   min-height: 100vh;
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center;
-  padding-top: 20px;
-  animation: fadeIn 2s ease-out; /* Fade-in animation */
-  margin: 0;
-  font-family: Arial, sans-serif;
   background-color: white;
+  background-image: url('../assets/télécharger.png');
   background-repeat: no-repeat;
   background-size: cover;
   background-position: center;
-  background-image: url('../assets/freepik__retouch__58585.png');
+  background-attachment: fixed;
+  padding: 20px 5%;
+  animation: fadeIn 2s ease-out;
+  font-family: Arial, sans-serif;
   width: 100%;
-  max-width: 100vw;
-background-attachment: fixed;
 }
 
 /* Navbar */
@@ -43,21 +31,16 @@ background-attachment: fixed;
   position: sticky;
   top: 0;
   z-index: 10;
-  animation: navbarFadeIn 1s ease-out; /* Navbar fade-in */
-  
+  animation: navbarFadeIn 1s ease-out;
 }
 
 @keyframes navbarFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .navbar a {
-  margin: 0 15px;
+  margin: 0 10px;
   text-decoration: none;
   color: #5d5d5d;
   transition: color 0.3s ease;
@@ -70,10 +53,11 @@ background-attachment: fixed;
 .navbar .logo {
   font-weight: bold;
   color: purple;
+  cursor: pointer;
 }
 
-/* Adding a button for "Inscription" */
-.navbar .signup-button {
+/* Bouton login / inscription */
+.navbar .login-button {
   padding: 10px 20px;
   background-color: purple;
   color: white;
@@ -81,99 +65,49 @@ background-attachment: fixed;
   border-radius: 5px;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.3s ease;
-  animation: pulse 2s infinite; /* Pulse animation */
 }
 
-.navbar .signup-button:hover {
+.navbar .login-button:hover {
   background-color: darkviolet;
-  transform: scale(1.1); /* Hover effect to enlarge the button */
-}
-
-/* Pulse Animation */
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1); /* Slightly grow the button */
-  }
-  100% {
-    transform: scale(1);
-  }
+  transform: scale(1.1);
 }
 
 /* Contenu principal */
 .content {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   align-items: center;
-  padding: 50px;
+  padding: 50px 0;
   animation: contentSlideIn 1s ease-out;
-padding: top 150px; 
+  flex-wrap: wrap;
 }
 
-/* Animation for content sliding in */
 @keyframes contentSlideIn {
-  from {
-    transform: translateX(-100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  from { transform: translateX(-100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 
 .text-section {
-  flex: 1;
-  max-width: 50%;
-  animation: slideInFromLeft 1s ease-out; /* Content slide-in */
+  flex: 1 1 400px; /* Flexible pour tous les écrans */
+  max-width: 600px;
+  animation: slideInFromLeft 1s ease-out;
 }
 
 @keyframes slideInFromLeft {
-  from {
-    transform: translateX(-100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
+  from { transform: translateX(-100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
 }
 
 .text-section h1 {
-  font-size: 48px;
+  font-size: 3rem;
   color: purple;
   margin-bottom: 20px;
-  animation: textSlideIn 1.5s ease-out; /* Headline animation */
-}
-
-@keyframes textSlideIn {
-  from {
-    transform: translateX(-100%);
-    opacity: 0;
-  }
-  to {
-    transform: translateX(0);
-    opacity: 1;
-  }
 }
 
 .text-section p {
-  font-size: 16px;
+  font-size: 1rem;
   color: plum;
   margin-bottom: 20px;
-  animation: textFadeIn 1.5s ease-out; /* Paragraph fade-in animation */
-  
-}
-
-@keyframes textFadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
 }
 
 .cta-button {
@@ -181,7 +115,7 @@ padding: top 150px;
   border: none;
   border-radius: 5px;
   color: purple;
-  font-size: 16px;
+  font-size: 1rem;
   cursor: pointer;
   transition: background-color 0.3s ease, color 0.3s ease, transform 0.3s ease;
 }
@@ -192,7 +126,7 @@ padding: top 150px;
   transform: scale(1.1);
 }
 
-/* Illustration (remplacer par du texte) */
+/* Illustration */
 .illustration h2 {
   color: white;
   font-size: 36px;
@@ -201,24 +135,108 @@ padding: top 150px;
 }
 
 /* Responsivité */
+@media (max-width: 1024px) {
+  .content {
+    padding: 40px 0;
+  }
+
+  .text-section h1 {
+    font-size: 2.5rem;
+  }
+
+  .text-section p {
+    font-size: 0.95rem;
+  }
+
+  .cta-button {
+    font-size: 0.95rem;
+    padding: 12px 25px;
+  }
+}
+
 @media (max-width: 768px) {
   .content {
     flex-direction: column;
-    padding: 20px;
+    padding: 20px 0;
+    align-items: flex-start;
   }
 
   .text-section {
     max-width: 100%;
-    text-align: left;
+    text-align: center;
   }
 
   .cta-button {
     width: 100%;
-    padding: 20px;
-    font-size: 18px;
+    padding: 18px;
+    font-size: 1rem;
   }
 
-  .landing-page {
-    padding-left: 10px;
+  .navbar {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .navbar nav {
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .navbar nav a {
+    margin: 5px 0;
+  }
+
+  .navbar .login-button {
+    width: 100%;
+    margin-top: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .text-section h1 {
+    font-size: 2rem;
+  }
+
+  .text-section p {
+    font-size: 0.9rem;
+  }
+}
+/* Hamburger */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  cursor: pointer;
+  gap: 5px;
+}
+
+.hamburger div {
+  width: 25px;
+  height: 3px;
+  background-color: purple;
+  transition: all 0.3s ease;
+}
+
+/* Mobile menu */
+.nav-links {
+  display: flex;
+  gap: 15px;
+}
+
+@media (max-width: 768px) {
+  .nav-links {
+    display: none; /* caché par défaut */
+    flex-direction: column;
+    width: 100%;
+    margin-top: 10px;
+  }
+
+  .nav-links.active {
+    display: flex; /* affiché quand hamburger cliqué */
+  }
+
+  .hamburger {
+    display: flex; /* visible sur mobile */
   }
 }

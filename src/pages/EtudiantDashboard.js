@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FiSun, FiMoon, FiSearch, FiLogOut, FiAlertCircle } from 'react-icons/fi';
 import { 
+  FaChalkboardTeacher, 
   FaBook, 
-  FaClipboardList,
-  FaRegCalendarAlt,
-  FaUser,
-  FaChartLine,
-  FaFileAlt,
-  FaCalendarCheck,
-  FaQuestionCircle
+  FaClipboardCheck, 
+  FaRegCalendarAlt, 
+  FaUser, 
+  FaShoppingCart ,
+    FaUsers, FaBars, FaTimes,
+    FaMoneyBill, FaChartBar, FaMoon, FaSun, 
+    FaUserGraduate, FaUserTie, FaMoneyCheckAlt, FaGlobe,
+    FaSearch, FaSignOutAlt, FaChartLine , FaClipboardList, FaCalendarCheck, FaFileAlt, FaQuestionCircle
 } from 'react-icons/fa';
 
 // Importation des composants étudiants
@@ -46,7 +48,7 @@ const ErrorScreen = ({ error }) => (
     </button>
   </div>
 );
-
+import { ChevronDown } from 'lucide-react';
 const EtudiantDashboard = () => {
     const [utilisateur, setUtilisateur] = useState(null);
     const [loading, setLoading] = useState(true);
@@ -54,6 +56,12 @@ const EtudiantDashboard = () => {
     const [activeSection, setActiveSection] = useState("cours");
     const [darkMode, setDarkMode] = useState(false);
     const navigate = useNavigate();
+    const [dropdownOpen, setDropdownOpen] = useState(false);
+    const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    const dropdownRef = useRef(null);
+    const sidebarRef = useRef(null);
+    const hamburgerRef = useRef(null);
 
     useEffect(() => {
         const fetchUserData = async () => {
@@ -93,6 +101,29 @@ const EtudiantDashboard = () => {
         localStorage.setItem('darkMode', darkMode);
     }, [darkMode]);
 
+    // Handle click outside dropdowns and sidebar
+      useEffect(() => {
+        const handleClickOutside = (event) => {
+          // Close dropdown if clicked outside
+          if (dropdownOpen && dropdownRef.current && 
+              !dropdownRef.current.contains(event.target)) {
+            setDropdownOpen(false);
+          }
+          
+          // Close sidebar if clicked outside (on mobile)
+          if (sidebarOpen && window.innerWidth < 992 && 
+              sidebarRef.current && !sidebarRef.current.contains(event.target) &&
+              hamburgerRef.current && !hamburgerRef.current.contains(event.target)) {
+            setSidebarOpen(false);
+          }
+        };
+    
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+          document.removeEventListener("mousedown", handleClickOutside);
+        };
+      }, [dropdownOpen, sidebarOpen]);
+
     const handleLogout = () => {
         localStorage.removeItem('utilisateur');
         localStorage.removeItem('access_token');
@@ -100,13 +131,23 @@ const EtudiantDashboard = () => {
         navigate('/login');
     };
 
+
     const handleSectionChange = (section) => {
         setActiveSection(section);
     };
+    // Gérer le clic sur un élément du menu
+const handleMenuItemClick = (section) => {
+    setActiveSection(section);
+    setDropdownOpen(false);
+    if (window.innerWidth < 992) setSidebarOpen(false);
+};
 
     const toggleDarkMode = () => {
         setDarkMode(!darkMode);
     };
+      const toggleSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
 
     if (loading) return <LoadingScreen />;
     if (error) return <ErrorScreen error={error} />;
@@ -117,6 +158,14 @@ const EtudiantDashboard = () => {
             {/* Barre de navigation supérieure */}
             <nav className="top-nav">
                 <div className="nav-left">
+                     <button 
+                        ref={hamburgerRef}
+                        className="hamburger-btn" 
+                        onClick={toggleSidebar}
+                        aria-label="Toggle menu"
+                    >
+                        {sidebarOpen ? <FaTimes /> : <FaBars />}
+                    </button>
                     <div className="logo">
                         <span className="logo-text">Scolyx</span>
                         <span className="logo-designer">Étudiant</span>
@@ -157,8 +206,12 @@ const EtudiantDashboard = () => {
 
             <div className="main-content">
                 {/* Sidebar */}
-                <div className="sidebar">
-                    <div className="sidebar-menu">
+                <div 
+                ref={sidebarRef}
+                className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''}`}
+                >
+                <div className="sidebar-menu">
+
                         <button 
                             onClick={() => handleSectionChange("cours")} 
                             className={`sidebar-button ${activeSection === "cours" ? 'active' : ''}`}

@@ -18,7 +18,7 @@ function SurveillantProfile() {
   });
 
   const surveillantId = localStorage.getItem('surveillant_id');
-
+console.log(surveillantId);
   useEffect(() => {
     axios.get(`http://127.0.0.1:8000/api/surveillants/${surveillantId}`)
       .then(response => {

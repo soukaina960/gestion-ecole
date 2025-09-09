@@ -1,36 +1,33 @@
-import React from "react";
+import React, { useState } from "react";
 import "../acceuil/navbar.css";
-import { useNavigate } from "react-router-dom"; // Import pour la navigation
-
-// Importation de l'image pour le fond (si toujours nécessaire)
-import backgroundImage from "../assets/télécharger.png";
+import { useNavigate } from "react-router-dom";
 
 const Navbar = () => {
-  const navigate = useNavigate(); // Hook pour la navigation
-
-  const handleLoginClick = () => {
-    navigate("/login"); // Redirection vers la page de login
-  };
-
-  const handleLogoClick = () => {
-    navigate("/"); // Redirection vers l'accueil
-  };
+  const navigate = useNavigate();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <div className="landing-page">
       <header className="navbar">
-        <div className="logo" onClick={handleLogoClick} style={{ cursor: "pointer" }}>
+        <div className="logo" onClick={() => navigate("/")}>
           LOGO
         </div>
-        <nav>
-          <a href="#home">Home</a>
-          <a href="#about">About</a>
-          <a href="#services">Services</a>
-          <a href="#contact">Contact</a>
-          <button className="login-button" onClick={handleLoginClick}>
+
+        <div className={`nav-links ${menuOpen ? "active" : ""}`}>
+          <a href="#home" onClick={() => setMenuOpen(false)}>Home</a>
+          <a href="#about" onClick={() => setMenuOpen(false)}>About</a>
+          <a href="#services" onClick={() => setMenuOpen(false)}>Services</a>
+          <a href="#contact" onClick={() => setMenuOpen(false)}>Contact</a>
+          <button className="login-button" onClick={() => { navigate("/login"); setMenuOpen(false); }}>
             Login
           </button>
-        </nav>
+        </div>
+
+        <div className="hamburger" onClick={() => setMenuOpen(!menuOpen)}>
+          <div></div>
+          <div></div>
+          <div></div>
+        </div>
       </header>
 
       <main className="content">
