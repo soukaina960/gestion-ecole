@@ -8,7 +8,7 @@ import '../css/style.css';
 import '../css/bootstrap.min.css';
 import { Nav } from "react-bootstrap";
 
-import Chatbot from '../components/ChatBot';
+
 import { Bot, ArrowUp } from 'lucide-react';
 import '../assets/styles.css';
 const Acceuil = () => {

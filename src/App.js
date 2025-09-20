@@ -108,7 +108,7 @@ import EnregistrerAbsence from './components/EnregistrerAbsence';
 import EtudiantDetail from './components/EtudiantDetail';
 import ProfesseurDetail from './components/ProfDetail';
 import DemandeAttestationList from './components/DemandeAttestationList';
-import ChatBot from './components/ChatBot';
+
 import Evenements from './components/evenementGestion';
 import EmploiTempsParProf from './components/emploiparprof';
 
