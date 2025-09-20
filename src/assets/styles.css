@@ -1,0 +1,134 @@
+/* Responsive adjustments */
+@media (max-width: 991.98px) {
+  .navbar-nav {
+    text-align: center;
+    padding: 1rem 0;
+  }
+  
+  .navbar-nav .nav-link {
+    padding: 0.5rem 0;
+    display: block;
+  }
+  
+  .display-4 {
+    font-size: 2rem;
+  }
+  
+  .facility-item {
+    margin-bottom: 1.5rem;
+  }
+  
+  .about-img .row > div {
+    margin-top: 0 !important;
+  }
+  
+  .team-item {
+    margin-bottom: 2rem;
+  }
+}
+
+@media (max-width: 767.98px) {
+  .display-4 {
+    font-size: 1.75rem;
+  }
+  
+  .btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+  
+  .facility-text {
+    padding: 1rem;
+  }
+  
+  .footer .row > div {
+    margin-bottom: 2rem;
+  }
+}
+
+@media (max-width: 575.98px) {
+  .display-4 {
+    font-size: 1.5rem;
+  }
+  
+  .carousel-caption {
+    bottom: 20px;
+  }
+  
+  .carousel-caption h1 {
+    font-size: 1.5rem;
+  }
+  
+  .carousel-caption p {
+    display: none;
+  }
+  
+  .btn-rounded {
+    border-radius: 50px;
+  }
+}
+
+/* Utility classes for responsive text */
+.display-md-2 {
+  font-size: 2.5rem;
+}
+
+@media (max-width: 768px) {
+  .display-md-2 {
+    font-size: 2rem;
+  }
+}
+
+/* Ensure images are responsive */
+.img-fluid {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Improve mobile navigation */
+.navbar-toggler:focus {
+  box-shadow: none;
+}
+
+.navbar-collapse {
+  transition: all 0.3s ease;
+}
+/* Remplace la couleur primaire Bootstrap */
+:root {
+    --bs-primary: #E74C3C;
+}
+
+/* Si tu veux forcer tous les boutons à cette couleur */
+.btn-primary {
+    background-color: #E74C3C;
+    border-color: #E74C3C;
+}
+
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    background-color: #C0392B; /* optionnel : couleur plus foncée au hover */
+    border-color: #C0392B;
+}
+
+/* Au clic */
+.team-item .btn-square:active,
+.team-item .btn-square:focus {
+  background-color: #E74C3C !important;
+  border-color: #E74C3C !important;
+  outline: none;
+}
+.about-img img {
+  transition: all 0.4s ease-in-out; /* animation fluide */
+}
+
+.about-img img:hover {
+  background-color:  #E74C3C; /* bordure rouge au hover */
+   /* léger zoom */
+}
+.btn-primary:hover,
+.btn-primary:focus,
+.btn-primary:active {
+    background-color: #C0392B; /* optionnel : couleur plus foncée au hover */
+    border-color: #C0392B;
+}

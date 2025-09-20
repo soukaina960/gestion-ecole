@@ -340,10 +340,6 @@ h6,
     transition: .5s;
 }
 
-.about-img img:hover {
-    background: var(--primary) !important;
-}
-
 
 /*** Classes ***/
 .classes-item {
@@ -372,9 +368,6 @@ h6,
     transition: .5s;
 }
 
-.team-item:hover .team-text {
-    border-color: var(--primary);
-}
 
 
 /*** Testimonial ***/

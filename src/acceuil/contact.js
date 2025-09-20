@@ -22,7 +22,7 @@ const ContactForm = () => {
 
 const styles = {
   container: {
-    backgroundColor: "#f9f8ff",
+   
     display: "flex",
     alignItems: "center",
     justifyContent: "center",

@@ -151,9 +151,7 @@ th {
 }
 
 :root {
-  --primary: #4361ee;
-  --primary-light: #a5b2f5;
-  --primary-dark: #2a3eb7;
+
   --secondary: #f72585;
   --success: #4cc9f0;
   --warning: #f8961e;
@@ -169,7 +167,7 @@ th {
   --sidebar-bg-dark: #16213e;
   --sidebar-text-light: #2b2d42;
   --sidebar-text-dark: #e2e2e2;
-  --sidebar-active-light: #4361ee;
+
   --sidebar-active-dark: #4cc9f0;
 
   --card-bg-light: #ffffff;

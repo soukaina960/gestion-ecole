@@ -54,9 +54,7 @@
 
   :root {
     /* Palette de couleurs révisée */
-    --primary: #4361ee;
-    --primary-light: #a5b2f5;
-    --primary-dark: #2a3eb7;
+ 
     --secondary: #f72585;
     --success: #4cc9f0;
     --warning: #f8961e;
