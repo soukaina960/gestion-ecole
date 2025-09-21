@@ -13,6 +13,7 @@ import {
     FaUserGraduate, FaUserTie, FaMoneyCheckAlt, FaGlobe,
     FaSearch, FaSignOutAlt
 } from 'react-icons/fa';
+import { ChevronDown } from 'lucide-react';
 
 // Importation des composants
 import EntrerNotes from '../components/EntrerNotes';
@@ -41,7 +42,6 @@ const ErrorScreen = ({ error }) => (
     <p>Veuillez rafraîchir la page ou contacter l'administrateur</p>
   </div>
 );
-import { ChevronDown } from 'lucide-react';
 const EnseignantDashboard = () => {
     const [utilisateur, setUtilisateur] = useState(null);
     const [loading, setLoading] = useState(true);
