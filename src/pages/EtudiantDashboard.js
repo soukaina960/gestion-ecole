@@ -13,7 +13,7 @@ import {
     FaUserGraduate, FaUserTie, FaMoneyCheckAlt, FaGlobe,
     FaSearch, FaSignOutAlt, FaChartLine , FaClipboardList, FaCalendarCheck, FaFileAlt, FaQuestionCircle
 } from 'react-icons/fa';
-
+import { ChevronDown } from 'lucide-react';
 // Importation des composants étudiants
 import EtudiantCours from '../components/Etudiant/EtudiantCours';
 import EtudiantNotes from '../components/Etudiant/EtudiantNotes';
@@ -48,7 +48,7 @@ const ErrorScreen = ({ error }) => (
     </button>
   </div>
 );
-import { ChevronDown } from 'lucide-react';
+
 const EtudiantDashboard = () => {
     const [utilisateur, setUtilisateur] = useState(null);
     const [loading, setLoading] = useState(true);
