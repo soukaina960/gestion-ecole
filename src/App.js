@@ -128,7 +128,7 @@ function App() {
         {/* Public routes */}
           <Route index element={<Acceuil />} />
           <Route path="login" element={<Login />} />
-          <Route path="chatbot" element={<ChatBot />} />
+         
           <Route path="creer-compte" element={<CreateAccount />} />
           <Route path="fonctionnalites" element={<Fonctionnaliter />} />
         {/* Admin routes */}
